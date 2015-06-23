@@ -2,8 +2,7 @@
 raspi-configでの設定
 ==============================
 
-.. code-block:: bash
-	:linenos:
+::
 
 	pi@raspberrypi ~ $ sudo raspi-config
 	###青い選択画面になるので矢印キーとTabキー、Enterで次のように操作###
@@ -20,3 +19,5 @@ raspi-configでの設定
 	* A6 SPIを選択        * Would you like the SPI kernel module to be loaded by default?  で「はい」
 	* 選択画面を出る
 	###再起動###
+
+
