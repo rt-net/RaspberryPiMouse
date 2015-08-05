@@ -17,14 +17,15 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 #include <linux/mutex.h>
+#include <linux/timer.h>
+
 
 #include <asm/uaccess.h>
 #include <asm/delay.h>
 
-//Raspberry pi version setting
-#define	RASPBERRYPI1
-#undef RASPBERRYPI2
 
+#define	RASPBERRYPI2
+#undef RASPBERRYPI1
 
 
 MODULE_AUTHOR("RT Corporation");
@@ -40,17 +41,18 @@ MODULE_DESCRIPTION("Raspberry pi MicroMouse device driver");
 #define NUM_DEV_MOTORRAWR	1
 #define NUM_DEV_MOTORRAWL	1
 #define NUM_DEV_MOTOREN		1
+#define NUM_DEV_MOTOR		1
 
 
-#define NUM_DEV_TOTAL (NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR + NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR)
+#define NUM_DEV_TOTAL (NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR + NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR + NUM_DEV_MOTOR)
 
 #define DEVNAME_LED "rtled"
 #define DEVNAME_SWITCH "rtswitch"
-#define DEVNAME_SENSOR "rtsensor"
 #define DEVNAME_BUZZER "rtbuzzer"
 #define DEVNAME_MOTORRAWR	"rtmotor_raw_r"
 #define DEVNAME_MOTORRAWL	"rtmotor_raw_l"
 #define DEVNAME_MOTOREN	"rtmotoren"
+#define DEVNAME_MOTOR	"rtmotor"
 #define DEVNAME_SENSOR	"rtlightsensor"
 
 #define	DEV_MAJOR 0
@@ -80,6 +82,9 @@ static int _minor_motorrawl = DEV_MINOR;
 static int _major_motoren = DEV_MAJOR;
 static int _minor_motoren = DEV_MINOR;
 
+static int _major_motor = DEV_MAJOR;
+static int _minor_motor = DEV_MINOR;
+
 static struct cdev *cdev_array = NULL;
 static struct class *class_led = NULL;
 static struct class *class_buzzer = NULL;
@@ -88,6 +93,7 @@ static struct class *class_sensor = NULL;
 static struct class *class_motorrawr = NULL;
 static struct class *class_motorrawl = NULL;
 static struct class *class_motoren = NULL;
+static struct class *class_motor = NULL;
 
 static volatile void __iomem *pwm_base;
 static volatile void __iomem *clk_base;
@@ -96,10 +102,10 @@ static volatile uint32_t *gpio_base;
 static volatile int cdev_index = 0;
 static volatile int open_counter = 0;
 
-#define R_AD_CH		1
-#define L_AD_CH		2
-#define RF_AD_CH	0
-#define LF_AD_CH	3
+#define R_AD_CH		3
+#define L_AD_CH		0
+#define RF_AD_CH	2
+#define LF_AD_CH	1
 
 
 #define R_LED_BASE 	22
@@ -210,9 +216,14 @@ static volatile int open_counter = 0;
 #define RPI_GPIO_P2MASK (uint32_t)0xffffffff
 
 
+
+static void set_motor_r_freq(int freq);
+static void set_motor_l_freq(int freq);
 static int mcp3204_remove(struct spi_device *spi);
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
+
+
 
 
 struct mcp3204_drvdata
@@ -256,9 +267,28 @@ static struct spi_driver mcp3204_driver =
 };
 
 
+typedef struct
+{
+	signed int r_hz;
+	signed int l_hz;
+	unsigned int time;
+}t_motor_motion;
 
 
 
+
+static int getPWMCount(int freq)
+{
+	if(freq < 1)
+	{
+		freq = 1;
+	}
+	else if(freq > 10000)
+	{
+		freq = 10000;
+	}
+	return  PWM_BASECLK / freq;
+}
 
 
 
@@ -266,6 +296,56 @@ static struct spi_driver mcp3204_driver =
 #define MAX_BUFLEN 64
 unsigned char sw_buf[ MAX_BUFLEN ];
 static int buflen = 0;
+
+#define MAX_MOTORBUFLEN 16
+static t_motor_motion motor_motion[MAX_MOTORBUFLEN];
+static unsigned int motor_motion_head = 0, motor_motion_tail = 0;
+
+static int motor_motion_push(int r_hz, int l_hz, int time)
+{
+	unsigned int next_tail = motor_motion_tail + 1;
+	
+	if(next_tail >= MAX_MOTORBUFLEN)
+	{
+		next_tail = 0;
+	}
+	
+	if(next_tail == motor_motion_head)
+	{
+		return -1;
+	}
+	
+	motor_motion[motor_motion_tail].r_hz = r_hz;
+	motor_motion[motor_motion_tail].l_hz = l_hz;
+	motor_motion[motor_motion_tail].time = time;
+	
+	motor_motion_tail = next_tail;
+	
+	return 0;
+}
+
+static int motor_motion_pop(t_motor_motion **ret)
+{
+	unsigned int next_head = motor_motion_head + 1;
+
+	if(motor_motion_tail == motor_motion_head)
+	{
+		return -1;
+	}
+	
+	if(next_head >= MAX_MOTORBUFLEN)
+	{
+		next_head = 0;
+	}
+	
+	*ret = (motor_motion + motor_motion_head);
+	
+	motor_motion_head = next_head;
+	
+	return 0;
+}
+
+
 
 
 static int rpi_gpio_function_set(int pin, uint32_t func)
@@ -291,6 +371,73 @@ static void rpi_pwm_write32(uint32_t offset, uint32_t val)
 	iowrite32(val, pwm_base + offset);
 }
 
+static void set_motor_l_freq(int freq)
+{
+	int dat;
+	
+	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+	
+	if(freq == 0)
+	{
+		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
+		return;
+	}
+	else
+	{
+		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
+	}
+	
+	if(freq > 0)
+	{
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+	}
+	else
+	{
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+		freq = -freq;
+	}
+	
+	dat = getPWMCount(freq);
+	
+	rpi_pwm_write32(RPI_PWM_RNG1, dat);
+	rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
+	
+	return;
+}
+
+static void set_motor_r_freq(int freq)
+{
+	int dat;
+	
+	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+	
+	if(freq == 0)
+	{
+		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
+		return;
+	}
+	else
+	{
+		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
+	}
+	
+	if(freq > 0)
+	{
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+	}
+	else
+	{
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+		freq = -freq;
+	}
+	
+	dat = getPWMCount(freq);
+	
+	rpi_pwm_write32(RPI_PWM_RNG2, dat);
+	rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
+	
+	return;
+}
 
 
 //ここでreturn 0はデバイスクローズなのでやってはいけない
@@ -302,7 +449,6 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count, loff_
 	int index;
 	unsigned int pin=SW1_PIN;
 	uint32_t mask;
-	int _eof=-1;
 	int minor =  *((int *)filep->private_data);
 
 	switch(minor)
@@ -342,7 +488,7 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count, loff_
 	
 	
 	buflen = strlen(sw_buf);
-	count=buflen+1;
+	count=buflen;
 	len=buflen;
 
 	if(copy_to_user((void *)buf, &sw_buf, count))
@@ -367,43 +513,46 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count, l
 	
 	unsigned int ret=0;
 	int len;
-	int index;
-	uint32_t mask;
-	int _eof=-1;
 	
 	int usecs = 30;
 	int rf, lf, r, l;
+	int orf, olf, or, ol;
 
 	if(*f_pos > 0) return 0; /* End of file */
 
+
+
+	or = mcp3204_get_value(R_AD_CH);
 	rpi_gpio_set32( RPI_GPIO_P2MASK, 1 << R_LED_BASE);
 	udelay(usecs);
 	r = mcp3204_get_value(R_AD_CH);
 	rpi_gpio_clear32( RPI_GPIO_P2MASK, 1 << R_LED_BASE);
 	udelay(usecs);
-	
+
+	ol = mcp3204_get_value(L_AD_CH);
 	rpi_gpio_set32( RPI_GPIO_P2MASK, 1 << L_LED_BASE);
 	udelay(usecs);
 	l = mcp3204_get_value(L_AD_CH);
 	rpi_gpio_clear32( RPI_GPIO_P2MASK, 1 << L_LED_BASE);
 	udelay(usecs);
-	
+
+	orf = mcp3204_get_value(RF_AD_CH);
 	rpi_gpio_set32( RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	udelay(usecs);
 	rf = mcp3204_get_value(RF_AD_CH);
 	rpi_gpio_clear32( RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	udelay(usecs);
 	
+	olf = mcp3204_get_value(LF_AD_CH);
 	rpi_gpio_set32( RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 	udelay(usecs);
 	lf = mcp3204_get_value(LF_AD_CH);
 	rpi_gpio_clear32( RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 	udelay(usecs);
 	
-	
-	sprintf(sw_buf, "%d %d %d %d\n", l, lf, rf, r);
+	sprintf(sw_buf, "%d %d %d %d\n", rf - orf, r - or, l - ol, lf - olf);
 	buflen = strlen(sw_buf);
-	count=buflen+1;
+	count=buflen;
 	len=buflen;
 
 	if(copy_to_user((void *)buf, &sw_buf, count))
@@ -481,6 +630,8 @@ static int buzzer_init(void)
 
 static int led_gpio_map(void)
 {
+	static int clk_status = 1;
+	
 	if(gpio_base == NULL)
 	{
 		gpio_base = ioremap_nocache(RPI_GPIO_BASE, RPI_GPIO_SIZE);
@@ -497,45 +648,47 @@ static int led_gpio_map(void)
 	}
 
 	//kill
-	iowrite32(0x5a000000 | (1 << 5), clk_base + CLK_PWM_INDEX);
-	udelay(1000);
+	if(clk_status == 1)
+	{
+		iowrite32(0x5a000000 | (1 << 5), clk_base + CLK_PWM_INDEX);
+		udelay(1000);
 
-	//clk set
-	iowrite32(0x5a000000 | (2 << 12), clk_base + CLK_PWMDIV_INDEX);
-	iowrite32(0x5a000011, clk_base + CLK_PWM_INDEX);
+		//clk set
+		iowrite32(0x5a000000 | (2 << 12), clk_base + CLK_PWMDIV_INDEX);
+		iowrite32(0x5a000011, clk_base + CLK_PWM_INDEX);
 
-	udelay(1000);	//1mS wait
+		udelay(1000);	//1mS wait
+		
+		clk_status = 0;
+	}
 
 	return 0;
 }
 
 static int dev_open(struct inode *inode, struct file *filep)
 {
-		int retval;
+	int retval;
 	int *minor = (int *)kmalloc(sizeof(int),GFP_KERNEL);
 	int major = MAJOR(inode->i_rdev);
 	*minor = MINOR(inode->i_rdev);
 
-	
 	printk(KERN_INFO "open request major:%d minor: %d \n", major, *minor);
 	
 	filep->private_data = (void *)minor;
-	
-	/*
-		if( gpio_base != NULL ) {
-				printk(KERN_ERR "led is already open.\n" );
-				return -EIO;
-		}
-	*/
-		retval = led_gpio_map();
-		if( retval != 0 ) {
-				printk(KERN_ERR "Can not open led.\n" );
-				return retval;
-		}
 
+	retval = led_gpio_map();
+	if( retval != 0 ) {
+			printk(KERN_ERR "Can not open led.\n" );
+			return retval;
+	}
 	
+	if(_major_motor == major)
+	{
+		printk(KERN_INFO"motor write\n" );
+	}
+
 	open_counter++;
-		return 0;
+	return 0;
 }
 
 static int gpio_unmap(void)
@@ -554,6 +707,7 @@ static int gpio_unmap(void)
 static int dev_release(struct inode *inode, struct file *filep)
 {
 	kfree(filep->private_data);
+	
 	
 	open_counter--;
 	if(open_counter <= 0)
@@ -653,6 +807,39 @@ static int parseFreq(const char __user *buf, size_t count, int *ret)
 }
 
 
+
+static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
+{
+	static struct mutex lock;
+	char *newbuf = kmalloc(sizeof(char)*count, GFP_KERNEL);
+	int r_motor_val, l_motor_val, time_val;
+
+	mutex_init(&lock);	
+	if(copy_from_user(newbuf, buf, sizeof(char) * count)){
+		return -EFAULT;
+	}
+	
+	sscanf(newbuf,"%d%d%d\n",&l_motor_val, &r_motor_val, &time_val);
+	
+	kfree(newbuf);
+	mutex_lock(&lock);	
+
+	set_motor_l_freq(l_motor_val);
+	set_motor_r_freq(r_motor_val);
+
+	msleep_interruptible(time_val);
+	
+	set_motor_l_freq(0);
+	set_motor_r_freq(0);
+
+	
+	mutex_unlock(&lock);
+
+	return count;
+}
+
+
+
 static ssize_t buzzer_write( struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
 {
 	int bufcnt;
@@ -685,45 +872,14 @@ static ssize_t buzzer_write( struct file *filep, const char __user *buf, size_t 
 	return bufcnt;
 }
 
+
+
 static ssize_t rawmotor_l_write( struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
 {
-	int freq, bufcnt, dat;
+	int freq, bufcnt;
 	bufcnt = parseFreq(buf, count, &freq);
 	
-	if(freq == 0)
-	{
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
-		return bufcnt;
-	}
-	else
-	{
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
-	}
-	
-	if(freq > 0)
-	{
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
-	}
-	else
-	{
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
-		freq = -freq;
-	}
-	
-	
-	if(freq < 1)
-	{
-		freq = 1;
-	}
-	else if(freq > 10000)
-	{
-		freq = 10000;
-	}
-	dat = PWM_BASECLK / freq;
-	
-	rpi_pwm_write32(RPI_PWM_RNG1, dat);
-	rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
-	
+	set_motor_l_freq(freq);
 	
 	return bufcnt;
 } 
@@ -732,45 +888,10 @@ static ssize_t rawmotor_l_write( struct file *filep, const char __user *buf, siz
 
 static ssize_t rawmotor_r_write( struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
 {
-	int freq, bufcnt, dat;
+	int freq, bufcnt;
 	bufcnt = parseFreq(buf, count, &freq);
 	
-	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
-	
-	if(freq == 0)
-	{
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
-		return bufcnt;
-	}
-	else
-	{
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
-	}
-	
-	if(freq > 0)
-	{
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-	}
-	else
-	{
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-		freq = -freq;
-	}
-	
-	
-	if(freq < 1)
-	{
-		freq = 1;
-	}
-	else if(freq > 10000)
-	{
-		freq = 10000;
-	}
-	dat = PWM_BASECLK / freq;
-	
-	rpi_pwm_write32(RPI_PWM_RNG2, dat);
-	rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
-	
+	set_motor_r_freq(freq);
 	
 	return bufcnt;
 } 
@@ -799,47 +920,63 @@ static ssize_t motoren_write( struct file *filep, const char __user *buf, size_t
 	return 0;
 } 
 
-struct file_operations led_fops = {
+static ssize_t motor_write( struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+{
+	int tmp;
+	int bufcnt;
+	bufcnt = parseMotorCmd(buf,count,&tmp);
+	
+	return bufcnt;
+} 
+
+
+static struct file_operations led_fops = {
 		.open      = dev_open,
 		.release   = dev_release,
 		.write     = led_write,
 };
 
-struct file_operations buzzer_fops = {
+static struct file_operations buzzer_fops = {
 		.open      = dev_open,
 		.release   = dev_release,
 		.write     = buzzer_write,
 };
 
 
-struct file_operations sw_fops = {
+static struct file_operations sw_fops = {
 		.open      = dev_open,
 		.read      = sw_read,
 		.release   = dev_release,
 };
 
-struct file_operations sensor_fops = {
+static struct file_operations sensor_fops = {
 		.open      = dev_open,
 		.read      = sensor_read,
 		.release   = dev_release,
 };
 
-struct file_operations motorrawr_fops = {
+static struct file_operations motorrawr_fops = {
 		.open      = dev_open,
 		.write      = rawmotor_r_write,
 		.release   = dev_release,
 };
 
 
-struct file_operations motorrawl_fops = {
+static struct file_operations motorrawl_fops = {
 		.open      = dev_open,
 		.write      = rawmotor_l_write,
 		.release   = dev_release,
 };
 
-struct file_operations motoren_fops = {
+static struct file_operations motoren_fops = {
 		.open      = dev_open,
 		.write      = motoren_write,
+		.release   = dev_release,
+};
+
+static struct file_operations motor_fops = {
+		.open      = dev_open,
+		.write      = motor_write,
 		.release   = dev_release,
 };
 
@@ -912,7 +1049,6 @@ static int buzzer_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	int i;
 	
 	/* 空いているメジャー番号を使ってメジャー&
 	   マイナー番号をカーネルに登録する */
@@ -963,7 +1099,6 @@ static int motorrawr_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	int i;
 	
 	/* 空いているメジャー番号を使ってメジャー&
 	   マイナー番号をカーネルに登録する */
@@ -1014,7 +1149,6 @@ static int motorrawl_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	int i;
 	
 	/* 空いているメジャー番号を使ってメジャー&
 	   マイナー番号をカーネルに登録する */
@@ -1064,7 +1198,6 @@ static int switch_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	size_t size;
 	int i;
 		
 	/* 空いているメジャー番号を使ってメジャー&マイナー番号をカーネルに登録する */
@@ -1117,7 +1250,6 @@ static int sensor_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	size_t size;
 		
 	/* 空いているメジャー番号を使ってメジャー&マイナー番号をカーネルに登録する */
 	retval =  alloc_chrdev_region(
@@ -1168,7 +1300,6 @@ static int motoren_register_dev(void)
 {
 	int retval;
 	dev_t dev;
-	size_t size;
 		
 	/* 空いているメジャー番号を使ってメジャー&マイナー番号をカーネルに登録する */
 	retval =  alloc_chrdev_region(
@@ -1205,6 +1336,56 @@ static int motoren_register_dev(void)
 				devno,
 				NULL,
 				DEVNAME_MOTOREN"%u",_minor_motoren
+		);
+	}
+	cdev_index++;
+
+	return 0;
+}
+
+
+
+
+static int motor_register_dev(void)
+{
+	int retval;
+	dev_t dev;
+		
+	/* 空いているメジャー番号を使ってメジャー&マイナー番号をカーネルに登録する */
+	retval =  alloc_chrdev_region(
+		&dev,				/* 結果を格納するdev_t構造体 */
+		DEV_MINOR,		/* ベースマイナー番号 */
+		NUM_DEV_MOTOR,	/* デバイスの数 */
+		DEVNAME_MOTOR		/* デバイスドライバの名前 */
+	);
+	
+	if( retval < 0 ) {
+		printk(KERN_ERR "alloc_chrdev_region failed.\n" );
+		return retval;
+	}
+	_major_motor = MAJOR(dev);
+	
+	/* デバイスクラスを作成する */
+	class_motor = class_create(THIS_MODULE,DEVNAME_MOTOR);
+	if(IS_ERR(class_motor))
+	return PTR_ERR(class_motor);
+
+	dev_t devno = MKDEV(_major_motor, _minor_motor);
+	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
+	cdev_init(&(cdev_array[cdev_index]), &motor_fops);
+	cdev_array[cdev_index].owner = THIS_MODULE;
+	if( cdev_add( &(cdev_array[cdev_index]), devno, 1) < 0 ) {
+		/* 登録に失敗した */
+		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_motor);
+	}
+	else {
+		/* デバイスノードの作成 */
+		device_create(
+				class_motor,
+				NULL,
+				devno,
+				NULL,
+				DEVNAME_MOTOR"%u",_minor_motor
 		);
 	}
 	cdev_index++;
@@ -1379,24 +1560,23 @@ static void mcp3204_exit(void)
 	
 }
 
-
+static struct mutex lock;
 
 int dev_init_module(void)
 {
-		int retval, i;
+	int retval, i;
 	size_t size;
 	
-		/* 開始のメッセージ */
-		printk(KERN_INFO "%s loading...\n", DEVNAME_LED );
+	/* 開始のメッセージ */
+	printk(KERN_INFO "%s loading...\n", DEVNAME_LED );
 
-		/* GPIOレジスタがマップ可能か調べる */
-		retval = led_gpio_map();
-		if( retval != 0 ) {
-				printk( KERN_ALERT "Can not use GPIO registers.\n");
-				return -EBUSY;
-		}
-		/* GPIO初期化 */
-		//led_gpio_setup();
+	/* GPIOレジスタがマップ可能か調べる */
+	retval = led_gpio_map();
+	if( retval != 0 ) {
+			printk( KERN_ALERT "Can not use GPIO registers.\n");
+			return -EBUSY;
+	}
+	/* GPIO初期化 */
 	rpi_gpio_function_set( LED0_BASE, RPI_GPF_OUTPUT );
 	rpi_gpio_function_set( LED1_BASE, RPI_GPF_OUTPUT );
 	rpi_gpio_function_set( LED2_BASE, RPI_GPF_OUTPUT );
@@ -1488,6 +1668,12 @@ int dev_init_module(void)
 		return retval;
 	}
 	
+	retval = motor_register_dev();
+	if( retval != 0 ) {
+		printk( KERN_ALERT " motor driver register failed.\n");
+		return retval;
+	}
+	
 	retval = mcp3204_init();
 	if(retval != 0)
 	{
@@ -1508,8 +1694,9 @@ void dev_cleanup_module(void)
 {
 		int i;
 		dev_t devno;
-
+		
 		/* キャラクタデバイスの登録解除 */
+
 		
 	for(i = 0; i < NUM_DEV_TOTAL; i++)
 	{
@@ -1553,6 +1740,10 @@ void dev_cleanup_module(void)
 	device_destroy(class_motoren, devno);
 	unregister_chrdev_region(devno, NUM_DEV_MOTOREN);
 	
+	devno = MKDEV(_major_motor,_minor_motor); 
+	device_destroy(class_motor, devno);
+	unregister_chrdev_region(devno, NUM_DEV_MOTOR);
+	
 	/* デバイスノードを取り除く */
 	class_destroy( class_led );
 	class_destroy( class_switch );
@@ -1561,12 +1752,16 @@ void dev_cleanup_module(void)
 	class_destroy( class_motorrawr );
 	class_destroy( class_motorrawl );
 	class_destroy( class_motoren );
+	class_destroy( class_motor );
 	
 	mcp3204_exit();
 	
 	kfree(cdev_array);
 	printk("module being removed at %lu\n",jiffies);
+	
 }
+
+
 
 
 
