@@ -10,3 +10,4 @@ obj-m:= $(MODULE).o
 
 clean:
 	rm -f *.o *.order *.mod.c *.symvers *.ko
+	rm -rf .*.cmd .tmp_versions
