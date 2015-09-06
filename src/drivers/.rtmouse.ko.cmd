@@ -1,0 +1,1 @@
+cmd_/home/pi/RaspberryPiMouse/src/drivers/rtmouse.ko := ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/pi/RaspberryPiMouse/src/drivers/rtmouse.ko /home/pi/RaspberryPiMouse/src/drivers/rtmouse.o /home/pi/RaspberryPiMouse/src/drivers/rtmouse.mod.o
