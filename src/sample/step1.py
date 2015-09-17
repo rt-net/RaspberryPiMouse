@@ -1,0 +1,26 @@
+#!/usr/bin/python
+import time
+led0 = open('/dev/rtled0','a')
+led1 = open('/dev/rtled1','a')
+led2 = open('/dev/rtled2','a')
+led3 = open('/dev/rtled3','a')
+
+while 1:
+	led3.write("1")
+ 	led2.write("1")
+ 	led1.write("1")
+ 	led0.write("1")
+	led3.flush()
+        led2.flush()
+        led1.flush()
+        led0.flush()
+        time.sleep(0.5)
+	led3.write("0")
+        led2.write("0")
+        led1.write("0")
+        led0.write("0")
+	led3.flush()
+       	led2.flush()
+       	led1.flush()
+      	led0.flush()
+        time.sleep(0.5)
