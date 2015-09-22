@@ -3,7 +3,7 @@
 This repository has the source code and kernel objects
 for the Raspberry Pi mouse.
 
-## How to install the kernel objects
+## How to install the device driver
 
 ```
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
