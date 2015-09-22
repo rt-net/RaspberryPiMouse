@@ -7,9 +7,12 @@ for the Raspberry Pi mouse.
 
 ```
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
+### check the kernel version
 $ uname -r
 4.1.6-v7+
+###choose a directory based on your RPi and the kernel version
 $ cd RaspberryPiMouse/lib/Pi2B+/4.1.6-v7+/
+###install the kernel object
 $ sudo insmod rtmouse.ko
 ```
 
