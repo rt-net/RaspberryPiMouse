@@ -10,3 +10,4 @@ make
 sudo insmod rtmouse.ko
 sleep 1
 sudo chmod 666 /dev/rt*
+echo 0 > /dev/rtmotoren0
