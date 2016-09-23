@@ -3,7 +3,21 @@
 This repository has the source code and kernel objects
 for the Raspberry Pi mouse.
 
-## How to install the device driver
+## インストール
+
+./utilディレクトリのシェルスクリプトを実行します。
+
+```
+$ git clone https://github.com/rt-net/RaspberryPiMouse.git
+$ cd utils
+###Raspbianの場合###
+$ ./build_install.raspbian.bash
+###Ubuntuの場合（ubuntu14とありますがUbuntu Linux 16.04でもインストール可能です）###
+$ ./build_install.ubuntu14.bash
+```
+
+
+## How to install the device driver（マニュアルインストール）
 
 ```
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
