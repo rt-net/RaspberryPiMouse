@@ -1,0 +1,5 @@
+KERNEL=="rtmotor*",ACTION=="add",MODE="0666"
+KERNEL=="rtlightsensor*",ACTION=="add",MODE="0666"
+KERNEL=="rtbuzzer*",ACTION=="add",MODE="0666"
+KERNEL=="rtswitch*",ACTION=="add",MODE="0666"
+KERNEL=="rtled*",ACTION=="add",MODE="0666"

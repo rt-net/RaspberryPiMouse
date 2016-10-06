@@ -11,4 +11,10 @@ clean:
 
 obj-m:= rtmouse.o
 
+install: rtmouse.ko
+	cp ../../50-rtmouse.rules /etc/udev/rules.d/
+
+uninstall:
+	rm /etc/udev/rules.d/50-rtmouse.rules
+
 clean-files := *.o *.ko *.mod.[co] *~
