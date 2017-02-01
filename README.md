@@ -1,5 +1,7 @@
 # RaspberryPiMouse
 
+[![Build Status](https://travis-ci.org/rt-net/RaspberryPiMouse.svg?branch=master)](https://travis-ci.org/rt-net/RaspberryPiMouse)
+
 This repository has the source code and kernel objects
 for the Raspberry Pi mouse.
 
@@ -48,3 +50,10 @@ rtmouseをインストールして不具合が出た場合のみ以下の設定�
 シェルスクリプトは下記にあります。
 
 https://github.com/ryuichiueda/RPiM
+
+
+## License
+
+This repository is licensed under the GPLv3 License, see [LICENSE](./LICENSE).
+
+このリポジトリはGPLv3ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
