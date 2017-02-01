@@ -1,0 +1,31 @@
+language: generic
+dist: trusty
+addons:
+    apt:
+        packages:
+            - build-essential
+            - bc
+
+env:
+    global:
+        - HOME=/home/travis
+
+cache:
+    apt: true
+    directories:
+        - $HOME/repo/raspberrypi
+
+before_script:
+    - export REPOSITORY_DIR=$(pwd) && echo $REPOSITORY_DIR
+    - export DRIVER_SRC_DIR=$(pwd)/src/drivers && echo $DRIVER_SRC_DIR
+    - mkdir -p $HOME/repo/raspberrypi && cd $HOME/repo/raspberrypi
+    - git clone --depth 1 https://github.com/raspberrypi/tools.git
+    - git clone -b rpi-4.1.y https://github.com/raspberrypi/linux.git
+    - cd linux
+    - cp $DRIVER_SRC_DIR/.test/config-pi3-mate ./.config
+    - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
+    - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
+
+script:
+    - cd $DRIVER_SRC_DIR
+    - make -f $REPOSITORY_DIR/.test/Makefile.crosscompile
