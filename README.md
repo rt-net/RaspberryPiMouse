@@ -36,6 +36,10 @@ $ sudo insmod rtmouse.ko
 raspi-configコマンドで設定します。
 
 * SPI機能を「入」にする。
+
+2017年1月現在、以下の設定は不要です。  
+rtmouseをインストールして不具合が出た場合のみ以下の設定を追加で行ってください。
+
 * Device Tree機能を「切」にする。
 
 ## 日経Linux連載
