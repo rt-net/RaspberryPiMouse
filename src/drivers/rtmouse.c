@@ -1945,7 +1945,7 @@ int dev_init_module(void)
 		printk( KERN_ALERT "optical sensor driver register failed.\n");
 	}
 	
-	printk( KERN_INFO "rtmouse driver register sccessed.\n");
+	printk( KERN_INFO "rtmouse driver registered successfully.\n");
 		
 	/* GPIOレジスタのアンマップ */
 	gpio_unmap();
