@@ -22,7 +22,7 @@ before_script:
     - git clone --depth 1 https://github.com/raspberrypi/tools.git
     - git clone -b rpi-4.1.y https://github.com/raspberrypi/linux.git
     - cd linux
-    - cp $DRIVER_SRC_DIR/.test/config-pi3-mate ./.config
+    - cp $REPOSITORY_DIR/.test/config-pi3-mate ./.config
     - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
     - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
 
