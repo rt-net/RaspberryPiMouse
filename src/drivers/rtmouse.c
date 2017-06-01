@@ -67,11 +67,12 @@ MODULE_DESCRIPTION("Raspberry Pi MicroMouse device driver");
 #define NUM_DEV_MOTOR 1
 #define NUM_DEV_CNTR 1
 #define NUM_DEV_CNTL 1
+#define NUM_DEV_CNT 1
 
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
 	 NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR +                \
-	 NUM_DEV_MOTOR + NUM_DEV_CNTR + NUM_DEV_CNTL)
+	 NUM_DEV_MOTOR + NUM_DEV_CNTR + NUM_DEV_CNTL + NUM_DEV_CNT)
 
 /* --- Device Names --- */
 #define DEVNAME_LED "rtled"
@@ -82,8 +83,9 @@ MODULE_DESCRIPTION("Raspberry Pi MicroMouse device driver");
 #define DEVNAME_MOTOREN "rtmotoren"
 #define DEVNAME_MOTOR "rtmotor"
 #define DEVNAME_SENSOR "rtlightsensor"
-#define DEVNAME_CNTR "rtcntr"
-#define DEVNAME_CNTL "rtcntl"
+#define DEVNAME_CNTR "rtcounter_r"
+#define DEVNAME_CNTL "rtcounter_l"
+#define DEVNAME_CNT "rtcounter"
 
 /* --- Device Major and Minor Numbers --- */
 #define DEV_MAJOR 0
@@ -122,6 +124,9 @@ static int _minor_cntr = DEV_MINOR;
 static int _major_cntl = DEV_MAJOR;
 static int _minor_cntl = DEV_MINOR;
 
+static int _major_cnt = DEV_MAJOR;
+static int _minor_cnt = DEV_MINOR;
+
 /* --- General Options --- */
 static struct cdev *cdev_array = NULL;
 static struct class *class_led = NULL;
@@ -134,6 +139,7 @@ static struct class *class_motoren = NULL;
 static struct class *class_motor = NULL;
 static struct class *class_cntr = NULL;
 static struct class *class_cntl = NULL;
+static struct class *class_cnt = NULL;
 
 static volatile void __iomem *pwm_base;
 static volatile void __iomem *clk_base;
@@ -1069,7 +1075,7 @@ static ssize_t motor_write(struct file *filep, const char __user *buf,
 
 /*
  *  cntr_write - Set value to right pulse counter
- *  Write function of /dev/rtcntr
+ *  Write function of /dev/rtcounter_r
  */
 static ssize_t cntr_write(struct file *filep, const char *buf, size_t count,
 			  loff_t *pos)
@@ -1086,7 +1092,7 @@ static ssize_t cntr_write(struct file *filep, const char *buf, size_t count,
 
 /*
  *  cntr_read - Read value from right pulse counter
- *  Read function of /dev/rtcntr
+ *  Read function of /dev/rtcounter_r
  */
 static ssize_t cntr_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
@@ -1121,7 +1127,7 @@ static ssize_t cntr_read(struct file *filep, char __user *buf, size_t count,
 
 /*
  *  cntl_write - Set value to left pulse counter
- *  Write function of /dev/rtcntl
+ *  Write function of /dev/rtcounter_l
  */
 static ssize_t cntl_write(struct file *filep, const char *buf, size_t count,
 			  loff_t *pos)
@@ -1140,7 +1146,7 @@ static ssize_t cntl_write(struct file *filep, const char *buf, size_t count,
 
 /*
  *  cntl_read - Read value from left pulse counter
- *  Read function of /dev/rtcntl
+ *  Read function of /dev/rtcounter_l
  */
 static ssize_t cntl_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
@@ -1156,6 +1162,66 @@ static ssize_t cntl_read(struct file *filep, char __user *buf, size_t count,
 
 	/* set sensor data to sw_buf(static buffer) */
 	snprintf(sw_buf, sizeof(sw_buf), "%d\n", cntl_count);
+	buflen = strlen(sw_buf);
+	count = buflen;
+	len = buflen;
+
+	/* copy data to user area */
+	if (copy_to_user((void *)buf, &sw_buf, count)) {
+		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
+		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
+		return -EFAULT;
+	}
+	*f_pos += count;
+	buflen = 0;
+
+	return count;
+}
+
+/*
+ *  cnt_write - Set value to right/left pulse counter
+ *  Write function of /dev/rtcounter
+ */
+static ssize_t cnt_write(struct file *filep, const char *buf, size_t count,
+			 loff_t *pos)
+{
+	int cntr_count, cntl_count;
+	char *newbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
+	if (count < 0)
+		return 0;
+	if (copy_from_user(newbuf, buf, sizeof(char) * count)) {
+		kfree(newbuf);
+		return -EFAULT;
+	}
+	sscanf(newbuf, "%d%d\n", &cntl_count, &cntl_count);
+	kfree(newbuf);
+
+	i2c_counter_set(&(i2c_clients[0]->client), cntl_count);
+	i2c_counter_set(&(i2c_clients[1]->client), cntr_count);
+
+	return count;
+}
+
+/*
+ *  cnt_read - Read value from right/left pulse counter
+ *  Read function of /dev/rtcounter
+ */
+static ssize_t cnt_read(struct file *filep, char __user *buf, size_t count,
+			loff_t *f_pos)
+{
+	int len;
+	int cntr_count, cntl_count;
+
+	if (*f_pos > 0)
+		return 0; /* End of file */
+
+	/* get sensor data */
+	i2c_counter_read(&(i2c_clients[0]->client), &cntl_count);
+	i2c_counter_read(&(i2c_clients[1]->client), &cntr_count);
+
+	/* set sensor data to sw_buf(static buffer) */
+	snprintf(sw_buf, sizeof(sw_buf), "%d %d\n", cntl_count, cntr_count);
 	buflen = strlen(sw_buf);
 	count = buflen;
 	len = buflen;
@@ -1206,21 +1272,27 @@ static struct file_operations motoren_fops = {
 static struct file_operations motor_fops = {
     .open = dev_open, .write = motor_write, .release = dev_release,
 };
-/* /dev/rtcntr */
+/* /dev/rtcounter_r */
 static struct file_operations cntr_fops = {
     .open = dev_open,
     .release = dev_release,
     .write = cntr_write,
     .read = cntr_read,
 };
-/* /dev/rtcntl */
+/* /dev/rtcounter_l */
 static struct file_operations cntl_fops = {
     .open = dev_open,
     .release = dev_release,
     .write = cntl_write,
     .read = cntl_read,
 };
-
+/* /dev/rtcounter */
+static struct file_operations cnt_fops = {
+    .open = dev_open,
+    .release = dev_release,
+    .write = cnt_write,
+    .read = cnt_read,
+};
 
 /* --- Device Driver Registration and Device File Creation --- */
 /* /dev/rtled0,/dev/rtled1,/dev/rtled2 */
@@ -1599,7 +1671,7 @@ static int motor_register_dev(void)
 	return 0;
 }
 
-/* /dev/rtcntr0 */
+/* /dev/rtcounter_r0 */
 static int cntr_register_dev(void)
 {
 	int retval;
@@ -1639,7 +1711,7 @@ static int cntr_register_dev(void)
 	return 0;
 }
 
-/* /dev/rtcntl0 */
+/* /dev/rtcounter_l0 */
 static int cntl_register_dev(void)
 {
 	int retval;
@@ -1679,6 +1751,45 @@ static int cntl_register_dev(void)
 	return 0;
 }
 
+/* /dev/rtcounter0 */
+static int cnt_register_dev(void)
+{
+	int retval;
+	dev_t dev;
+	dev_t devno;
+	int i;
+
+	retval = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNT, DEVNAME_CNT);
+
+	if (retval < 0) {
+		printk(KERN_ERR "alloc_chrdev_region failed.\n");
+		return retval;
+	}
+	_major_cnt = MAJOR(dev);
+
+	class_cnt = class_create(THIS_MODULE, DEVNAME_CNT);
+	if (IS_ERR(class_cnt)) {
+		return PTR_ERR(class_cnt);
+	}
+
+	for (i = 0; i < NUM_DEV_CNT; i++) {
+		devno = MKDEV(_major_cnt, _minor_cnt + i);
+
+		cdev_init(&(cdev_array[cdev_index]), &cnt_fops);
+		cdev_array[cdev_index].owner = THIS_MODULE;
+		if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
+			printk(KERN_ERR "cdev_add failed minor = %d\n",
+			       _minor_cnt + i);
+		} else {
+			device_create(class_cnt, NULL, devno, NULL,
+				      DEVNAME_CNT "%u", _minor_cnt + i);
+		}
+		cdev_index++;
+	}
+
+	return 0;
+}
+
 /* mcp3204_remove - remove function lined with spi_dirver */
 static int mcp3204_remove(struct spi_device *spi)
 {
@@ -1687,7 +1798,7 @@ static int mcp3204_remove(struct spi_device *spi)
 	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
 	/* free kernel memory */
 	kfree(data);
-	printk(KERN_INFO "%s:mcp3204 removed\n",__func__);
+	printk(KERN_INFO "%s:mcp3204 removed\n", __func__);
 	return 0;
 }
 
@@ -1701,7 +1812,7 @@ static int mcp3204_probe(struct spi_device *spi)
 	spi->bits_per_word = 8;
 
 	if (spi_setup(spi)) {
-		printk(KERN_ERR "%s:spi_setup failed!\n",__func__);
+		printk(KERN_ERR "%s:spi_setup failed!\n", __func__);
 		return -ENODEV;
 	}
 
@@ -1732,7 +1843,7 @@ static int mcp3204_probe(struct spi_device *spi)
 	/* set drvdata */
 	spi_set_drvdata(spi, data);
 
-	printk(KERN_INFO "%s:mcp3204 probed",__func__);
+	printk(KERN_INFO "%s:mcp3204 probed", __func__);
 
 	return 0;
 }
@@ -1767,7 +1878,8 @@ static unsigned int mcp3204_get_value(int channel)
 	data->tx[2] = 0;
 
 	if (spi_sync(data->spi, &data->msg)) {
-		printk(KERN_INFO "%s:spi_sync_transfer returned non zero\n",__func__);
+		printk(KERN_INFO "%s:spi_sync_transfer returned non zero\n",
+		       __func__);
 	}
 
 	mutex_unlock(&data->lock);
@@ -1775,7 +1887,8 @@ static unsigned int mcp3204_get_value(int channel)
 	r = (data->rx[1] & 0xf) << 8;
 	r |= data->rx[2];
 
-	printk(KERN_INFO "%s: get result on ch[%d] : %04d\n",__func__, channel, r);
+	printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__, channel,
+	       r);
 
 	return r;
 }
@@ -1789,7 +1902,8 @@ static int i2c_counter_set(struct i2c_client *client, int setval)
 	int ret = 0;
 	int lsb = 0, msb = 0;
 
-	printk(KERN_INFO "%s: set 0x%x = 0x%x\n",__func__, client->addr, setval);
+	printk(KERN_INFO "%s: set 0x%x = 0x%x\n", __func__, client->addr,
+	       setval);
 	msb = (setval >> 8) & 0xFF;
 	lsb = setval & 0xFF;
 	usleep_range(27, 100);
@@ -1840,7 +1954,7 @@ static void i2c_counter_read(struct i2c_client *client, int *ret)
 
 	*ret = ((msb << 8) & 0xFF00) + (lsb & 0xFF);
 
-	printk(KERN_INFO "%s:0x%x == 0x%x\n", __func__,client->addr, *ret);
+	printk(KERN_INFO "%s:0x%x == 0x%x\n", __func__, client->addr, *ret);
 }
 
 /*
@@ -1852,9 +1966,11 @@ static int i2c_counter_detect(struct i2c_client *client,
 {
 	int ret = 0;
 
-	printk(KERN_INFO "%s: detect i2c device, addr=0x%x\n", __func__, client->addr);
+	printk(KERN_INFO "%s: detect i2c device, addr=0x%x\n", __func__,
+	       client->addr);
 	i2c_clients[client->addr - 0x10]->client = *client;
-	printk(KERN_INFO "%s: i2c_clients[%x] addr=0x%x\n",__func__, (client->addr - 0x10),
+	printk(KERN_INFO "%s: i2c_clients[%x] addr=0x%x\n", __func__,
+	       (client->addr - 0x10),
 	       i2c_clients[client->addr - 0x10]->client.addr);
 
 	ret = i2c_counter_set(client, 0);
@@ -1868,7 +1984,7 @@ static int i2c_counter_detect(struct i2c_client *client,
  */
 static int i2c_counter_remove(struct i2c_client *client)
 {
-	printk(KERN_INFO "%s: i2c removing ... \n",__func__);
+	printk(KERN_INFO "%s: i2c removing ... \n", __func__);
 	return 0;
 }
 
@@ -1907,7 +2023,8 @@ static int mcp3204_init(void)
 	master = spi_busnum_to_master(mcp3204_info.bus_num);
 
 	if (!master) {
-		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n", __func__);
+		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
+		       __func__);
 		spi_unregister_driver(&mcp3204_driver);
 		return -ENODEV;
 	}
@@ -1952,12 +2069,20 @@ static int i2c_counter_init(void)
 	int retval = 0;
 	retval = cntr_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT "%s: rtcntr driver registration failed.\n",__func__);
+		printk(KERN_ALERT "%s: rtcntr driver registration failed.\n",
+		       __func__);
 		return retval;
 	}
 	retval = cntl_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT "%s: rtcntl driver registration failed.\n", __func__);
+		printk(KERN_ALERT "%s: rtcntl driver registration failed.\n",
+		       __func__);
+		return retval;
+	}
+	retval = cnt_register_dev();
+	if (retval != 0) {
+		printk(KERN_ALERT "%s: rtcnt driver registration failed.\n",
+		       __func__);
 		return retval;
 	}
 	i2c_clients[0] = (struct i2c_counter_device *)kzalloc(
@@ -1993,7 +2118,7 @@ static void i2c_counter_exit(void)
 	kfree(i2c_clients[1]);
 }
 
-/* 
+/*
  * dev_init_module - register driver module
  * called by module_init(dev_init_module)
  */
@@ -2133,7 +2258,7 @@ int dev_init_module(void)
 	return 0;
 }
 
-/* 
+/*
  * dev_cleanup_module - cleanup driver module
  * called by module_exit(dev_cleanup_module)
  */
@@ -2187,14 +2312,18 @@ void dev_cleanup_module(void)
 	devno = MKDEV(_major_motor, _minor_motor);
 	device_destroy(class_motor, devno);
 	unregister_chrdev_region(devno, NUM_DEV_MOTOR);
-	/* /dev/rtcntr0 */
+	/* /dev/rtcounter_0 */
 	devno = MKDEV(_major_cntr, _minor_cntr);
 	device_destroy(class_cntr, devno);
 	unregister_chrdev_region(devno, NUM_DEV_CNTR);
-	/* /dev/rtcntl0 */
-	devno_top = MKDEV(_major_cntl, _minor_cntl);
+	/* /dev/rtcounter_l0 */
+	devno = MKDEV(_major_cntl, _minor_cntl);
 	device_destroy(class_cntl, devno);
 	unregister_chrdev_region(devno, NUM_DEV_CNTL);
+	/* /dev/rtcounter */
+	devno = MKDEV(_major_cnt, _minor_cnt);
+	device_destroy(class_cnt, devno);
+	unregister_chrdev_region(devno, NUM_DEV_CNT);
 
 	/* --- remove device node --- */
 	class_destroy(class_led);
@@ -2205,6 +2334,9 @@ void dev_cleanup_module(void)
 	class_destroy(class_motorrawl);
 	class_destroy(class_motoren);
 	class_destroy(class_motor);
+	class_destroy(class_cntr);
+	class_destroy(class_cntl);
+	class_destroy(class_cnt);
 
 	/* remove MCP3204 */
 	mcp3204_exit();
