@@ -352,7 +352,7 @@ MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
 /* -- Buffer -- */
 #define MAX_BUFLEN 64
-unsigned char sw_buf[MAX_BUFLEN];
+//unsigned char sw_buf[MAX_BUFLEN];
 static int buflen = 0;
 
 #define MOTOR_MOTION 0
@@ -517,6 +517,7 @@ static void set_motor_r_freq(int freq)
 static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 		       loff_t *f_pos)
 {
+	unsigned char sw_buf[MAX_BUFLEN];
 	unsigned int ret = 0;
 	int len;
 	int index;
@@ -582,7 +583,7 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 			   loff_t *f_pos)
 {
-
+	unsigned char sw_buf[MAX_BUFLEN];
 	unsigned int ret = 0;
 	int len;
 
@@ -1097,6 +1098,7 @@ static ssize_t cntr_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cntr_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
 {
+	unsigned char sw_buf[MAX_BUFLEN];
 	int len;
 	int cntr_count;
 
@@ -1151,6 +1153,7 @@ static ssize_t cntl_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cntl_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
 {
+	unsigned char sw_buf[MAX_BUFLEN];
 	int len;
 	int cntl_count;
 
@@ -1210,6 +1213,7 @@ static ssize_t cnt_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cnt_read(struct file *filep, char __user *buf, size_t count,
 			loff_t *f_pos)
 {
+	unsigned char sw_buf[MAX_BUFLEN];
 	int len;
 	int cntr_count, cntl_count;
 
