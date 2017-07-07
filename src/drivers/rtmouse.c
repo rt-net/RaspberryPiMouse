@@ -352,8 +352,7 @@ MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
 /* -- Buffer -- */
 #define MAX_BUFLEN 64
-//unsigned char sw_buf[MAX_BUFLEN];
-static int buflen = 0;
+//static int buflen = 0;
 
 #define MOTOR_MOTION 0
 #if MOTOR_MOTION
@@ -413,11 +412,11 @@ static int motor_motion_pop(t_motor_motion **ret)
 /* getPWMCount function for GPIO Operation */
 static int getPWMCount(int freq)
 {
-	if (freq < 1) {
-		freq = 1;
-	} else if (freq > 10000) {
-		freq = 10000;
-	}
+	if (freq < 1)
+		return PWM_BASECLK;
+	if (freq > 10000)
+		return PWM_BASECLK / 10000;
+
 	return PWM_BASECLK / freq;
 }
 
@@ -517,7 +516,8 @@ static void set_motor_r_freq(int freq)
 static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 		       loff_t *f_pos)
 {
-	unsigned char sw_buf[MAX_BUFLEN];
+	int buflen = 0;
+	unsigned char rw_buf[MAX_BUFLEN];
 	unsigned int ret = 0;
 	int len;
 	int index;
@@ -557,21 +557,20 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 	mask = ~(0x7 << ((pin % 10) * 3));
 
 	ret = ((gpio_base[13] & (0x01 << pin)) != 0);
-	sprintf(sw_buf, "%d\n", ret);
+	sprintf(rw_buf, "%d\n", ret);
 
-	buflen = strlen(sw_buf);
+	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
 
-	if (copy_to_user((void *)buf, &sw_buf, count)) {
+	if (copy_to_user((void *)buf, &rw_buf, count)) {
 		printk(KERN_INFO "err read buffer from ret  %d\n", ret);
-		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
 		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return 0;
 	}
 	*f_pos += count;
-	buflen = 0;
 
 	return count;
 }
@@ -583,13 +582,16 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 			   loff_t *f_pos)
 {
-	unsigned char sw_buf[MAX_BUFLEN];
+	int buflen = 0;
+	unsigned char rw_buf[MAX_BUFLEN];
 	unsigned int ret = 0;
 	int len;
+  
+	//printk(KERN_INFO "new\n");
 
 	int usecs = 30;
-	int rf, lf, r, l;
-	int orf, olf, or, ol;
+	int rf = 0, lf = 0, r = 0, l = 0;
+	int orf = 0, olf = 0, or = 0, ol = 0;
 
 	if (*f_pos > 0)
 		return 0; /* End of file */
@@ -624,24 +626,22 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 	udelay(usecs);
 
-	/* set sensor data to sw_buf(static buffer) */
-	snprintf(sw_buf, sizeof(sw_buf), "%d %d %d %d\n", rf - orf, r - or,
-		 l - ol, lf - olf);
-	buflen = strlen(sw_buf);
+	/* set sensor data to rw_buf(static buffer) */
+	snprintf(rw_buf, sizeof(rw_buf), "%d %d %d %d\n", rf - orf, r - or, l - ol, lf - olf);
+	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
 
 	/* copy data to user area */
-	if (copy_to_user((void *)buf, &sw_buf, count)) {
+	if (copy_to_user((void *)buf, &rw_buf, count)) {
 		printk(KERN_INFO "err read buffer from ret  %d\n", ret);
-		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
 		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return 0;
 	}
 
 	*f_pos += count;
-	buflen = 0;
 
 	return count;
 }
@@ -773,9 +773,6 @@ static int dev_open(struct inode *inode, struct file *filep)
 	int *minor = (int *)kmalloc(sizeof(int), GFP_KERNEL);
 	int major = MAJOR(inode->i_rdev);
 	*minor = MINOR(inode->i_rdev);
-
-	printk(KERN_INFO "device open request, major:%d minor: %d \n", major,
-	       *minor);
 
 	filep->private_data = (void *)minor;
 
@@ -1081,10 +1078,12 @@ static ssize_t motor_write(struct file *filep, const char __user *buf,
 static ssize_t cntr_write(struct file *filep, const char *buf, size_t count,
 			  loff_t *pos)
 {
-	int bufcnt = 0;
-	int cntr_count;
+	int bufcnt, cntr_count;
+
 	if (count < 0)
 		return 0;
+
+	cntr_count = 0;
 	bufcnt = parse_count(buf, count, &cntr_count);
 	i2c_counter_set(&(i2c_clients[1]->client), cntr_count);
 	printk(KERN_INFO "set right pulse counter to:%d\n", cntr_count);
@@ -1098,7 +1097,8 @@ static ssize_t cntr_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cntr_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
 {
-	unsigned char sw_buf[MAX_BUFLEN];
+	int buflen;
+	unsigned char rw_buf[MAX_BUFLEN];
 	int len;
 	int cntr_count;
 
@@ -1108,21 +1108,20 @@ static ssize_t cntr_read(struct file *filep, char __user *buf, size_t count,
 	/* get sensor data */
 	i2c_counter_read(&(i2c_clients[1]->client), &cntr_count);
 
-	/* set sensor data to sw_buf(static buffer) */
-	snprintf(sw_buf, sizeof(sw_buf), "%d\n", cntr_count);
-	buflen = strlen(sw_buf);
+	/* set sensor data to rw_buf(static buffer) */
+	snprintf(rw_buf, sizeof(rw_buf), "%d\n", cntr_count);
+	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
 
 	/* copy data to user area */
-	if (copy_to_user((void *)buf, &sw_buf, count)) {
-		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+	if (copy_to_user((void *)buf, &rw_buf, count)) {
+		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
 		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return -EFAULT;
 	}
 	*f_pos += count;
-	buflen = 0;
 
 	return count;
 }
@@ -1135,7 +1134,7 @@ static ssize_t cntl_write(struct file *filep, const char *buf, size_t count,
 			  loff_t *pos)
 {
 	int bufcnt = 0;
-	int cntl_count;
+	int cntl_count = 0;
 
 	if (count < 0)
 		return 0;
@@ -1153,7 +1152,8 @@ static ssize_t cntl_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cntl_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *f_pos)
 {
-	unsigned char sw_buf[MAX_BUFLEN];
+	int buflen;
+	unsigned char rw_buf[MAX_BUFLEN];
 	int len;
 	int cntl_count;
 
@@ -1163,21 +1163,20 @@ static ssize_t cntl_read(struct file *filep, char __user *buf, size_t count,
 	/* get sensor data */
 	i2c_counter_read(&(i2c_clients[0]->client), &cntl_count);
 
-	/* set sensor data to sw_buf(static buffer) */
-	snprintf(sw_buf, sizeof(sw_buf), "%d\n", cntl_count);
-	buflen = strlen(sw_buf);
+	/* set sensor data to rw_buf(static buffer) */
+	snprintf(rw_buf, sizeof(rw_buf), "%d\n", cntl_count);
+	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
 
 	/* copy data to user area */
-	if (copy_to_user((void *)buf, &sw_buf, count)) {
-		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+	if (copy_to_user((void *)buf, &rw_buf, count)) {
+		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
 		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return -EFAULT;
 	}
 	*f_pos += count;
-	buflen = 0;
 
 	return count;
 }
@@ -1197,6 +1196,8 @@ static ssize_t cnt_write(struct file *filep, const char *buf, size_t count,
 		kfree(newbuf);
 		return -EFAULT;
 	}
+
+	cntr_count = cntl_count = 0;
 	sscanf(newbuf, "%d%d\n", &cntl_count, &cntl_count);
 	kfree(newbuf);
 
@@ -1213,7 +1214,8 @@ static ssize_t cnt_write(struct file *filep, const char *buf, size_t count,
 static ssize_t cnt_read(struct file *filep, char __user *buf, size_t count,
 			loff_t *f_pos)
 {
-	unsigned char sw_buf[MAX_BUFLEN];
+	int buflen;
+	unsigned char rw_buf[MAX_BUFLEN];
 	int len;
 	int cntr_count, cntl_count;
 
@@ -1224,21 +1226,20 @@ static ssize_t cnt_read(struct file *filep, char __user *buf, size_t count,
 	i2c_counter_read(&(i2c_clients[0]->client), &cntl_count);
 	i2c_counter_read(&(i2c_clients[1]->client), &cntr_count);
 
-	/* set sensor data to sw_buf(static buffer) */
-	snprintf(sw_buf, sizeof(sw_buf), "%d %d\n", cntl_count, cntr_count);
-	buflen = strlen(sw_buf);
+	/* set sensor data to rw_buf(static buffer) */
+	snprintf(rw_buf, sizeof(rw_buf), "%d %d\n", cntl_count, cntr_count);
+	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
 
 	/* copy data to user area */
-	if (copy_to_user((void *)buf, &sw_buf, count)) {
-		printk(KERN_INFO "err read buffer from %s\n", sw_buf);
+	if (copy_to_user((void *)buf, &rw_buf, count)) {
+		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
 		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return -EFAULT;
 	}
 	*f_pos += count;
-	buflen = 0;
 
 	return count;
 }
@@ -1891,8 +1892,7 @@ static unsigned int mcp3204_get_value(int channel)
 	r = (data->rx[1] & 0xf) << 8;
 	r |= data->rx[2];
 
-	printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__, channel,
-	       r);
+	//printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__, channel, r);
 
 	return r;
 }
