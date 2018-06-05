@@ -3,7 +3,7 @@
  * rtmouse.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 1:1.1
+ * Version: 1:1.2
  *
  * Copyright (C) 2015-2017 RT Corporation <shop@rt-net.jp>
  *
@@ -43,17 +43,18 @@
 #include <linux/stat.h>
 #include <linux/timer.h>
 #include <linux/types.h>
+#include <linux/uaccess.h>
 #include <linux/version.h>
 
 #include <asm/delay.h>
-#include <asm/uaccess.h>
+//#include <asm/uaccess.h> //linux/uaccess.h includes this header
 
 #define RASPBERRYPI2
 #undef RASPBERRYPI1
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1:1.1");
+MODULE_VERSION("1:1.2");
 MODULE_DESCRIPTION("Raspberry Pi MicroMouse device driver");
 
 /* --- Device Numbers --- */
