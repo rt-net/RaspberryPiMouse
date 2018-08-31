@@ -70,7 +70,7 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
 	 NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR +                \
-	 NUM_DEV_MOTOR + NUM_DEV_CNTR + NUM_DEV_CNTL + NUM_DEV_CNT)
+	 NUM_DEV_MOTOR)
 
 /* --- Device Names --- */
 #define DEVNAME_LED "rtled"
