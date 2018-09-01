@@ -1,31 +1,40 @@
 language: generic
 dist: trusty
+
 addons:
-    apt:
-        packages:
-            - build-essential
-            - bc
+  apt:
+    packages:
+      - build-essential
+      - bc
 
 env:
-    global:
-        - HOME=/home/travis
+  global:
+    - HOME=/home/travis
+  matrix:
+    - RPI_LINUX_VER=rpi-4.1.y CONFIG_FILE=config-4.1.19-v7+ RPI_LINUX_COMMIT_HASH=b9a9cfd
+    - RPI_LINUX_VER=rpi-4.4.y CONFIG_FILE=config-4.4.38-v7+ RPI_LINUX_COMMIT_HASH=c95b7f1
+    - RPI_LINUX_VER=rpi-4.14.y CONFIG_FILE=config-4.14.34-v7+ RPI_LINUX_COMMIT_HASH=f70eae4
 
 cache:
-    apt: true
-    directories:
-        - $HOME/repo/raspberrypi
+  apt: true
+  directories:
+    - $HOME/repo/raspberrypi
+
+install:
+  - export DRIVER_SRC_DIR=$(pwd)/src && echo $DRIVER_SRC_DIR
+  - export REPOSITORY_DIR=$(pwd) && echo $REPOSITORY_DIR
+  - mkdir -p $HOME/repo/raspberrypi && cd $HOME/repo/raspberrypi
+  - git clone --depth 1 https://github.com/raspberrypi/tools.git
 
 before_script:
-    - export REPOSITORY_DIR=$(pwd) && echo $REPOSITORY_DIR
-    - export DRIVER_SRC_DIR=$(pwd)/src/drivers && echo $DRIVER_SRC_DIR
-    - mkdir -p $HOME/repo/raspberrypi && cd $HOME/repo/raspberrypi
-    - git clone --depth 1 https://github.com/raspberrypi/tools.git
-    - git clone -b rpi-4.1.y https://github.com/raspberrypi/linux.git
-    - cd linux
-    - cp $REPOSITORY_DIR/.test/config-pi3-mate ./.config
+    - cd $HOME/repo/raspberrypi && git clone -b $RPI_LINUX_VER https://github.com/raspberrypi/linux.git
+    - cd $HOME/repo/raspberrypi/linux && make clean && git reset --hard HEAD && git checkout $RPI_LINUX_COMMIT_HASH
+    - cp $REPOSITORY_DIR/.test/$CONFIG_FILE $HOME/repo/raspberrypi/linux/.config
     - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
     - make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
 
 script:
     - cd $DRIVER_SRC_DIR
     - make -f $REPOSITORY_DIR/.test/Makefile.crosscompile
+    - make -f $REPOSITORY_DIR/.test/Makefile.crosscompile clean
+
