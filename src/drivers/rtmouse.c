@@ -63,14 +63,11 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define NUM_DEV_MOTORRAWL 1
 #define NUM_DEV_MOTOREN 1
 #define NUM_DEV_MOTOR 1
-#define NUM_DEV_CNTR 1
-#define NUM_DEV_CNTL 1
 #define NUM_DEV_CNT 1
 
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
-	 NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR +                \
-	 NUM_DEV_MOTOR)
+	 NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR + NUM_DEV_MOTOR)
 
 /* --- Device Names --- */
 #define DEVNAME_LED "rtled"
@@ -84,6 +81,8 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define DEVNAME_CNTR "rtcounter_r"
 #define DEVNAME_CNTL "rtcounter_l"
 #define DEVNAME_CNT "rtcounter"
+
+#define DRIVER_NAME "rtmouse"
 
 /* --- Device Major and Minor Numbers --- */
 #define DEV_MAJOR 0
@@ -263,7 +262,8 @@ static void set_motor_l_freq(int freq);
 static int mcp3204_remove(struct spi_device *spi);
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
-static int rtcnt_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id);
+static int rtcnt_i2c_probe(struct i2c_client *client,
+			   const struct i2c_device_id *id);
 static int rtcnt_i2c_remove(struct i2c_client *client);
 
 /* --- Variable Type definitions --- */
@@ -315,21 +315,20 @@ struct rtcnt_device_info {
 static struct i2c_client *i2c_client_r = NULL;
 static struct i2c_client *i2c_client_l = NULL;
 
-
 /* I2C Device ID */
 static struct i2c_device_id i2c_counter_id[] = {
-	{DEVNAME_CNTL, 0}, {DEVNAME_CNTR, 1}, {},
+    {DEVNAME_CNTL, 0}, {DEVNAME_CNTR, 1}, {},
 };
 
 /* I2C Dirver Info */
 static struct i2c_driver i2c_counter_driver = {
-	.driver =
+    .driver =
 	{
-		.name = "rtcounter", .owner = THIS_MODULE,
+	    .name = "rtcounter", .owner = THIS_MODULE,
 	},
-	.id_table = i2c_counter_id,
-	.probe = rtcnt_i2c_probe,
-	.remove = rtcnt_i2c_remove,
+    .id_table = i2c_counter_id,
+    .probe = rtcnt_i2c_probe,
+    .remove = rtcnt_i2c_remove,
 };
 
 /* -- Device Addition -- */
@@ -339,7 +338,7 @@ MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
 /* -- Buffer -- */
 #define MAX_BUFLEN 64
-//static int buflen = 0;
+// static int buflen = 0;
 
 #define MOTOR_MOTION 0
 #if MOTOR_MOTION
@@ -573,8 +572,8 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 	unsigned char rw_buf[MAX_BUFLEN];
 	unsigned int ret = 0;
 	int len;
-  
-	//printk(KERN_INFO "new\n");
+
+	// printk(KERN_INFO "new\n");
 
 	int usecs = 30;
 	int rf = 0, lf = 0, r = 0, l = 0;
@@ -614,7 +613,8 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 	udelay(usecs);
 
 	/* set sensor data to rw_buf(static buffer) */
-	snprintf(rw_buf, sizeof(rw_buf), "%d %d %d %d\n", rf - orf, r - or, l - ol, lf - olf);
+	snprintf(rw_buf, sizeof(rw_buf), "%d %d %d %d\n", rf - orf, r - or,
+		 l - ol, lf - olf);
 	buflen = strlen(rw_buf);
 	count = buflen;
 	len = buflen;
@@ -692,7 +692,7 @@ static int buzzer_init(void)
 	udelay(1000);
 	rpi_pwm_write32(RPI_PWM_CTRL, 0x00008181); // PWM1,2 enable
 
-	printk(KERN_INFO "rpi_pwm_ctrl:%08X\n",
+	printk(KERN_INFO "%s: rpi_pwm_ctrl:%08X\n", DRIVER_NAME,
 	       ioread32(pwm_base + RPI_PWM_CTRL));
 
 	return 0;
@@ -706,7 +706,7 @@ static int buzzer_init(void)
  *   - clk_base
  *   - clk_status
  */
-static int led_gpio_map(void)
+static int gpio_map(void)
 {
 	static int clk_status = 1;
 
@@ -763,7 +763,7 @@ static int dev_open(struct inode *inode, struct file *filep)
 
 	filep->private_data = (void *)minor;
 
-	retval = led_gpio_map();
+	retval = gpio_map();
 	if (retval != 0) {
 		printk(KERN_ERR "Can not use GPIO registers.\n");
 		return retval;
@@ -791,21 +791,18 @@ static int dev_release(struct inode *inode, struct file *filep)
 
 static int i2c_dev_open(struct inode *inode, struct file *filep)
 {
-    struct rtcnt_device_info *dev_info;
-    dev_info = container_of(inode->i_cdev, struct rtcnt_device_info, cdev);
-    if (dev_info  == NULL || dev_info->client  == NULL) {
-        printk(KERN_ERR "i2c_dev_open failed.\n");
-        return -EFAULT;
-    }
-    filep->private_data = dev_info;
-    printk("i2c address = %02X\n",dev_info->client->addr);
-
-    return 0;
+	struct rtcnt_device_info *dev_info;
+	dev_info = container_of(inode->i_cdev, struct rtcnt_device_info, cdev);
+	if (dev_info == NULL || dev_info->client == NULL) {
+		printk(KERN_ERR "i2c_dev_open failed.\n");
+	}
+	filep->private_data = dev_info;
+	return 0;
 }
 
 static int i2c_dev_release(struct inode *inode, struct file *filep)
 {
-    return 0;
+	return 0;
 }
 
 /* Parse Frequency */
@@ -1077,35 +1074,38 @@ static ssize_t motor_write(struct file *filep, const char __user *buf,
 	return bufcnt;
 }
 
-
 /*
  * i2c_counter_set - set value to I2C pulse counter
  * called by cntr_write() and cntl_write()
  */
 static int i2c_counter_set(struct rtcnt_device_info *dev_info, int setval)
 {
-    int ret = 0;
-    int lsb = 0, msb = 0;
-    struct i2c_client *client = dev_info->client;
+	int ret = 0;
+	int lsb = 0, msb = 0;
+	struct i2c_client *client = dev_info->client;
 
-    // printk(KERN_INFO "set 0x%x = 0x%x\n", client->addr, setval);
-    msb = (setval >> 8) & 0xFF;
-    lsb = setval & 0xFF;
-    mutex_lock(&dev_info->lock);
-    // printk(KERN_INFO "set 0x%x msb = 0x%x\n", client->addr, msb);
-    ret = i2c_smbus_write_byte_data(client, 0x10, msb);
-    if( ret < 0 ) {
-        printk(KERN_ERR "%s: Error writing to i2c counter device, addr=0x%x\n", __func__, client->addr);
-        return -ENODEV;
-    }
-    // printk(KERN_INFO "set 0x%x lsb = 0x%x\n", client->addr, lsb);
-    ret = i2c_smbus_write_byte_data(client, 0x11, lsb);
-    if( ret < 0 ) {
-        printk(KERN_ERR "%s: Error writing to i2c counter device, addr=0x%x\n", __func__, client->addr);
-        return -ENODEV;
-    }
-    mutex_unlock(&dev_info->lock);
-    return ret;
+	// printk(KERN_INFO "set 0x%x = 0x%x\n", client->addr, setval);
+	msb = (setval >> 8) & 0xFF;
+	lsb = setval & 0xFF;
+	mutex_lock(&dev_info->lock);
+	// printk(KERN_INFO "set 0x%x msb = 0x%x\n", client->addr, msb);
+	ret = i2c_smbus_write_byte_data(client, 0x10, msb);
+	if (ret < 0) {
+		printk(KERN_ERR
+		       "%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       __func__, client->addr);
+		return -ENODEV;
+	}
+	// printk(KERN_INFO "set 0x%x lsb = 0x%x\n", client->addr, lsb);
+	ret = i2c_smbus_write_byte_data(client, 0x11, lsb);
+	if (ret < 0) {
+		printk(KERN_ERR
+		       "%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       __func__, client->addr);
+		return -ENODEV;
+	}
+	mutex_unlock(&dev_info->lock);
+	return ret;
 }
 
 /*
@@ -1114,34 +1114,41 @@ static int i2c_counter_set(struct rtcnt_device_info *dev_info, int setval)
  */
 static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 {
-    int lsb = 0, msb = 0;
-    // printk(KERN_INFO "read 0x%x\n", client->addr);
-    struct i2c_client *client = dev_info->client;
-    mutex_lock(&dev_info->lock);
+	int lsb = 0, msb = 0;
+	// printk(KERN_INFO "read 0x%x\n", client->addr);
+	struct i2c_client *client = dev_info->client;
+	mutex_lock(&dev_info->lock);
 
-    lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
-    if( lsb < 0 ) {
-        printk(KERN_ERR "%s: error reading from i2c counter device, addr=0x%x\n", __func__, client->addr);
-        return -ENODEV;
-    }
-    msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
-    if( msb < 0 ) {
-        printk(KERN_ERR "%s: error reading from i2c counter device, addr=0x%x\n", __func__, client->addr);
-        return -ENODEV;
-    }
-    mutex_unlock(&dev_info->lock);
+	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+	if (lsb < 0) {
+		printk(
+		    KERN_ERR
+		    "%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    __func__, client->addr);
+		return -ENODEV;
+	}
+	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+	if (msb < 0) {
+		printk(
+		    KERN_ERR
+		    "%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    __func__, client->addr);
+		return -ENODEV;
+	}
+	mutex_unlock(&dev_info->lock);
 
-    *ret = ((msb << 8) & 0xFF00) + (lsb & 0xFF);
+	*ret = ((msb << 8) & 0xFF00) + (lsb & 0xFF);
 
-    // printk(KERN_INFO "0x%x == 0x%x\n", client->addr, *ret);
-    return 0;
+	// printk(KERN_INFO "0x%x == 0x%x\n", client->addr, *ret);
+	return 0;
 }
 
 /*
  *  rtcnt_read - Read value from right/left pulse counter
  *  Read function of /dev/rtcounter_*
  */
-static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count, loff_t *f_pos)
+static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
+			  loff_t *f_pos)
 {
 	struct rtcnt_device_info *dev_info = filep->private_data;
 
@@ -1149,7 +1156,8 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count, lo
 	int buflen;
 
 	int rtcnt_count = 0;
-	if(*f_pos > 0) return 0; /* close device */
+	if (*f_pos > 0)
+		return 0; /* close device */
 	i2c_counter_read(dev_info, &rtcnt_count);
 
 	/* set sensor data to rw_buf(static buffer) */
@@ -1172,20 +1180,23 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count, lo
  *  cnt_write - Set value to right/left pulse counter
  *  Write function of /dev/rtcounter
  */
-static ssize_t rtcnt_write(struct file *filep, const char __user *buf, size_t count,
-						 loff_t *pos) {
+static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
+			   size_t count, loff_t *pos)
+{
 	struct rtcnt_device_info *dev_info = filep->private_data;
 
 	int bufcnt = 0;
 	int rtcnt_count = 0;
 
-	if (count < 0) return 0;
+	if (count < 0)
+		return 0;
 
 	bufcnt = parse_count(buf, count, &rtcnt_count);
 
 	i2c_counter_set(dev_info, rtcnt_count);
 
-	printk(KERN_INFO "set i2c couter: %d\n", rtcnt_count);
+	printk(KERN_INFO "%s: set pulse counter value %d\n", DRIVER_NAME,
+	       rtcnt_count);
 	return bufcnt;
 }
 
@@ -1816,7 +1827,7 @@ static int mcp3204_probe(struct spi_device *spi)
 	/* set drvdata */
 	spi_set_drvdata(spi, data);
 
-	printk(KERN_INFO "%s:mcp3204 probed", __func__);
+	printk(KERN_INFO "%s: mcp3204 probed", DRIVER_NAME);
 
 	return 0;
 }
@@ -1851,7 +1862,7 @@ static unsigned int mcp3204_get_value(int channel)
 	data->tx[2] = 0;
 
 	if (spi_sync(data->spi, &data->msg)) {
-		printk(KERN_INFO "%s:spi_sync_transfer returned non zero\n",
+		printk(KERN_INFO "%s: spi_sync_transfer returned non zero\n",
 		       __func__);
 	}
 
@@ -1860,26 +1871,27 @@ static unsigned int mcp3204_get_value(int channel)
 	r = (data->rx[1] & 0xf) << 8;
 	r |= data->rx[2];
 
-	//printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__, channel, r);
+	// printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__,
+	// channel, r);
 
 	return r;
 }
 
-
 static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
 {
-    dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
-    int minor;
-    /* /sys/class/mydevice/mydevice* を削除する */
-    for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
-        device_destroy(dev_info->device_class, MKDEV(dev_info->device_major, minor));
-    }
-    /* このデバイスのクラス登録を取り除く(/sys/class/mydevice/を削除する) */
-    class_destroy(dev_info->device_class);
-    /* このデバイスドライバ(cdev)をカーネルから取り除く */
-    cdev_del(&dev_info->cdev);
-    /* このデバイスドライバで使用していたメジャー番号の登録を取り除く */
-    unregister_chrdev_region(dev, NUM_DEV_CNT);
+	dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
+	int minor;
+	/* /sys/class/mydevice/mydevice* を削除する */
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+		device_destroy(dev_info->device_class,
+			       MKDEV(dev_info->device_major, minor));
+	}
+	/* このデバイスのクラス登録を取り除く(/sys/class/mydevice/を削除する) */
+	class_destroy(dev_info->device_class);
+	/* このデバイスドライバ(cdev)をカーネルから取り除く */
+	cdev_del(&dev_info->cdev);
+	/* このデバイスドライバで使用していたメジャー番号の登録を取り除く */
+	unregister_chrdev_region(dev, NUM_DEV_CNT);
 }
 
 /*
@@ -1888,131 +1900,157 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
  */
 static int rtcnt_i2c_remove(struct i2c_client *client)
 {
-    struct rtcnt_device_info *dev_info;
-	printk(KERN_INFO "%s: removing i2c device\n", __func__);
-    dev_info = i2c_get_clientdata(client);
-    rtcnt_i2c_delete_cdev(dev_info);
-    return 0;
+	struct rtcnt_device_info *dev_info;
+	printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+	       client->addr);
+	dev_info = i2c_get_clientdata(client);
+	rtcnt_i2c_delete_cdev(dev_info);
+	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+	       client->addr);
+	return 0;
 }
-
 
 static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 {
-    int minor;
-    int alloc_ret = 0;
-    int cdev_err = 0;
-    dev_t dev;
+	int minor;
+	int alloc_ret = 0;
+	int cdev_err = 0;
+	dev_t dev;
 
-    /* 空いているメジャー番号を確保する */
-    alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNTR, DEVNAME_CNTR);
-    if (alloc_ret != 0) {
-        printk(KERN_ERR  "alloc_chrdev_region = %d\n", alloc_ret);
-        return -1;
-    }
+	/* 空いているメジャー番号を確保する */
+	alloc_ret =
+	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNT, DEVNAME_CNTR);
+	if (alloc_ret != 0) {
+		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
+		return -1;
+	}
 
-    /* 取得したdev( = メジャー番号 + マイナー番号)からメジャー番号を取得して保持しておく */
-    dev_info->device_major = MAJOR(dev);
-    dev = MKDEV(dev_info->device_major, DEV_MINOR);
+	/* 取得したdev( = メジャー番号 +
+	 * マイナー番号)からメジャー番号を取得して保持しておく */
+	dev_info->device_major = MAJOR(dev);
+	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
-    /* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
-    cdev_init(&dev_info->cdev, &rtcnt_fops);
-    dev_info->cdev.owner = THIS_MODULE;
+	/* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
+	cdev_init(&dev_info->cdev, &rtcnt_fops);
+	dev_info->cdev.owner = THIS_MODULE;
 
-    /* このデバイスドライバ(cdev)をカーネルに登録する */
-    cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNTR);
-    if (cdev_err != 0) {
-        printk(KERN_ERR  "cdev_add = %d\n", alloc_ret);
-        unregister_chrdev_region(dev, NUM_DEV_CNTR);
-        return -1;
-    }
+	/* このデバイスドライバ(cdev)をカーネルに登録する */
+	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNT);
+	if (cdev_err != 0) {
+		printk(KERN_ERR "cdev_add = %d\n", alloc_ret);
+		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		return -1;
+	}
 
-    /* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-    dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
-    if (IS_ERR(dev_info->device_class)) {
-        printk(KERN_ERR  "class_create\n");
-        cdev_del(&dev_info->cdev);
-        unregister_chrdev_region(dev, NUM_DEV_CNTR);
-        return -1;
-    }
+	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
+	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
+	if (IS_ERR(dev_info->device_class)) {
+		printk(KERN_ERR "class_create\n");
+		cdev_del(&dev_info->cdev);
+		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		return -1;
+	}
 
-    for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNTR; minor++) {
-        device_create(dev_info->device_class, NULL, MKDEV(dev_info->device_major, minor), NULL, "rtcounter_r%d", minor);
-    }
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+		device_create(dev_info->device_class, NULL,
+			      MKDEV(dev_info->device_major, minor), NULL,
+			      "rtcounter_r%d", minor);
+	}
 
-    return 0;
+	return 0;
 }
 
-// static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, char __user *device_name    )
 static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 {
-    int minor;
-    int alloc_ret = 0;
-    int cdev_err = 0;
-    dev_t dev;
+	int minor;
+	int alloc_ret = 0;
+	int cdev_err = 0;
+	dev_t dev;
 
-    /* 空いているメジャー番号を確保する */
-    alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNTL, DEVNAME_CNTL);
-    if (alloc_ret != 0) {
-        printk(KERN_ERR  "alloc_chrdev_region = %d\n", alloc_ret);
-        return -1;
-    }
+	/* 空いているメジャー番号を確保する */
+	alloc_ret =
+	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNT, DEVNAME_CNTL);
+	if (alloc_ret != 0) {
+		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
+		return -1;
+	}
 
-    /* 取得したdev( = メジャー番号 + マイナー番号)からメジャー番号を取得して保持しておく */
-    dev_info->device_major = MAJOR(dev);
-    dev = MKDEV(dev_info->device_major, DEV_MINOR);
+	/* 取得したdev( = メジャー番号 +
+	 * マイナー番号)からメジャー番号を取得して保持しておく */
+	dev_info->device_major = MAJOR(dev);
+	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
-    /* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
-    cdev_init(&dev_info->cdev, &rtcnt_fops);
-    dev_info->cdev.owner = THIS_MODULE;
+	/* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
+	cdev_init(&dev_info->cdev, &rtcnt_fops);
+	dev_info->cdev.owner = THIS_MODULE;
 
-    /* このデバイスドライバ(cdev)をカーネルに登録する */
-    cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNTL);
-    if (cdev_err != 0) {
-        printk(KERN_ERR  "cdev_add = %d\n", alloc_ret);
-        unregister_chrdev_region(dev, NUM_DEV_CNTL);
-        return -1;
-    }
+	/* このデバイスドライバ(cdev)をカーネルに登録する */
+	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNT);
+	if (cdev_err != 0) {
+		printk(KERN_ERR "cdev_add = %d\n", alloc_ret);
+		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		return -1;
+	}
 
-    /* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-    dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
-    if (IS_ERR(dev_info->device_class)) {
-        printk(KERN_ERR  "class_create\n");
-        cdev_del(&dev_info->cdev);
-        unregister_chrdev_region(dev, NUM_DEV_CNTL);
-        return -1;
-    }
+	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
+	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+	if (IS_ERR(dev_info->device_class)) {
+		printk(KERN_ERR "class_create\n");
+		cdev_del(&dev_info->cdev);
+		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		return -1;
+	}
 
-    /* /sys/class/mydevice/mydevice* を作る */
-    for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNTL; minor++) {
-        device_create(dev_info->device_class, NULL, MKDEV(dev_info->device_major, minor), NULL, "rtcounter_l%d", minor);
-    }
+	/* /sys/class/mydevice/mydevice* を作る */
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+		device_create(dev_info->device_class, NULL,
+			      MKDEV(dev_info->device_major, minor), NULL,
+			      "rtcounter_l%d", minor);
+	}
 
-    return 0;
+	return 0;
 }
 
-
-static int rtcnt_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int rtcnt_i2c_probe(struct i2c_client *client,
+			   const struct i2c_device_id *id)
 {
 	struct rtcnt_device_info *dev_info;
-	printk(KERN_INFO "i2c counters probe: id.name=%s, id.driver_data=%d, addr=0x%x\n",
-			id->name, (int)(id->driver_data), client->addr );
+	int msb = 0, lsb = 0;
+	printk(KERN_DEBUG "%s: probing i2c device", __func__);
+	printk(KERN_INFO "%s: new i2c device found, id.name=%s, "
+			 "id.driver_data=%d, addr=0x%x\n",
+	       DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
-	/* 通常はここで、このデバドラでサポートしているデバイスかどうかチェックする */
-	// if(( i2c_smbus_read_byte_data(client, 0x10) < 0 ) || ( i2c_smbus_read_byte_data(client, 0x11) < 0 )){
-	// 	printk(KERN_INFO "rtcounter device not found.");
-	// 	return -ENODEV;
-	// }
+	/* 通常はここで、このデバドラでサポートしているデバイスかどうかチェックする
+	 */
+	// if(( i2c_smbus_read_byte_data(client, 0x10) < 0 ) || (
+	// i2c_smbus_read_byte_data(client, 0x11) < 0 )){
+	printk(KERN_DEBUG "%s: checking i2c device", __func__);
+	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+	if ((msb < 0) || (lsb < 0)) {
+		printk(
+		    KERN_INFO
+		    "%s: detected i2c device seems not to be rtcounter device.",
+		    DRIVER_NAME);
+		printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
+		       client->addr, msb, lsb);
+		return -ENODEV;
+	}
 	/* open/close/read/writeでもi2c_clientは使うので、保持する */
-	dev_info =  (struct rtcnt_device_info*)devm_kzalloc(&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
+	    &client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
 	dev_info->client = client;
 	i2c_set_clientdata(client, dev_info);
 	mutex_init(&dev_info->lock);
-	/* このデバイスドライバをキャラクタ型としてカーネルに登録する。(/sys/class/mydevice/mydevice	* を作る) */
-	if((int)(id->driver_data) == 0){
-		if(rtcntl_i2c_create_cdev(dev_info)) return -ENOMEM;
-	}
-	else if((int)(id->driver_data) == 1){
-		if(rtcntr_i2c_create_cdev(dev_info)) return -ENOMEM;
+	/* このデバイスドライバをキャラクタ型としてカーネルに登録する。(/sys/class/mydevice/mydevice
+	 * * を作る) */
+	if ((int)(id->driver_data) == 0) {
+		if (rtcntl_i2c_create_cdev(dev_info))
+			return -ENOMEM;
+	} else if ((int)(id->driver_data) == 1) {
+		if (rtcntr_i2c_create_cdev(dev_info))
+			return -ENOMEM;
 	}
 
 	return 0;
@@ -2100,25 +2138,32 @@ static int i2c_counter_init(void)
 	struct i2c_adapter *i2c_adap_l;
 	struct i2c_adapter *i2c_adap_r;
 	struct i2c_board_info i2c_board_info_l = {
-		I2C_BOARD_INFO(DEVNAME_CNTL, 0x10)
-	};
+	    I2C_BOARD_INFO(DEVNAME_CNTL, 0x10)};
 	struct i2c_board_info i2c_board_info_r = {
-		I2C_BOARD_INFO(DEVNAME_CNTR, 0x11)
-	};
+	    I2C_BOARD_INFO(DEVNAME_CNTR, 0x11)};
 
-	i2c_add_driver(&i2c_counter_driver);
+	printk(KERN_DEBUG "%s: initializing i2c device", __func__);
+	retval = i2c_add_driver(&i2c_counter_driver);
+	if (retval != 0) {
+		printk(KERN_INFO "%s: failed adding i2c device", DRIVER_NAME);
+		return retval;
+	}
 
 	/*
 	 * 動的にデバイス実体を作成
 	 * (https://www.kernel.org/doc/Documentation/i2c/instantiating-devices)
 	 */
+	printk(KERN_DEBUG "%s: adding i2c device", __func__);
 	i2c_adap_l = i2c_get_adapter(1);
 	i2c_client_l = i2c_new_device(i2c_adap_l, &i2c_board_info_l);
 	i2c_put_adapter(i2c_adap_l);
+	printk(KERN_DEBUG "%s: added i2c device rtcntl", __func__);
 
+	printk(KERN_DEBUG "%s: adding i2c device", __func__);
 	i2c_adap_r = i2c_get_adapter(1);
 	i2c_client_r = i2c_new_device(i2c_adap_r, &i2c_board_info_r);
 	i2c_put_adapter(i2c_adap_r);
+	printk(KERN_DEBUG "%s: added i2c device rtcntr", __func__);
 
 	return retval;
 }
@@ -2132,8 +2177,10 @@ static void i2c_counter_exit(void)
 	/* delete I2C driver */
 	i2c_del_driver(&i2c_counter_driver);
 	/* free memory */
-	if(i2c_client_r) i2c_unregister_device(i2c_client_r);
-	if(i2c_client_l) i2c_unregister_device(i2c_client_l);
+	if (i2c_client_r)
+		i2c_unregister_device(i2c_client_r);
+	if (i2c_client_l)
+		i2c_unregister_device(i2c_client_l);
 }
 
 /*
@@ -2143,19 +2190,25 @@ static void i2c_counter_exit(void)
 int dev_init_module(void)
 {
 	int retval, i;
+	int registered_devices = 0;
 	size_t size;
 
 	/* 開始のメッセージ */
-	printk(KERN_INFO "%s loading...\n", DEVNAME_LED);
+	printk(KERN_INFO "%s: loading driver...\n", DRIVER_NAME);
+
+	/* Initialize mutex lock */
+	mutex_init(&lock);
 
 	/* GPIOレジスタがマップ可能か調べる */
-	retval = led_gpio_map();
+	retval = gpio_map();
 	if (retval != 0) {
-		printk(KERN_ALERT "Can not use GPIO registers.\n");
+		printk(KERN_ALERT "%s on %s: cannot use GPIO registers.\n",
+		       __func__, DRIVER_NAME);
 		return -EBUSY;
 	}
 
 	/* GPIO初期化 */
+	printk(KERN_DEBUG "%s: gpio initializing...\n", __func__);
 	rpi_gpio_function_set(LED0_BASE, RPI_GPF_OUTPUT);
 	rpi_gpio_function_set(LED1_BASE, RPI_GPF_OUTPUT);
 	rpi_gpio_function_set(LED2_BASE, RPI_GPF_OUTPUT);
@@ -2199,6 +2252,11 @@ int dev_init_module(void)
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 
+	/* GPIOレジスタのアンマップ */
+	gpio_unmap();
+
+	printk(KERN_DEBUG "%s: gpio initialized\n", __func__);
+
 	/* cdev構造体の用意 */
 	size = sizeof(struct cdev) * NUM_DEV_TOTAL;
 	cdev_array = (struct cdev *)kmalloc(size, GFP_KERNEL);
@@ -2206,7 +2264,8 @@ int dev_init_module(void)
 	/* デバイスドライバをカーネルに登録 */
 	retval = led_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " led driver register failed.\n");
+		printk(KERN_ALERT "%s: led driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
@@ -2255,24 +2314,20 @@ int dev_init_module(void)
 	retval = mcp3204_init();
 	if (retval != 0) {
 		printk(KERN_ALERT "optical sensor driver register failed.\n");
+		return retval;
 	}
 
 	retval = i2c_counter_init();
 	if (retval != 0) {
 		printk(KERN_ALERT
 		       "I2C counter device driver register failed.\n");
+		return retval;
 	}
 
-	printk(KERN_INFO "%d devices loaded.\n", NUM_DEV_TOTAL);
-	printk(KERN_INFO "rtmouse driver registered successfully.\n");
+	printk(KERN_INFO "%s: %d devices loaded.\n", DRIVER_NAME,
+	       NUM_DEV_TOTAL);
 
-	/* GPIOレジスタのアンマップ */
-	gpio_unmap();
-
-	/* Initialize mutex lock.... */
-	mutex_init(&lock);
-
-	printk("module being installed at %lu\n", jiffies);
+	printk(KERN_INFO "%s: module installed at %lu\n", DRIVER_NAME, jiffies);
 	return 0;
 }
 
@@ -2349,7 +2404,7 @@ void dev_cleanup_module(void)
 
 	/* free cdev memory */
 	kfree(cdev_array);
-	printk("module being removed at %lu\n", jiffies);
+	printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
 }
 
 /* --- MAIN PROCESS --- */
