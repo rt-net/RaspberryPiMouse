@@ -2199,6 +2199,14 @@ int dev_init_module(void)
 	/* Initialize mutex lock */
 	mutex_init(&lock);
 
+	retval = i2c_counter_init();
+	if (retval != 0) {
+		printk(KERN_ALERT
+		       "%s: i2c counter device driver register failed.\n",
+		       DRIVER_NAME);
+		return retval;
+	}
+
 	/* GPIOレジスタがマップ可能か調べる */
 	retval = gpio_map();
 	if (retval != 0) {
@@ -2271,56 +2279,58 @@ int dev_init_module(void)
 
 	retval = buzzer_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " buzzer driver register failed.\n");
+		printk(KERN_ALERT "%s: buzzer driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = switch_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " switch driver register failed.\n");
+		printk(KERN_ALERT "%s: switch driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = sensor_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " switch driver register failed.\n");
+		printk(KERN_ALERT "%s: switch driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = motorrawr_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " motor driver register failed.\n");
+		printk(KERN_ALERT "%s: motor driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = motorrawl_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " motor driver register failed.\n");
+		printk(KERN_ALERT "%s: motor driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = motoren_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " motor driver register failed.\n");
+		printk(KERN_ALERT "%s: motor driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = motor_register_dev();
 	if (retval != 0) {
-		printk(KERN_ALERT " motor driver register failed.\n");
+		printk(KERN_ALERT "%s: motor driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
 	retval = mcp3204_init();
 	if (retval != 0) {
-		printk(KERN_ALERT "optical sensor driver register failed.\n");
-		return retval;
-	}
-
-	retval = i2c_counter_init();
-	if (retval != 0) {
 		printk(KERN_ALERT
-		       "I2C counter device driver register failed.\n");
+		       "%s: optical sensor driver register failed.\n",
+		       DRIVER_NAME);
 		return retval;
 	}
 
