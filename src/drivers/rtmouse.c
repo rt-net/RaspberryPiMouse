@@ -80,7 +80,6 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define DEVNAME_SENSOR "rtlightsensor"
 #define DEVNAME_CNTR "rtcounter_r"
 #define DEVNAME_CNTL "rtcounter_l"
-#define DEVNAME_CNT "rtcounter"
 
 #define DRIVER_NAME "rtmouse"
 
@@ -115,9 +114,6 @@ static int _minor_motoren = DEV_MINOR;
 static int _major_motor = DEV_MAJOR;
 static int _minor_motor = DEV_MINOR;
 
-static int _major_cnt = DEV_MAJOR;
-static int _minor_cnt = DEV_MINOR;
-
 /* --- General Options --- */
 static struct cdev *cdev_array = NULL;
 static struct class *class_led = NULL;
@@ -128,7 +124,6 @@ static struct class *class_motorrawr = NULL;
 static struct class *class_motorrawl = NULL;
 static struct class *class_motoren = NULL;
 static struct class *class_motor = NULL;
-static struct class *class_cnt = NULL;
 
 static volatile void __iomem *pwm_base;
 static volatile void __iomem *clk_base;
@@ -1200,7 +1195,6 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 	return bufcnt;
 }
 
-
 /* --- Device File Operations --- */
 /* /dev/rtled */
 static struct file_operations led_fops = {
@@ -1234,7 +1228,7 @@ static struct file_operations motoren_fops = {
 static struct file_operations motor_fops = {
     .open = dev_open, .write = motor_write, .release = dev_release,
 };
-/* /dev/rtcounter* */
+/* /dev/rtcounter_* */
 static struct file_operations rtcnt_fops = {
     .open = i2c_dev_open,
     .release = i2c_dev_release,
@@ -1722,36 +1716,76 @@ static unsigned int mcp3204_get_value(int channel)
 	return r;
 }
 
-static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
+/*
+ * spi_remove_device - remove SPI device
+ * called by mcp3204_init and mcp3204_exit
+ */
+static void spi_remove_device(struct spi_master *master, unsigned int cs)
 {
-	dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
-	int minor;
-	/* /sys/class/mydevice/mydevice* を削除する */
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
-		device_destroy(dev_info->device_class,
-			       MKDEV(dev_info->device_major, minor));
+	struct device *dev;
+	char str[128];
+
+	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev), cs);
+
+	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
+	//ここを参考にspi_deviceを取得するプログラムを作成する
+	if (dev) {
+		device_del(dev);
 	}
-	/* このデバイスのクラス登録を取り除く(/sys/class/mydevice/を削除する) */
-	class_destroy(dev_info->device_class);
-	/* このデバイスドライバ(cdev)をカーネルから取り除く */
-	cdev_del(&dev_info->cdev);
-	/* このデバイスドライバで使用していたメジャー番号の登録を取り除く */
-	unregister_chrdev_region(dev, NUM_DEV_CNT);
 }
 
 /*
- * i2c_counter_remove - I2C pulse counter
- * called when I2C pulse counter removed
+ * mcp3204_init - initialize MCP3204
+ * called by 'dev_init_module'
  */
-static int rtcnt_i2c_remove(struct i2c_client *client)
+static int mcp3204_init(void)
 {
-	struct rtcnt_device_info *dev_info;
-	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__, client->addr);
-	dev_info = i2c_get_clientdata(client);
-	rtcnt_i2c_delete_cdev(dev_info);
-	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-	       client->addr);
+	struct spi_master *master;
+	struct spi_device *spi_device;
+
+	spi_register_driver(&mcp3204_driver);
+
+	mcp3204_info.bus_num = spi_bus_num;
+	mcp3204_info.chip_select = spi_chip_select;
+
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
+
+	if (!master) {
+		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
+		       __func__);
+		spi_unregister_driver(&mcp3204_driver);
+		return -ENODEV;
+	}
+
+	spi_remove_device(master, mcp3204_info.chip_select);
+
+	spi_device = spi_new_device(master, &mcp3204_info);
+	if (!spi_device) {
+		printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
+		spi_unregister_driver(&mcp3204_driver);
+		return -ENODEV;
+	}
+
 	return 0;
+}
+
+/*
+ * mcp3204_exit - cleanup MCP3204
+ * called by dev_cleanup_module()
+ */
+static void mcp3204_exit(void)
+{
+	struct spi_master *master;
+
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
+
+	if (master) {
+		spi_remove_device(master, mcp3204_info.chip_select);
+	} else {
+		printk(KERN_ERR "mcp3204 remove error\n");
+	}
+
+	spi_unregister_driver(&mcp3204_driver);
 }
 
 static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
@@ -1896,77 +1930,6 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 	return 0;
 }
 
-/*
- * spi_remove_device - remove SPI device
- * called by mcp3204_init and mcp3204_exit
- */
-static void spi_remove_device(struct spi_master *master, unsigned int cs)
-{
-	struct device *dev;
-	char str[128];
-
-	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev), cs);
-
-	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
-	//ここを参考にspi_deviceを取得するプログラムを作成する
-	if (dev) {
-		device_del(dev);
-	}
-}
-
-/*
- * mcp3204_init - initialize MCP3204
- * called by 'dev_init_module'
- */
-static int mcp3204_init(void)
-{
-	struct spi_master *master;
-	struct spi_device *spi_device;
-
-	spi_register_driver(&mcp3204_driver);
-
-	mcp3204_info.bus_num = spi_bus_num;
-	mcp3204_info.chip_select = spi_chip_select;
-
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
-
-	if (!master) {
-		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
-		       __func__);
-		spi_unregister_driver(&mcp3204_driver);
-		return -ENODEV;
-	}
-
-	spi_remove_device(master, mcp3204_info.chip_select);
-
-	spi_device = spi_new_device(master, &mcp3204_info);
-	if (!spi_device) {
-		printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
-		spi_unregister_driver(&mcp3204_driver);
-		return -ENODEV;
-	}
-
-	return 0;
-}
-
-/*
- * mcp3204_exit - cleanup MCP3204
- * called by dev_cleanup_module()
- */
-static void mcp3204_exit(void)
-{
-	struct spi_master *master;
-
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
-
-	if (master) {
-		spi_remove_device(master, mcp3204_info.chip_select);
-	} else {
-		printk(KERN_ERR "mcp3204 remove error\n");
-	}
-
-	spi_unregister_driver(&mcp3204_driver);
-}
 
 /*
  * i2c_counter_init - initialize I2C counter
@@ -2005,6 +1968,7 @@ static int i2c_counter_init(void)
 	i2c_put_adapter(i2c_adap_r);
 	// printk(KERN_DEBUG "%s: added i2c device rtcntr", __func__);
 
+
 	return retval;
 }
 
@@ -2021,6 +1985,38 @@ static void i2c_counter_exit(void)
 		i2c_unregister_device(i2c_client_r);
 	if (i2c_client_l)
 		i2c_unregister_device(i2c_client_l);
+}
+
+static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
+{
+	dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
+	int minor;
+	/* /sys/class/mydevice/mydevice* を削除する */
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+		device_destroy(dev_info->device_class,
+			       MKDEV(dev_info->device_major, minor));
+	}
+	/* このデバイスのクラス登録を取り除く(/sys/class/mydevice/を削除する) */
+	class_destroy(dev_info->device_class);
+	/* このデバイスドライバ(cdev)をカーネルから取り除く */
+	cdev_del(&dev_info->cdev);
+	/* このデバイスドライバで使用していたメジャー番号の登録を取り除く */
+	unregister_chrdev_region(dev, NUM_DEV_CNT);
+}
+
+/*
+ * i2c_counter_remove - I2C pulse counter
+ * called when I2C pulse counter removed
+ */
+static int rtcnt_i2c_remove(struct i2c_client *client)
+{
+	struct rtcnt_device_info *dev_info;
+	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__, client->addr);
+	dev_info = i2c_get_clientdata(client);
+	rtcnt_i2c_delete_cdev(dev_info);
+	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+	       client->addr);
+	return 0;
 }
 
 /*
