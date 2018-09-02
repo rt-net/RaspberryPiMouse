@@ -57,3 +57,14 @@ https://github.com/ryuichiueda/RPiM
 This repository is licensed under the GPLv3 License, see [LICENSE](./LICENSE).
 
 このリポジトリはGPLv3ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
+
+### Includings
+
+This repository contains the code of the repository shown below.
+
+このリポジトリは以下に示すリポジトリのコードを一部含みます。
+
+* [take-iwiw/DeviceDriverLesson](https://github.com/take-iwiw/DeviceDriverLesson)
+  * BSD License
+* [mcp3204.c in Raspberry Piで学ぶARMデバイスドライバープログラミング](http://www.socym.co.jp/support/s-940#ttlDownload)
+  * GPL v2 License
