@@ -130,7 +130,6 @@ static volatile void __iomem *clk_base;
 static volatile uint32_t *gpio_base;
 
 static volatile int cdev_index = 0;
-static volatile int open_counter = 0;
 
 static struct mutex lock;
 
@@ -751,24 +750,16 @@ static int gpio_unmap(void)
 /* Open Device */
 static int dev_open(struct inode *inode, struct file *filep)
 {
-	int retval;
 	int *minor = (int *)kmalloc(sizeof(int), GFP_KERNEL);
 	int major = MAJOR(inode->i_rdev);
 	*minor = MINOR(inode->i_rdev);
 
 	filep->private_data = (void *)minor;
 
-	retval = gpio_map();
-	if (retval != 0) {
-		printk(KERN_ERR "Can not use GPIO registers.\n");
-		return retval;
-	}
-
 	if (_major_motor == major) {
 		printk(KERN_INFO "motor write\n");
 	}
 
-	open_counter++;
 	return 0;
 }
 
@@ -776,11 +767,6 @@ static int dev_open(struct inode *inode, struct file *filep)
 static int dev_release(struct inode *inode, struct file *filep)
 {
 	kfree(filep->private_data);
-
-	open_counter--;
-	if (open_counter <= 0) {
-		gpio_unmap();
-	}
 	return 0;
 }
 
@@ -2099,9 +2085,6 @@ int dev_init_module(void)
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 
-	/* GPIOレジスタのアンマップ */
-	gpio_unmap();
-
 	// printk(KERN_DEBUG "%s: gpio initialized\n", __func__);
 
 	/* cdev構造体の用意 */
@@ -2253,6 +2236,7 @@ void dev_cleanup_module(void)
 
 	/* free cdev memory */
 	kfree(cdev_array);
+	gpio_unmap();
 	printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
 }
 
