@@ -34,8 +34,10 @@ $ sudo insmod rtmouse.ko
 
 ## ドライバの導入の際の注意
 
+### Raspbian
+
 以下の設定を確認ください。
-raspi-configコマンドで設定します。
+`raspi-config` コマンドで設定します。
 
 * SPI機能を「入」にする。
 
@@ -43,6 +45,16 @@ raspi-configコマンドで設定します。
 rtmouseをインストールして不具合が出た場合のみ以下の設定を追加で行ってください。
 
 * Device Tree機能を「切」にする。
+
+### arm64版Ubuntu18.04
+
+I2Cのbaudrateをデフォルト値より下げる必要があります（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）。
+
+`/boot/firmware/config.txt`に以下の1行を追加することでI2Cのbaudrateを62.5kHzに固定することができます。
+
+```
+dtparam=i2c_baudrate=62500
+```
 
 ## 日経Linux連載
 
