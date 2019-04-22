@@ -1,7 +1,7 @@
 #!/bin/bash -vxe
 
 dir=$(dirname $0)/../
-
+[ ! -e /usr/src/linux ] && { bash -e $dir/utils/print_env.bash "No kernel header files found."; exit 1; }
 cd $dir/src/drivers/
 rm Makefile
 ln -s Makefile.raspbian Makefile
