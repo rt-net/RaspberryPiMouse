@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/rt-net/RaspberryPiMouse.svg?branch=master)](https://travis-ci.org/rt-net/RaspberryPiMouse)
 
 This repository has the source code and kernel objects
-for the Raspberry Pi mouse.
+for the Raspberry Pi Mouse.
 
 ## インストール
 
@@ -13,9 +13,11 @@ for the Raspberry Pi mouse.
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd utils
 ###Raspbianの場合###
-$ ./build_install.raspbian.bash
-###Ubuntuの場合（ubuntu14とありますがUbuntu Linux 16.04でもインストール可能です）###
-$ ./build_install.ubuntu14.bash
+$ sudo apt install raspberrypi-kernel-headers
+$ ./build_install.bash
+###Ubuntuの場合###
+$ sudo apt install linux-headers-$(uname -r)
+$ ./build_install.bash
 ```
 
 
@@ -40,6 +42,7 @@ $ sudo insmod rtmouse.ko
 `raspi-config` コマンドで設定します。
 
 * SPI機能を「入」にする。
+* I2C機能を「入」にする。
 
 2017年1月現在、以下の設定は不要です。  
 rtmouseをインストールして不具合が出た場合のみ以下の設定を追加で行ってください。
@@ -77,6 +80,6 @@ This repository contains the code of the repository shown below.
 このリポジトリは以下に示すリポジトリのコードを一部含みます。
 
 * [take-iwiw/DeviceDriverLesson](https://github.com/take-iwiw/DeviceDriverLesson)
-  * BSD License
+  * GPL/BSD License
 * [mcp3204.c in Raspberry Piで学ぶARMデバイスドライバープログラミング](http://www.socym.co.jp/support/s-940#ttlDownload)
   * GPL v2 License
