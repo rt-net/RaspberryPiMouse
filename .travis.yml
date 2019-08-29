@@ -1,5 +1,8 @@
+os: linux
+group: stable
+sudo: false
+dist: xenial
 language: generic
-dist: trusty
 
 addons:
   apt:
