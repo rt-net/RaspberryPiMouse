@@ -83,3 +83,5 @@ This repository contains the code of the repository shown below.
   * GPL/BSD License
 * [mcp3204.c in Raspberry Piで学ぶARMデバイスドライバープログラミング](http://www.socym.co.jp/support/s-940#ttlDownload)
   * GPL v2 License
+* [RPi-Distro/raspi-gpio](https://github.com/RPi-Distro/raspi-gpio)
+  * The 3-Clause BSD License
