@@ -9,7 +9,11 @@ $(TARGET): $(MODULE).c
 obj-m:= $(MODULE).o
 
 install:
-	insmod $(MODULE).ko
+	#insmod $(MODULE).ko
+	/bin/bash ../scripts/install.sh
+
+uninstall:
+	/bin/bash ../scripts/uninstall.sh
 
 clean:
 	rm -f *.o *.order *.mod.c *.symvers *.ko
