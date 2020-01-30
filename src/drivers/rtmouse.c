@@ -46,6 +46,8 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
+#include "rtmouse.h"
+
 #define RASPBERRYPI2
 #undef RASPBERRYPI1
 
@@ -348,6 +350,12 @@ typedef struct {
 static t_motor_motion motor_motion[MAX_MOTORBUFLEN];
 static unsigned int motor_motion_head = 0, motor_motion_tail = 0;
 
+/* -- Status Info --- */
+//#define N_LEDS 4
+//static unsigned char led_status[N_LEDS];
+
+/*-------------------------------------*/
+
 static int motor_motion_push(int r_hz, int l_hz, int time)
 {
 	unsigned int next_tail = motor_motion_tail + 1;
@@ -437,6 +445,7 @@ static void set_motor_l_freq(int freq)
 	int dat;
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+	//printk(KERN_INFO "set_motor_l_freq  %d\n", freq);
 
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
@@ -466,6 +475,7 @@ static void set_motor_r_freq(int freq)
 	int dat;
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+	//printk(KERN_INFO "set_motor_r_freq  %d\n", freq);
 
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
@@ -627,25 +637,30 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 
 	return count;
 }
-
 /*
  * Turn On LEDs
  * return 0 : device close
  */
+static unsigned char led_status[N_LEDS];
+
 static int led_put(int ledno)
 {
 	switch (ledno) {
 	case 0:
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
+         	led_status[0] = 1;
 		break;
 	case 1:
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
+         	led_status[1] = 1;
 		break;
 	case 2:
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
+         	led_status[2] = 1;
 		break;
 	case 3:
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
+         	led_status[3] = 1;
 		break;
 	}
 	return 0;
@@ -660,15 +675,19 @@ static int led_del(int ledno)
 	switch (ledno) {
 	case 0:
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
+         	led_status[0] = 0;
 		break;
 	case 1:
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
+         	led_status[1] = 0;
 		break;
 	case 2:
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
+         	led_status[2] = 0;
 		break;
 	case 3:
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
+         	led_status[3] = 0;
 		break;
 	}
 
@@ -1180,15 +1199,311 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 	       rtcnt_count);
 	return bufcnt;
 }
+/* --- Device File Operations(ioctl) --- */
+
+/*
+   LEDs
+*/
+static long led_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+  unsigned char val[4];
+  int i;
+  int cval;
+  long ret;
+
+  //printk(KERN_INFO "%s: Call led_ioctl cmd=%d\n", DRIVER_NAME, cmd);
+
+  switch(cmd){
+     case IOCTL_READ: // Read
+	cval = *((int *)fp->private_data);
+        if (copy_to_user((void __user *)arg, &led_status, sizeof(led_status))) {
+          return -EFAULT;
+        }
+	break;
+     case IOCTL_WRITE: // Write
+        if (copy_from_user(&val, (void __user *)arg, sizeof(val))) {
+          return -EFAULT;
+        }
+        for(i=0; i< 4; i++){
+          if (val[i] == 1){
+	    ret = led_put(i);
+          }else{
+	    ret = led_del(i);
+          }
+        }
+	break;
+     default:
+        return -EFAULT;
+   }
+   return 0;
+}
+
+/*
+  Buzzer
+*/
+static long buzzer_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	int freq;
+	int dat;
+
+	if(cmd == IOCTL_WRITE){
+		if (copy_from_user(&freq, (void __user *)arg, sizeof(freq))) {
+          return -EFAULT;
+        }
+
+		if (freq != 0) {
+			if (freq < 1) {
+				freq = 1;
+			} else if (freq > 20000) {
+				freq = 20000;
+			}
+			rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_ALT5); // io is pwm out
+			dat = PWM_BASECLK / freq;
+			rpi_pwm_write32(RPI_PWM_RNG2, dat);
+			rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
+		} else {
+			rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT); // io is pwm out
+		}
+		return 0;
+	}
+	return -EFAULT;
+}
+
+/*
+  LED Sendor 
+*/
+static int sens_val[N_SENSORS];
+
+static long sensor_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	int usecs = SENS_INTVAL;
+	int rf = 0, lf = 0, r = 0, l = 0;
+	int orf = 0, olf = 0, or = 0, ol = 0;
+
+ 	if (cmd == IOCTL_READ){
+	  /* get values through MCP3204 */
+	  /* Right side */
+	  or = mcp3204_get_value(R_AD_CH);
+	  rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << R_LED_BASE);
+	  udelay(usecs);
+
+	  r = mcp3204_get_value(R_AD_CH);
+	  rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << R_LED_BASE);
+	  udelay(usecs);
+
+	  /* Left side */
+	  ol = mcp3204_get_value(L_AD_CH);
+	  rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << L_LED_BASE);
+	  udelay(usecs);
+
+	  l = mcp3204_get_value(L_AD_CH);
+	  rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << L_LED_BASE);
+	  udelay(usecs);
+
+	  /* Right front side */
+	  orf = mcp3204_get_value(RF_AD_CH);
+	  rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
+	  udelay(usecs);
+
+  	  rf = mcp3204_get_value(RF_AD_CH);
+	  rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
+	  udelay(usecs);
+
+	  /* Left front side */
+	  olf = mcp3204_get_value(LF_AD_CH);
+	  rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
+	  udelay(usecs);
+	  lf = mcp3204_get_value(LF_AD_CH);
+	  rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
+	  udelay(usecs);
+
+	  /* set sensor data to rw_buf(static buffer) */
+	  sens_val[0] = rf - orf;
+	  sens_val[1] = r - or;
+	  sens_val[2] = l - ol;
+	  sens_val[3] = lf - olf;
+
+      if(copy_to_user((void __user *)arg, &sens_val, sizeof(sens_val)) ) {
+	    	printk(KERN_INFO "Fail to copy_to_user\n");
+            return -EFAULT;
+	  }
+
+	  return 0;
+	}else{
+	  printk("Invaid Command");
+      return -EFAULT;
+	}
+}
+
+/*
+  Motor
+*/
+static void __set_motor_freq(int motor_l, int motor_r){
+	mutex_lock(&lock);
+	set_motor_l_freq(motor_l);
+	set_motor_r_freq(motor_r);
+	mutex_unlock(&lock);
+}
+
+static long motor_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	int motor_cmd[3]; // motor_l, motor_r, time
+
+ 	//printk(KERN_INFO "motor_ioctl: %d\n", cmd);
+	switch(cmd){
+		case IOCTL_MOTOR_CMD:
+			if (copy_from_user(&motor_cmd, (void __user *)arg, sizeof(motor_cmd))) {
+	    		printk(KERN_INFO "Fail to copy_to_user\n");
+				__set_motor_freq(0, 0);
+				return -EFAULT;
+			}
+
+			mutex_lock(&lock);
+
+			set_motor_l_freq(motor_cmd[0]);
+			set_motor_r_freq(motor_cmd[1]);
+
+			msleep_interruptible(motor_cmd[2]);
+
+			set_motor_l_freq(0);
+			set_motor_r_freq(0);
+
+			mutex_unlock(&lock);
+			break;
+
+		case IOCTL_MOTOR_SP: //set motor_cal
+			if (copy_from_user(&motor_cmd, (void __user *)arg, sizeof(motor_cmd))) {
+	    			printk(KERN_INFO "Fail to copy_to_user\n");
+				__set_motor_freq(0, 0);
+				return -EFAULT;
+			}
+	    		//printk(KERN_INFO "speed %d, %d\n", motor_cmd[0], motor_cmd[1]);
+			__set_motor_freq(motor_cmd[0], motor_cmd[1]);
+			break;
+		case IOCTL_MOTOR_STOP: //Stop
+			__set_motor_freq(0, 0);
+			break;
+		default:
+			return -EFAULT;
+	}
+	return 0;
+}
+
+/*
+  Counter
+*/
+static long counter_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	struct rtcnt_device_info *dev_info = fp->private_data;
+	int ret;
+	int lsb_l, msb_l;
+	int lsb_r, msb_r;
+	int res_count[2];
+
+	switch(cmd){
+		case IOCTL_READ:
+		 	mutex_lock(&dev_info->lock);
+			lsb_l = i2c_smbus_read_byte_data(i2c_client_l, CNT_ADDR_LSB);
+			if (lsb_l < 0) {
+				printk( KERN_ERR
+		    		"%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    		__func__, i2c_client_l->addr);
+				return -ENODEV;
+			}
+			msb_l = i2c_smbus_read_byte_data(i2c_client_l, CNT_ADDR_MSB);
+			if (msb_l < 0) {
+				printk( KERN_ERR
+		    		"%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    		__func__, i2c_client_l->addr);
+				return -ENODEV;
+			}
+			lsb_r = i2c_smbus_read_byte_data(i2c_client_r, CNT_ADDR_LSB);
+			if (lsb_r < 0) {
+				printk( KERN_ERR
+		    		"%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    		__func__, i2c_client_r->addr);
+				return -ENODEV;
+			}
+			msb_r = i2c_smbus_read_byte_data(i2c_client_r, CNT_ADDR_MSB);
+			if (msb_r < 0) {
+				printk( KERN_ERR
+		    		"%s: Failed reading from i2c counter device, addr=0x%x\n",
+		    		__func__, i2c_client_r->addr);
+				return -ENODEV;
+			}
+			mutex_unlock(&dev_info->lock);
+
+			res_count[0] = ((msb_l << 8) & 0xFF00) + (lsb_l & 0xFF);
+			res_count[1] = ((msb_r << 8) & 0xFF00) + (lsb_r & 0xFF);
+			if (copy_to_user((void __user*)arg, &res_count, sizeof(int)*2)) {
+				printk(KERN_INFO "ERROR in copy_to_user\n");
+				return -EFAULT;
+			}
+
+			break;
+
+		case IOCTL_WRITE:
+			if (copy_from_user(&res_count, (void __user *)arg, sizeof(int)*2)) {
+				__set_motor_freq(0, 0);
+				return -EFAULT;
+			}
+
+			msb_l = (res_count[0] >> 8) & 0xFF;
+			lsb_l = res_count[0] & 0xFF;
+			msb_r = (res_count[1] >> 8) & 0xFF;
+			lsb_r = res_count[1] & 0xFF;
+
+			mutex_lock(&dev_info->lock);
+			ret = i2c_smbus_write_byte_data(i2c_client_l, 0x10, msb_l);
+			if (ret < 0) {
+				printk(KERN_ERR
+		       		"%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       		__func__, i2c_client_l->addr);
+				return -ENODEV;
+			}
+			ret = i2c_smbus_write_byte_data(i2c_client_l, 0x11, lsb_l);
+			if (ret < 0) {
+				printk(KERN_ERR
+		       		"%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       		__func__, i2c_client_l->addr);
+				return -ENODEV;
+			}
+			ret = i2c_smbus_write_byte_data(i2c_client_r, 0x10, msb_r);
+			if (ret < 0) {
+				printk(KERN_ERR
+		       		"%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       		__func__, i2c_client_r->addr);
+				return -ENODEV;
+			}
+			ret = i2c_smbus_write_byte_data(i2c_client_r, 0x11, lsb_r);
+			if (ret < 0) {
+				printk(KERN_ERR
+		       		"%s: Failed writing to i2c counter device, addr=0x%x\n",
+		       		__func__, i2c_client_r->addr);
+				return -ENODEV;
+			}
+
+			mutex_unlock(&dev_info->lock);
+			break;
+		default:
+			return -EFAULT;
+	}
+	return 0;
+}
+
 
 /* --- Device File Operations --- */
 /* /dev/rtled */
 static struct file_operations led_fops = {
     .open = dev_open, .release = dev_release, .write = led_write,
+    .unlocked_ioctl = led_ioctl,
+    .compat_ioctl = led_ioctl,
 };
 /* /dev/rtbuzzer */
 static struct file_operations buzzer_fops = {
     .open = dev_open, .release = dev_release, .write = buzzer_write,
+    .unlocked_ioctl = buzzer_ioctl,
+    .compat_ioctl = buzzer_ioctl,
 };
 /* /dev/rtswitch */
 static struct file_operations sw_fops = {
@@ -1197,6 +1512,8 @@ static struct file_operations sw_fops = {
 /* /dev/rtlightsensor */
 static struct file_operations sensor_fops = {
     .open = dev_open, .read = sensor_read, .release = dev_release,
+    .unlocked_ioctl = sensor_ioctl,
+    .compat_ioctl = sensor_ioctl,
 };
 /* /dev/rtmotor_raw_r */
 static struct file_operations motorrawr_fops = {
@@ -1213,6 +1530,8 @@ static struct file_operations motoren_fops = {
 /* /dev/rtmotor */
 static struct file_operations motor_fops = {
     .open = dev_open, .write = motor_write, .release = dev_release,
+    .unlocked_ioctl = motor_ioctl,
+    .compat_ioctl = motor_ioctl,
 };
 /* /dev/rtcounter_* */
 static struct file_operations rtcnt_fops = {
@@ -1220,6 +1539,8 @@ static struct file_operations rtcnt_fops = {
     .release = i2c_dev_release,
     .read = rtcnt_read,
     .write = rtcnt_write,
+    .unlocked_ioctl = counter_ioctl,
+    .compat_ioctl = counter_ioctl,
 };
 
 /* --- Device Driver Registration and Device File Creation --- */
@@ -2018,6 +2339,7 @@ int dev_init_module(void)
 	/* log loding message */
 	printk(KERN_INFO "%s: loading driver...\n", DRIVER_NAME);
 
+        memset(led_status, 0, sizeof(unsigned char) * 4);
 	/* Initialize mutex lock */
 	mutex_init(&lock);
 
