@@ -57,7 +57,7 @@ The LED0 ~ LED3 blinks.
 'c'を入力するとプログラムが終了します。（Shell ScriptではCtrl-cで終了します。）
 
 Beep the buzzer with keyboard input. 
-Refer the [./SCALE](./SCALE) file for the pairs of input characters and scales.
+Refer to the [./SCALE](./SCALE) file for the pairs of input characters and scales.
 
 Press '0' to stop beeping.
 Press 'c' to terminate the program. (Press Ctrl-c for the Shell Script.)
@@ -68,7 +68,7 @@ Press 'c' to terminate the program. (Press Ctrl-c for the Shell Script.)
 組み合わせは次のとおりです。
 
 Turn on/off LEDs by the switches.
-The pairs of LEDs and switches are bellow:
+The combination of LEDs and switches are defined as bellow.
 
 - SW0 : LED3
 - SW1 : LED1 & LED2
