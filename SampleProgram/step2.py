@@ -1,12 +1,11 @@
 #!/usr/bin/python
-import sys
+import sys, tty, termios
 
 class _Getch:
     def __init__(self):
-        import tty,sys
+        pass
 
     def __call__(self):
-        import sys,tty,termios
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
