@@ -8,7 +8,7 @@ This directory contains examples how to use RaspberryPiMouse's peripherals like 
 
 各機能ごとにShell Script、C、Pythonで書かれたサンプルコードを用意しています。
 
-Each peripheral example have sample code files written Shell Script, C and Python.
+Each peripheral example has sample code files written Shell Script, C and Python.
 
 ## Shell Script
 
@@ -16,7 +16,7 @@ Each peripheral example have sample code files written Shell Script, C and Pytho
 $ bash step1.sh
 
 Ctrl-c を押して終了してください。
-Type [Ctrl-c] to terminate.
+Press [Ctrl-c] to terminate.
 ```
 
 ## C
@@ -30,7 +30,7 @@ $ gcc step1.c -o step1
 $ ./step1
 
 Ctrl-c を押して終了してください。
-Type [Ctrl-c] to terminate.
+Press [Ctrl-c] to terminate.
 ```
 
 ## Python
@@ -39,7 +39,7 @@ Type [Ctrl-c] to terminate.
 $ python3 step1.py
 
 Ctrl-c を押して終了してください。
-Type [Ctrl-c] to terminate.
+Press [Ctrl-c] to terminate.
 ```
 
 # Step1
@@ -59,13 +59,13 @@ The LED0 ~ LED3 blinks.
 Beep the buzzer with keyboard input. 
 Refer the [./SCALE](./SCALE) file for the pairs of input characters and scales.
 
-Type '0' to stop beeping.
-Type 'c' to terminate the program. (Type Ctrl-c for the Shell Script.)
+Press '0' to stop beeping.
+Press 'c' to terminate the program. (Press Ctrl-c for the Shell Script.)
 
 # Step3
 
 スイッチを押してLEDを点消灯します。
-組み合わせは次のとおりです
+組み合わせは次のとおりです。
 
 Turn on/off LEDs by the switches.
 The pairs of LEDs and switches are bellow:
