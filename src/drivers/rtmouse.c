@@ -242,7 +242,12 @@ static struct mutex lock;
 #define RPI_PWM_RNG2 0x20
 #define RPI_PWM_DAT2 0x24
 
+
+#if RASPBERRYPI == 4
+#define PWM_BASECLK 27000000
+#else
 #define PWM_BASECLK 9600000
+#endif
 
 /* A/D Parameter */
 #define MCP320X_PACKET_SIZE 3
