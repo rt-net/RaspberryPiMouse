@@ -46,7 +46,12 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
-#define RASPBERRYPI 4
+// define the Raspberry Pi version here
+// Raspberry Pi 1 B/A/B+/A+: 1
+// Raspberry Pi 2 B        : 2
+// Raspberry Pi 3 B/A+/B+  : 2
+// Raspberry Pi 4 B        : 4
+#define RASPBERRYPI 2
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
