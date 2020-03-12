@@ -209,9 +209,15 @@ static struct mutex lock;
 #define CLK_PWMDIV_INDEX 0xa4
 
 /* GPIO PUPD select */
+#if RASPBERRYPI == 4
+#define GPIO_PULLNONE 0x0
+#define GPIO_PULLUP 0x1
+#define GPIO_PULLDOWN 0x2
+#else
 #define GPIO_PULLNONE 0x0
 #define GPIO_PULLDOWN 0x1
 #define GPIO_PULLUP 0x2
+#endif
 
 /* GPIO Function */
 #define RPI_GPF_INPUT 0x00
