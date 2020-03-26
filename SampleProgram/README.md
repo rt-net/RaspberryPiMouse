@@ -79,3 +79,9 @@ The combination of LEDs and switches are defined as bellow.
 モータを回して右旋回、左旋回します。
 
 Drive the motors to rotate clockwise and counter-clockwise.
+
+# Step5
+
+ライトセンサの値を読み込みます。
+
+Read the lightsensors values.
