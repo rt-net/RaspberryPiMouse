@@ -3,9 +3,9 @@
  * rtmouse.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 1:1.4
+ * Version: 1:1.5
  *
- * Copyright (C) 2015-2018 RT Corporation <shop@rt-net.jp>
+ * Copyright (C) 2015-2020 RT Corporation <shop@rt-net.jp>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,8 +46,12 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
-#define RASPBERRYPI2
-#undef RASPBERRYPI1
+// define the Raspberry Pi version here
+// Raspberry Pi 1 B/A/B+/A+: 1
+// Raspberry Pi 2 B        : 2
+// Raspberry Pi 3 B/A+/B+  : 2
+// Raspberry Pi 4 B        : 4
+#define RASPBERRYPI 2
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
@@ -168,10 +172,17 @@ static struct mutex lock;
 
 /* --- Register Address --- */
 /* Base Addr */
-#ifdef RASPBERRYPI1
+#if RASPBERRYPI == 1
 #define RPI_REG_BASE 0x20000000
-#else
+#elif RASPBERRYPI == 2
 #define RPI_REG_BASE 0x3f000000
+#elif RASPBERRYPI == 4
+#define RPI_REG_BASE 0xfe000000
+/* 2711 has a different mechanism for pin pull-up/down/enable  */
+#define GPPUPPDN0 57 /* Pin pull-up/down for pins 15:0  */
+#define GPPUPPDN1 58 /* Pin pull-up/down for pins 31:16 */
+#define GPPUPPDN2 59 /* Pin pull-up/down for pins 47:32 */
+#define GPPUPPDN3 60 /* Pin pull-up/down for pins 57:48 */
 #endif
 
 /* GPIO Addr */
@@ -198,9 +209,15 @@ static struct mutex lock;
 #define CLK_PWMDIV_INDEX 0xa4
 
 /* GPIO PUPD select */
+#if RASPBERRYPI == 4
+#define GPIO_PULLNONE 0x0
+#define GPIO_PULLUP 0x1
+#define GPIO_PULLDOWN 0x2
+#else
 #define GPIO_PULLNONE 0x0
 #define GPIO_PULLDOWN 0x1
 #define GPIO_PULLUP 0x2
+#endif
 
 /* GPIO Function */
 #define RPI_GPF_INPUT 0x00
@@ -236,7 +253,12 @@ static struct mutex lock;
 #define RPI_PWM_RNG2 0x20
 #define RPI_PWM_DAT2 0x24
 
+
+#if RASPBERRYPI == 4
+#define PWM_BASECLK 27000000
+#else
 #define PWM_BASECLK 9600000
+#endif
 
 /* A/D Parameter */
 #define MCP320X_PACKET_SIZE 3
@@ -505,6 +527,12 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 	unsigned int pin = SW1_PIN;
 	uint32_t mask;
 	int minor = *((int *)filep->private_data);
+#if RASPBERRYPI == 4
+	int pullreg = GPPUPPDN1 + (pin >> 4); // SW1, 2, 3 is between GPIO16-31
+	int pullshift = (pin & 0xf) << 1;
+	unsigned int pullbits;
+	unsigned int pull;
+#endif
 
 	switch (minor) {
 	case 0:
@@ -524,6 +552,13 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 	if (*f_pos > 0)
 		return 0; /* End of file */
 
+#if RASPBERRYPI == 4
+	pull = GPIO_PULLUP;
+	pullbits = *(gpio_base + pullreg);
+	pullbits &= ~(3 << pullshift);
+	pullbits |= (pull << pullshift);
+	*(gpio_base + pullreg) = pullbits;
+#else
 	//  プルモード (2bit)を書き込む NONE/DOWN/UP
 	gpio_base[37] = GPIO_PULLUP & 0x3; //  GPPUD
 	//  ピンにクロックを供給（前後にウェイト）
@@ -533,6 +568,7 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 	//  プルモード・クロック状態をクリアして終了
 	gpio_base[37] = 0;
 	gpio_base[38] = 0;
+#endif
 
 	index = RPI_GPFSEL0_INDEX + pin / 10;
 	mask = ~(0x7 << ((pin % 10) * 3));
