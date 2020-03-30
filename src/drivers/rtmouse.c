@@ -1378,8 +1378,8 @@ static int motorrawr_register_dev(void)
 
 	/* デバイスクラスを作成する */
 	class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
-	if (IS_ERR(class_buzzer)) {
-		return PTR_ERR(class_buzzer);
+	if (IS_ERR(class_motorrawr)) {
+		return PTR_ERR(class_motorrawr);
 	}
 
 	devno = MKDEV(_major_motorrawr, _minor_motorrawr);
@@ -1426,8 +1426,8 @@ static int motorrawl_register_dev(void)
 
 	/* デバイスクラスを作成する */
 	class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
-	if (IS_ERR(class_buzzer)) {
-		return PTR_ERR(class_buzzer);
+	if (IS_ERR(class_motorrawl)) {
+		return PTR_ERR(class_motorrawl);
 	}
 
 	devno = MKDEV(_major_motorrawl, _minor_motorrawl);
