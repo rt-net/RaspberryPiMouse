@@ -67,7 +67,7 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define NUM_DEV_MOTORRAWL 1
 #define NUM_DEV_MOTOREN 1
 #define NUM_DEV_MOTOR 1
-#define NUM_DEV_CNT 1
+#define NUM_DEV_CNT 2
 
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
@@ -2059,7 +2059,7 @@ int dev_init_module(void)
 
 	retval = i2c_counter_init();
 	if (retval == 0) {
-		registered_devices += 2;
+		registered_devices += 2 * NUM_DEV_CNT;
 	}
 	else{
 		printk(KERN_ALERT
