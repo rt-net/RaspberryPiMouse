@@ -267,8 +267,8 @@ static struct mutex lock;
 #define MCP3204_CHANNELS 4
 
 /* I2C Parameter */
-#define DEV_ADDR_CNTR 0x10
-#define DEV_ADDR_CNTL 0x11
+#define DEV_ADDR_CNTL 0x10
+#define DEV_ADDR_CNTR 0x11
 #define CNT_ADDR_MSB 0x10
 #define CNT_ADDR_LSB 0x11
 
@@ -1963,9 +1963,9 @@ static int i2c_counter_init(void)
 	struct i2c_adapter *i2c_adap_l;
 	struct i2c_adapter *i2c_adap_r;
 	struct i2c_board_info i2c_board_info_l = {
-	    I2C_BOARD_INFO(DEVNAME_CNTL, 0x10)};
+	    I2C_BOARD_INFO(DEVNAME_CNTL, DEV_ADDR_CNTL)};
 	struct i2c_board_info i2c_board_info_r = {
-	    I2C_BOARD_INFO(DEVNAME_CNTR, 0x11)};
+	    I2C_BOARD_INFO(DEVNAME_CNTR, DEV_ADDR_CNTR)};
 
 	// printk(KERN_DEBUG "%s: initializing i2c device", __func__);
 	retval = i2c_add_driver(&i2c_counter_driver);
