@@ -330,6 +330,8 @@ struct rtcnt_device_info {
 
 static struct i2c_client *i2c_client_r = NULL;
 static struct i2c_client *i2c_client_l = NULL;
+static unsigned int motor_l_freq_is_positive = 1;
+static unsigned int motor_r_freq_is_positive = 1;
 
 /* I2C Device ID */
 static struct i2c_device_id i2c_counter_id[] = {
@@ -468,8 +470,10 @@ static void set_motor_l_freq(int freq)
 	}
 
 	if (freq > 0) {
+		motor_l_freq_is_positive = 1;
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
 	} else {
+		motor_l_freq_is_positive = 0;
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
 		freq = -freq;
 	}
@@ -497,8 +501,10 @@ static void set_motor_r_freq(int freq)
 	}
 
 	if (freq > 0) {
+		motor_r_freq_is_positive = 1;
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 	} else {
+		motor_r_freq_is_positive = 0;
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 		freq = -freq;
 	}
