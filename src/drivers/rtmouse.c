@@ -323,6 +323,7 @@ static struct spi_driver mcp3204_driver = {
 struct rtcnt_device_info {
 	struct cdev cdev;
 	unsigned int device_major;
+	unsigned int device_minor;
 	struct class *device_class;
 	struct i2c_client *client;
 	struct mutex lock;
@@ -819,6 +820,7 @@ static int i2c_dev_open(struct inode *inode, struct file *filep)
 	if (dev_info == NULL || dev_info->client == NULL) {
 		printk(KERN_ERR "%s: i2c dev_open failed.\n", DRIVER_NAME);
 	}
+	dev_info->device_minor =  MINOR(inode->i_rdev);
 	filep->private_data = dev_info;
 	return 0;
 }
@@ -1166,6 +1168,19 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 	return 0;
 }
 
+void read_signed_counter(struct rtcnt_device_info *dev_info,
+	int rtcnt_count)
+{
+	if(dev_info->client->addr == DEV_ADDR_CNTL){
+		printk(KERN_INFO "motor_l_freq is positive:%d, count:%d\n",
+			motor_l_freq_is_positive, rtcnt_count);
+	}else{
+		printk(KERN_INFO "motor_r_freq is positive:%d, count:%d\n",
+			motor_r_freq_is_positive, rtcnt_count);
+	}
+
+	return 0;
+}
 /*
  *  rtcnt_read - Read value from right/left pulse counter
  *  Read function of /dev/rtcounter_*
@@ -1182,6 +1197,10 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 	if (*f_pos > 0)
 		return 0; /* close device */
 	i2c_counter_read(dev_info, &rtcnt_count);
+
+	if(dev_info->device_minor == 1){
+		read_signed_counter(dev_info, rtcnt_count);
+	}
 
 	/* set sensor data to rw_buf(static buffer) */
 	sprintf(rw_buf, "%d\n", rtcnt_count);
