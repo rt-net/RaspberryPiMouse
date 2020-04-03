@@ -327,12 +327,16 @@ struct rtcnt_device_info {
 	struct class *device_class;
 	struct i2c_client *client;
 	struct mutex lock;
+	int signed_pulse_count;
+	int raw_pulse_count;
 };
 
 static struct i2c_client *i2c_client_r = NULL;
 static struct i2c_client *i2c_client_l = NULL;
 static unsigned int motor_l_freq_is_positive = 1;
 static unsigned int motor_r_freq_is_positive = 1;
+#define SIGNED_COUNT_SIZE 32767
+#define MAX_PULSE_COUNT 65535
 
 /* I2C Device ID */
 static struct i2c_device_id i2c_counter_id[] = {
@@ -1168,19 +1172,43 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 	return 0;
 }
 
-void read_signed_counter(struct rtcnt_device_info *dev_info,
+/*
+ * set_signed_count - set signed pulse count to dev_info
+ * called by rtcnt_read()
+ */
+void set_signed_count(struct rtcnt_device_info *dev_info,
 	int rtcnt_count)
 {
-	if(dev_info->client->addr == DEV_ADDR_CNTL){
-		printk(KERN_INFO "motor_l_freq is positive:%d, count:%d\n",
-			motor_l_freq_is_positive, rtcnt_count);
-	}else{
-		printk(KERN_INFO "motor_r_freq is positive:%d, count:%d\n",
-			motor_r_freq_is_positive, rtcnt_count);
+	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
+
+	// カウントがMAX_PULSE_COUNTから0に変わる場合の処理
+	// ただし、それ以外でもdiffが負の値になることがある
+	// そのため、diffが十分に大きな負の値の場合に処理する
+	// if(diff_count < 0) では正常に動作しない
+	if(diff_count < -SIGNED_COUNT_SIZE){
+		diff_count += MAX_PULSE_COUNT;
 	}
 
-	return 0;
+	if(dev_info->client->addr == DEV_ADDR_CNTL){
+		if(motor_l_freq_is_positive){
+			dev_info->signed_pulse_count += diff_count;
+		}else{
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	}else{
+		if(motor_r_freq_is_positive){
+			dev_info->signed_pulse_count += diff_count;
+		}else{
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	}
+
+	if(dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
+		dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE){
+		dev_info->signed_pulse_count = 0;
+	}
 }
+
 /*
  *  rtcnt_read - Read value from right/left pulse counter
  *  Read function of /dev/rtcounter_*
@@ -1199,7 +1227,11 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 	i2c_counter_read(dev_info, &rtcnt_count);
 
 	if(dev_info->device_minor == 1){
-		read_signed_counter(dev_info, rtcnt_count);
+		set_signed_count(dev_info, rtcnt_count);
+		dev_info->raw_pulse_count = rtcnt_count;
+		rtcnt_count = dev_info->signed_pulse_count;
+	}else{
+		dev_info->raw_pulse_count = rtcnt_count;
 	}
 
 	/* set sensor data to rw_buf(static buffer) */
