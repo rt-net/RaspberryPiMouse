@@ -1173,10 +1173,10 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 }
 
 /*
- * set_signed_count - set signed pulse count to dev_info
+ * update_signed_count - update signed pulse count of dev_info
  * called by rtcnt_read()
  */
-void set_signed_count(struct rtcnt_device_info *dev_info,
+void update_signed_count(struct rtcnt_device_info *dev_info,
 	int rtcnt_count)
 {
 	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
@@ -1246,7 +1246,7 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 	i2c_counter_read(dev_info, &rtcnt_count);
 
 	if(dev_info->device_minor == 1){
-		set_signed_count(dev_info, rtcnt_count);
+		update_signed_count(dev_info, rtcnt_count);
 		dev_info->raw_pulse_count = rtcnt_count;
 		rtcnt_count = dev_info->signed_pulse_count;
 	}else{
