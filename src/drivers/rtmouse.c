@@ -1210,6 +1210,25 @@ void set_signed_count(struct rtcnt_device_info *dev_info,
 }
 
 /*
+ * reset_signed_count - reset signed pulse count of dev_info
+ * called by rtcnt_write()
+ */
+void reset_signed_count(struct rtcnt_device_info *dev_info,
+	int rtcnt_count)
+{
+	int raw_count;
+
+	if(rtcnt_count > SIGNED_COUNT_SIZE){
+		rtcnt_count = SIGNED_COUNT_SIZE;
+	}else if(rtcnt_count < - SIGNED_COUNT_SIZE){
+		rtcnt_count = -SIGNED_COUNT_SIZE;
+	}
+	dev_info->signed_pulse_count = rtcnt_count;
+	i2c_counter_read(dev_info, &raw_count);
+	dev_info->raw_pulse_count = raw_count;
+}
+
+/*
  *  rtcnt_read - Read value from right/left pulse counter
  *  Read function of /dev/rtcounter_*
  */
@@ -1268,6 +1287,10 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 	bufcnt = parse_count(buf, count, &rtcnt_count);
 
 	i2c_counter_set(dev_info, rtcnt_count);
+
+	if(dev_info->device_minor == 1){
+		reset_signed_count(dev_info, rtcnt_count);
+	}
 
 	printk(KERN_INFO "%s: set pulse counter value %d\n", DRIVER_NAME,
 	       rtcnt_count);
