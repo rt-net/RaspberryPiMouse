@@ -55,7 +55,7 @@
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1:1.4");
+MODULE_VERSION("1:1.5");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
