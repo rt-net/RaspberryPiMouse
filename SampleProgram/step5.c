@@ -11,7 +11,7 @@ void main(void)
     while(1){
         if ((fp = fopen("/dev/rtlightsensor0", "r")) != NULL){
             while(fgets(buff, buff_size, fp) != NULL){
-                printf("%s\n", buff);
+                printf("%s", buff);
             }
         }
         fclose(fp);
