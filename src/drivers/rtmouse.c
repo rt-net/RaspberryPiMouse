@@ -3,7 +3,7 @@
  * rtmouse.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 2.0.0
+ * Version: 2.1.0
  *
  * Copyright (C) 2015-2020 RT Corporation <shop@rt-net.jp>
  *
@@ -55,7 +55,7 @@
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("2.0.0");
+MODULE_VERSION("2.1.0");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
@@ -67,7 +67,7 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define NUM_DEV_MOTORRAWL 1
 #define NUM_DEV_MOTOREN 1
 #define NUM_DEV_MOTOR 1
-#define NUM_DEV_CNT 1
+#define NUM_DEV_CNT 2
 
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
@@ -267,8 +267,8 @@ static struct mutex lock;
 #define MCP3204_CHANNELS 4
 
 /* I2C Parameter */
-#define DEV_ADDR_CNTR 0x10
-#define DEV_ADDR_CNTL 0x11
+#define DEV_ADDR_CNTL 0x10
+#define DEV_ADDR_CNTR 0x11
 #define CNT_ADDR_MSB 0x10
 #define CNT_ADDR_LSB 0x11
 
@@ -323,13 +323,20 @@ static struct spi_driver mcp3204_driver = {
 struct rtcnt_device_info {
 	struct cdev cdev;
 	unsigned int device_major;
+	unsigned int device_minor;
 	struct class *device_class;
 	struct i2c_client *client;
 	struct mutex lock;
+	int signed_pulse_count;
+	int raw_pulse_count;
 };
 
 static struct i2c_client *i2c_client_r = NULL;
 static struct i2c_client *i2c_client_l = NULL;
+static unsigned int motor_l_freq_is_positive = 1;
+static unsigned int motor_r_freq_is_positive = 1;
+#define SIGNED_COUNT_SIZE 32767
+#define MAX_PULSE_COUNT 65535
 
 /* I2C Device ID */
 static struct i2c_device_id i2c_counter_id[] = {
@@ -468,8 +475,10 @@ static void set_motor_l_freq(int freq)
 	}
 
 	if (freq > 0) {
+		motor_l_freq_is_positive = 1;
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
 	} else {
+		motor_l_freq_is_positive = 0;
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
 		freq = -freq;
 	}
@@ -497,8 +506,10 @@ static void set_motor_r_freq(int freq)
 	}
 
 	if (freq > 0) {
+		motor_r_freq_is_positive = 1;
 		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 	} else {
+		motor_r_freq_is_positive = 0;
 		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 		freq = -freq;
 	}
@@ -813,6 +824,7 @@ static int i2c_dev_open(struct inode *inode, struct file *filep)
 	if (dev_info == NULL || dev_info->client == NULL) {
 		printk(KERN_ERR "%s: i2c dev_open failed.\n", DRIVER_NAME);
 	}
+	dev_info->device_minor =  MINOR(inode->i_rdev);
 	filep->private_data = dev_info;
 	return 0;
 }
@@ -1161,6 +1173,62 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 }
 
 /*
+ * update_signed_count - update signed pulse count of dev_info
+ * called by rtcnt_read()
+ */
+void update_signed_count(struct rtcnt_device_info *dev_info,
+	int rtcnt_count)
+{
+	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
+
+	// カウントがMAX_PULSE_COUNTから0に変わる場合の処理
+	// ただし、それ以外でもdiffが負の値になることがある
+	// そのため、diffが十分に大きな負の値の場合に処理する
+	// if(diff_count < 0) では正常に動作しない
+	if(diff_count < -SIGNED_COUNT_SIZE){
+		diff_count += MAX_PULSE_COUNT;
+	}
+
+	if(dev_info->client->addr == DEV_ADDR_CNTL){
+		if(motor_l_freq_is_positive){
+			dev_info->signed_pulse_count += diff_count;
+		}else{
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	}else{
+		if(motor_r_freq_is_positive){
+			dev_info->signed_pulse_count += diff_count;
+		}else{
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	}
+
+	if(dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
+		dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE){
+		dev_info->signed_pulse_count = 0;
+	}
+}
+
+/*
+ * reset_signed_count - reset signed pulse count of dev_info
+ * called by rtcnt_write()
+ */
+void reset_signed_count(struct rtcnt_device_info *dev_info,
+	int rtcnt_count)
+{
+	int raw_count;
+
+	if(rtcnt_count > SIGNED_COUNT_SIZE){
+		rtcnt_count = SIGNED_COUNT_SIZE;
+	}else if(rtcnt_count < - SIGNED_COUNT_SIZE){
+		rtcnt_count = -SIGNED_COUNT_SIZE;
+	}
+	dev_info->signed_pulse_count = rtcnt_count;
+	i2c_counter_read(dev_info, &raw_count);
+	dev_info->raw_pulse_count = raw_count;
+}
+
+/*
  *  rtcnt_read - Read value from right/left pulse counter
  *  Read function of /dev/rtcounter_*
  */
@@ -1176,6 +1244,14 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 	if (*f_pos > 0)
 		return 0; /* close device */
 	i2c_counter_read(dev_info, &rtcnt_count);
+
+	if(dev_info->device_minor == 1){
+		update_signed_count(dev_info, rtcnt_count);
+		dev_info->raw_pulse_count = rtcnt_count;
+		rtcnt_count = dev_info->signed_pulse_count;
+	}else{
+		dev_info->raw_pulse_count = rtcnt_count;
+	}
 
 	/* set sensor data to rw_buf(static buffer) */
 	sprintf(rw_buf, "%d\n", rtcnt_count);
@@ -1211,6 +1287,10 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 	bufcnt = parse_count(buf, count, &rtcnt_count);
 
 	i2c_counter_set(dev_info, rtcnt_count);
+
+	if(dev_info->device_minor == 1){
+		reset_signed_count(dev_info, rtcnt_count);
+	}
 
 	printk(KERN_INFO "%s: set pulse counter value %d\n", DRIVER_NAME,
 	       rtcnt_count);
@@ -1963,9 +2043,9 @@ static int i2c_counter_init(void)
 	struct i2c_adapter *i2c_adap_l;
 	struct i2c_adapter *i2c_adap_r;
 	struct i2c_board_info i2c_board_info_l = {
-	    I2C_BOARD_INFO(DEVNAME_CNTL, 0x10)};
+	    I2C_BOARD_INFO(DEVNAME_CNTL, DEV_ADDR_CNTL)};
 	struct i2c_board_info i2c_board_info_r = {
-	    I2C_BOARD_INFO(DEVNAME_CNTR, 0x11)};
+	    I2C_BOARD_INFO(DEVNAME_CNTR, DEV_ADDR_CNTR)};
 
 	// printk(KERN_DEBUG "%s: initializing i2c device", __func__);
 	retval = i2c_add_driver(&i2c_counter_driver);
@@ -2059,7 +2139,7 @@ int dev_init_module(void)
 
 	retval = i2c_counter_init();
 	if (retval == 0) {
-		registered_devices += 2;
+		registered_devices += 2 * NUM_DEV_CNT;
 	}
 	else{
 		printk(KERN_ALERT
