@@ -73,3 +73,15 @@ The combination of LEDs and switches are defined as bellow.
 - SW0 : LED3
 - SW1 : LED1 & LED2
 - SW2 : LED0
+
+# Step4
+
+モータを回して右旋回、左旋回します。
+
+Drive the motors to rotate clockwise and counter-clockwise.
+
+# Step5
+
+ライトセンサの値を読み込みます。
+
+Read the lightsensors values.
