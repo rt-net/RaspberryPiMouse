@@ -77,7 +77,7 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 
 ### その他
 
-その他のよくある質問については[wiki](https://github.com/rt-net/RaspberryPiMouse/wiki)にまとめています。
+その他のよくある質問については[wiki](https://github.com/rt-net/RaspberryPiMouse/wiki#%E3%82%88%E3%81%8F%E3%81%82%E3%82%8B%E8%B3%AA%E5%95%8F)にまとめています。
 
 ## 日経Linux連載
 
