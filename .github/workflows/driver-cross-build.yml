@@ -31,10 +31,8 @@ jobs:
       - name: Cache
         uses: actions/cache@v1
         with:
-          path: ${HOME}/repo/raspberrypi
-          key: ${{ runner.os }}-raspberrypi-cross-build-${{ matrix.env }}
-          restore-keys: |
-            ${{ runner.os }}-raspberrypi-cross-build-
+          path: ~/repo/raspberrypi
+          key: ${{ runner.os }}-raspberrypi-cross-build-${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
 
       - name: Install cross-build settings
         id: cross-build
@@ -53,16 +51,23 @@ jobs:
           RPI_LINUX_COMMIT_HASH: ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
         run: |
           if [ -e ${HOME}/repo/raspberrypi/linux ]; then (cd ${HOME}/repo/raspberrypi/linux && git fetch origin && git checkout ${RPI_LINUX_VER} && git pull); else (cd ${HOME}/repo/raspberrypi && git clone -b ${RPI_LINUX_VER} https://github.com/raspberrypi/linux.git); fi
-          cd ${HOME}/repo/raspberrypi/linux && make clean && git reset --hard HEAD && git checkout $RPI_LINUX_COMMIT_HASH
+          cd ${HOME}/repo/raspberrypi/linux && make clean && git reset --hard HEAD && git checkout ${RPI_LINUX_COMMIT_HASH}
           cp "${REPOSITORY_DIR}/.test/${CONFIG_FILE}" ${HOME}/repo/raspberrypi/linux/.config
-          make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
-          make CROSS_COMPILE=$HOME/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
+          make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
+          make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
 
       - name: Build kernel module
         env:
           REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
           DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
         run: |
-          cd $DRIVER_SRC_DIR
-          make -f $REPOSITORY_DIR/.test/Makefile.crosscompile
-          make -f $REPOSITORY_DIR/.test/Makefile.crosscompile clean
+          cd ${DRIVER_SRC_DIR}
+          make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile
+
+      - name: Clean up kernel module
+        env:
+          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
+          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
+        run: |
+          cd ${DRIVER_SRC_DIR}
+          make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile clean
