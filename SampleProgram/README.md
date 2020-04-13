@@ -85,3 +85,9 @@ Drive the motors to rotate clockwise and counter-clockwise.
 ライトセンサの値を読み込みます。
 
 Read the lightsensors values.
+
+# Step6
+
+モータを回して、パルスカウンタの値を読み込みます。
+
+Drive the motors and read the pulse counters values.
