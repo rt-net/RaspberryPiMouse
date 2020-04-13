@@ -23,7 +23,7 @@ function reset_counters_and_motors () {
     echo "count_l:$(cat $COUNTER_L), count_r:$(cat $COUNTER_R)"
 }
 
-reset_counter
+reset_counters_and_motors
 
 echo "Motor On"
 echo 1 > $MOTOR_EN
