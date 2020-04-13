@@ -63,7 +63,7 @@ dtparam=i2c_baudrate=62500
 
 ### Raspberry Pi 4
 
-Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります。  
+Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
 Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えて手動でビルドする必要があります。
 
 ```c
