@@ -57,7 +57,16 @@ jobs:
         run: |
           cd ${DRIVER_SRC_DIR}
           make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile
-          lsmod rtmouse.ko
+
+      - name: Output kernel module info
+        env:
+          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
+          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
+        run: |
+          uname -a
+          echo ${{ matrix.env.RPI_LINUX_VER }} ${{ matrix.env.CONFIG_FILE }} ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
+          cd ${DRIVER_SRC_DIR}
+          modinfo rtmouse.ko
 
       - name: Clean up kernel module
         env:
