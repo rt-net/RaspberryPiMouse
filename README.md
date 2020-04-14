@@ -7,30 +7,32 @@ for the Raspberry Pi Mouse.
 
 ## インストール
 
-./utilディレクトリのシェルスクリプトを実行します。
+インストール用のシェルスクリプト（[`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)）を実行します。
 
-```
+### Raspbianの場合
+
+```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
-$ cd utils
-###Raspbianの場合###
+$ cd RaspberryPiMouse/utils
 $ sudo apt install raspberrypi-kernel-headers
 $ ./build_install.bash
-###Ubuntuの場合###
+```
+
+### Ubuntuの場合
+
+```sh
+$ git clone https://github.com/rt-net/RaspberryPiMouse.git
+$ cd RaspberryPiMouse/utils
 $ sudo apt install linux-headers-$(uname -r)
 $ ./build_install.bash
 ```
 
+## マニュアルインストール
 
-## How to install the device driver（マニュアルインストール）
-
-```
+```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
-### check the kernel version
-$ uname -r
-4.1.6-v7+
-###choose a directory based on your RPi and the kernel version
-$ cd RaspberryPiMouse/lib/Pi2B+/4.1.6-v7+/
-###install the kernel object
+$ cd RaspberryPiMouse/src/drivers
+$ make
 $ sudo insmod rtmouse.ko
 ```
 
@@ -58,6 +60,24 @@ I2Cのbaudrateをデフォルト値より下げる必要があります（[issue
 ```
 dtparam=i2c_baudrate=62500
 ```
+
+### Raspberry Pi 4
+
+Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
+Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えて手動でビルドする必要があります。
+
+```c
+// define the Raspberry Pi version here
+// Raspberry Pi 1 B/A/B+/A+: 1
+// Raspberry Pi 2 B        : 2
+// Raspberry Pi 3 B/A+/B+  : 2
+// Raspberry Pi 4 B        : 4
+#define RASPBERRYPI 2
+```
+
+### その他
+
+その他のよくある質問については[wiki](https://github.com/rt-net/RaspberryPiMouse/wiki#%E3%82%88%E3%81%8F%E3%81%82%E3%82%8B%E8%B3%AA%E5%95%8F)にまとめています。
 
 ## 日経Linux連載
 
