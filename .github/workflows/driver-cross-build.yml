@@ -28,12 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Cache
-        uses: actions/cache@v1
-        with:
-          path: ~/repo/raspberrypi
-          key: ${{ runner.os }}-raspberrypi-cross-build-${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
-
       - name: Install cross-build settings
         id: cross-build
         run: |
