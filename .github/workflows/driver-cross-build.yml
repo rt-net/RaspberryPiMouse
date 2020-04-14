@@ -57,6 +57,7 @@ jobs:
         run: |
           cd ${DRIVER_SRC_DIR}
           make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile
+          lsmod rtmouse.ko
 
       - name: Clean up kernel module
         env:
