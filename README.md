@@ -1,6 +1,6 @@
 # RaspberryPiMouse
 
-[![Build Status](https://travis-ci.org/rt-net/RaspberryPiMouse.svg?branch=master)](https://travis-ci.org/rt-net/RaspberryPiMouse)
+![CI](https://github.com/rt-net/RaspberryPiMouse/workflows/CI/badge.svg?branch=master)
 
 This repository has the source code and kernel objects
 for the Raspberry Pi Mouse.
