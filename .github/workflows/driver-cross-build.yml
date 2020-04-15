@@ -13,9 +13,6 @@ on:
     - 'src/drivers/**'
     - '.github/workflows/**'
 
-env:
-  WORKSPACE: /home/runner
-
 jobs:
   build:
     strategy:
@@ -29,49 +26,35 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install cross-build settings
-        id: cross-build
         run: |
-          echo "::set-output name=driver-src-dir::$(echo ${GITHUB_WORKSPACE}/src/drivers)"
-          echo "::set-output name=repository-dir::$(echo ${GITHUB_WORKSPACE})"
           mkdir -p ${HOME}/repo/raspberrypi
           if [ -e ${HOME}/repo/raspberrypi/tools ]; then (cd ${HOME}/repo/raspberrypi/tools && git pull); else (cd ${HOME}/repo/raspberrypi && git clone --depth 1 https://github.com/raspberrypi/tools.git); fi
 
       - name: Install kernel headers
         env:
-          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
-          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
           RPI_LINUX_VER: ${{ matrix.env.RPI_LINUX_VER }}
           CONFIG_FILE: ${{ matrix.env.CONFIG_FILE }}
           RPI_LINUX_COMMIT_HASH: ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
         run: |
           if [ -e ${HOME}/repo/raspberrypi/linux ]; then (cd ${HOME}/repo/raspberrypi/linux && git fetch origin && git checkout ${RPI_LINUX_VER} && git pull); else (cd ${HOME}/repo/raspberrypi && git clone -b ${RPI_LINUX_VER} https://github.com/raspberrypi/linux.git); fi
           cd ${HOME}/repo/raspberrypi/linux && make clean && git reset --hard HEAD && git checkout ${RPI_LINUX_COMMIT_HASH}
-          cp "${REPOSITORY_DIR}/.test/${CONFIG_FILE}" ${HOME}/repo/raspberrypi/linux/.config
+          cp "${GITHUB_WORKSPACE}/.test/${CONFIG_FILE}" ${HOME}/repo/raspberrypi/linux/.config
           make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
           make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
 
       - name: Build kernel module
-        env:
-          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
-          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
         run: |
-          cd ${DRIVER_SRC_DIR}
-          make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile
+          cd ${GITHUB_WORKSPACE}/src/drivers
+          make -f ${GITHUB_WORKSPACE}/.test/Makefile.crosscompile
 
       - name: Output kernel module info
-        env:
-          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
-          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
         run: |
           uname -a
           echo ${{ matrix.env.RPI_LINUX_VER }} ${{ matrix.env.CONFIG_FILE }} ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
-          cd ${DRIVER_SRC_DIR}
+          cd ${GITHUB_WORKSPACE}/src/drivers
           modinfo rtmouse.ko
 
       - name: Clean up kernel module
-        env:
-          REPOSITORY_DIR: ${{ steps.cross-build.outputs.repository-dir }}
-          DRIVER_SRC_DIR: ${{ steps.cross-build.outputs.driver-src-dir }}
         run: |
-          cd ${DRIVER_SRC_DIR}
-          make -f ${REPOSITORY_DIR}/.test/Makefile.crosscompile clean
+          cd ${GITHUB_WORKSPACE}/src/drivers
+          make -f ${GITHUB_WORKSPACE}/.test/Makefile.crosscompile clean
