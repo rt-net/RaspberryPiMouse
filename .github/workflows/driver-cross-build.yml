@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+    - 'src/drivers/**'
+    - '.github/workflows/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+    - 'src/drivers/**'
+    - '.github/workflows/**'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        env:
+          - { RPI_LINUX_VER: rpi-4.1.y, CONFIG_FILE: config-4.1.21-v7+, RPI_LINUX_COMMIT_HASH: ff45bc0 }
+          - { RPI_LINUX_VER: rpi-4.4.y, CONFIG_FILE: config-4.4.38-v7+, RPI_LINUX_COMMIT_HASH: c95b7f1 }
+          - { RPI_LINUX_VER: rpi-4.14.y, CONFIG_FILE: config-4.14.34-v7+, RPI_LINUX_COMMIT_HASH: f70eae4 }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install cross-build settings
+        run: |
+          mkdir -p ${HOME}/repo/raspberrypi
+          if [ -e ${HOME}/repo/raspberrypi/tools ]; then (cd ${HOME}/repo/raspberrypi/tools && git pull); else (cd ${HOME}/repo/raspberrypi && git clone --depth 1 https://github.com/raspberrypi/tools.git); fi
+
+      - name: Install kernel headers
+        env:
+          RPI_LINUX_VER: ${{ matrix.env.RPI_LINUX_VER }}
+          CONFIG_FILE: ${{ matrix.env.CONFIG_FILE }}
+          RPI_LINUX_COMMIT_HASH: ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
+        run: |
+          if [ -e ${HOME}/repo/raspberrypi/linux ]; then (cd ${HOME}/repo/raspberrypi/linux && git fetch origin && git checkout ${RPI_LINUX_VER} && git pull); else (cd ${HOME}/repo/raspberrypi && git clone -b ${RPI_LINUX_VER} https://github.com/raspberrypi/linux.git); fi
+          cd ${HOME}/repo/raspberrypi/linux && make clean && git reset --hard HEAD && git checkout ${RPI_LINUX_COMMIT_HASH}
+          cp "${GITHUB_WORKSPACE}/.test/${CONFIG_FILE}" ${HOME}/repo/raspberrypi/linux/.config
+          make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm oldconfig
+          make CROSS_COMPILE=${HOME}/repo/raspberrypi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- ARCH=arm -j 8
+
+      - name: Build kernel module
+        run: |
+          cd ${GITHUB_WORKSPACE}/src/drivers
+          make -f ${GITHUB_WORKSPACE}/.test/Makefile.crosscompile
+
+      - name: Output kernel module info
+        run: |
+          uname -a
+          echo ${{ matrix.env.RPI_LINUX_VER }} ${{ matrix.env.CONFIG_FILE }} ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
+          cd ${GITHUB_WORKSPACE}/src/drivers
+          modinfo rtmouse.ko
+
+      - name: Clean up kernel module
+        run: |
+          cd ${GITHUB_WORKSPACE}/src/drivers
+          make -f ${GITHUB_WORKSPACE}/.test/Makefile.crosscompile clean
