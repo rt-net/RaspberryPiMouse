@@ -1,8 +1,8 @@
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #define FILE_MOTOREN "/dev/rtmotoren0"
 #define FILE_MOTOR_L "/dev/rtmotor_raw_l0"
@@ -10,7 +10,6 @@
 #define FILE_COUNT_L "/dev/rtcounter_l0"
 #define FILE_COUNT_R "/dev/rtcounter_r0"
 #define BUFF_SIZE 256
-
 
 void motor_drive(char *freq_l, char *freq_r) {
     FILE *motor_l, *motor_r;
@@ -42,8 +41,10 @@ void print_counter(const int timeout) {
     while (elapsed_time < timeout) {
         if ((count_l = fopen(FILE_COUNT_L, "r")) != NULL &&
             (count_r = fopen(FILE_COUNT_R, "r")) != NULL) {
-            while (fgets(buff_l, BUFF_SIZE, count_l) != NULL) {}
-            while (fgets(buff_r, BUFF_SIZE, count_r) != NULL) {}
+            while (fgets(buff_l, BUFF_SIZE, count_l) != NULL) {
+            }
+            while (fgets(buff_r, BUFF_SIZE, count_r) != NULL) {
+            }
             delete_newline(buff_l);
             delete_newline(buff_r);
             printf("count_l:%s, count_r:%s\n", buff_l, buff_r);
@@ -70,7 +71,6 @@ void reset_counters_and_motors(void) {
     fclose(count_r);
 }
 
-
 int main(void) {
     int motoren = open("/dev/rtmotoren0", O_WRONLY);
     // int motor_l = open("/dev/rtmotor_raw_l0",O_WRONLY);
@@ -79,25 +79,25 @@ int main(void) {
     write(motoren, "1", 1);
 
     printf("Rotate left motor\n");
-    usleep(500*1000);
+    usleep(500 * 1000);
     motor_drive("400", "0");
     print_counter(2);
     reset_counters_and_motors();
 
     printf("Rotate right motor\n");
-    usleep(500*1000);
+    usleep(500 * 1000);
     motor_drive("0", "400");
     print_counter(2);
     reset_counters_and_motors();
 
     printf("Move forward\n");
-    usleep(500*1000);
+    usleep(500 * 1000);
     motor_drive("400", "400");
     print_counter(2);
     reset_counters_and_motors();
 
     printf("Move backward\n");
-    usleep(500*1000);
+    usleep(500 * 1000);
     motor_drive("-400", "-400");
     print_counter(2);
     reset_counters_and_motors();
