@@ -1,4 +1,7 @@
-#include "fcntl.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int _Getch(void) {
     int ch;
@@ -8,7 +11,7 @@ int _Getch(void) {
     return ch;
 }
 
-void main(void) {
+int main(void) {
     int buzzer = open("/dev/rtbuzzer0", O_WRONLY);
     int c = 1;
 
@@ -63,4 +66,5 @@ void main(void) {
         }
     }
     close(buzzer);
+    return 0;
 }

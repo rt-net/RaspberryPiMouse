@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void main(void) {
+int main(void) {
     int buff_size = 256;
     FILE *fp;
 
@@ -16,4 +16,5 @@ void main(void) {
         fclose(fp);
         usleep(500 * 1000);
     }
+    return 0;
 }

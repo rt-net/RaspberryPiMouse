@@ -1,4 +1,5 @@
-#include "fcntl.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 char get_SW0(void) {
     char buf[2];
@@ -27,7 +28,7 @@ char get_SW2(void) {
     return buf[0];
 }
 
-void main(void) {
+int main(void) {
     int state0, state1, state2;
     int LED0, LED1, LED2, LED3;
 
@@ -78,4 +79,5 @@ void main(void) {
             }
         }
     }
+    return 0;
 }
