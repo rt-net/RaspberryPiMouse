@@ -67,5 +67,4 @@ int main(void) {
     }
     close(buzzer);
     return 0;
-    }
-    
+}
