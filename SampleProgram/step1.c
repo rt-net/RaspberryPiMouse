@@ -1,6 +1,7 @@
-#include "fcntl.h"
+#include <fcntl.h>
+#include <unistd.h>
 
-void main(void) {
+int main(void) {
     int led[4];
     int i;
 
@@ -22,4 +23,5 @@ void main(void) {
     for (i = 0; i < 4; i++) {
         close(led[i]);
     }
+    return 0;
 }

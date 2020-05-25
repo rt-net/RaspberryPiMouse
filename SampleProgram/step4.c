@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void main(void) {
+int main(void) {
     int motoren = open("/dev/rtmotoren0", O_WRONLY);
     int motor_l = open("/dev/rtmotor_raw_l0", O_WRONLY);
     int motor_r = open("/dev/rtmotor_raw_r0", O_WRONLY);
@@ -44,4 +44,5 @@ void main(void) {
     close(motor_l);
     close(motor_r);
     close(motor);
+    return 0;
 }
