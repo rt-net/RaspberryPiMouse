@@ -51,7 +51,7 @@ int main(void) {
                 write(buzzer, "440", 4);
                 break;
             case 'u':  // ra#
-                write(buzzer, "446", 4);
+                write(buzzer, "466", 4);
                 break;
             case 'j':  // shi
                 write(buzzer, "493", 4);
