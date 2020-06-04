@@ -61,6 +61,12 @@ I2Cのbaudrateをデフォルト値より下げる必要があります（[issue
 dtparam=i2c_baudrate=62500
 ```
 
+現在設定されているI2Cのbaudrateは以下のコマンドを実行することで確認できます。
+
+```
+$ printf "%d\n" 0x$(xxd -ps /sys/class/i2c-adapter/i2c-1/of_node/clock-frequency)
+```
+
 ### Raspberry Pi 4
 
 Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
