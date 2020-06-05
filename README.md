@@ -14,7 +14,7 @@ for the Raspberry Pi Mouse.
 ```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd RaspberryPiMouse/utils
-$ sudo apt install raspberrypi-kernel-headers
+$ sudo apt install raspberrypi-kernel-headers build-essential
 $ ./build_install.bash
 ```
 
@@ -23,7 +23,7 @@ $ ./build_install.bash
 ```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd RaspberryPiMouse/utils
-$ sudo apt install linux-headers-$(uname -r)
+$ sudo apt install linux-headers-$(uname -r) build-essential
 $ ./build_install.bash
 ```
 
