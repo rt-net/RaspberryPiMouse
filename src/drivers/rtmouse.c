@@ -55,7 +55,7 @@
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("2.1.0");
+MODULE_VERSION("2.1.1");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
@@ -594,7 +594,7 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 	if (copy_to_user((void *)buf, &rw_buf, count)) {
 		printk(KERN_INFO "err read buffer from ret  %d\n", ret);
 		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
-		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
+		printk(KERN_INFO "err sample_char_read size(%zu)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return 0;
 	}
@@ -665,7 +665,7 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 	if (copy_to_user((void *)buf, &rw_buf, count)) {
 		printk(KERN_INFO "err read buffer from ret  %d\n", ret);
 		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
-		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
+		printk(KERN_INFO "err sample_char_read size(%zu)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return 0;
 	}
@@ -1261,7 +1261,7 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 	/* copy data to user area */
 	if (copy_to_user((void *)buf, &rw_buf, count)) {
 		printk(KERN_INFO "err read buffer from %s\n", rw_buf);
-		printk(KERN_INFO "err sample_char_read size(%d)\n", count);
+		printk(KERN_INFO "err sample_char_read size(%zu)\n", count);
 		printk(KERN_INFO "sample_char_read size err(%d)\n", -EFAULT);
 		return -EFAULT;
 	}
