@@ -5,11 +5,13 @@
 This repository has the source code and kernel objects
 for the Raspberry Pi Mouse.
 
-## インストール
+## Installation
+
+Run the installation script ([`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)).
 
 インストール用のシェルスクリプト（[`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)）を実行します。
 
-### Raspbianの場合
+### for Raspbian
 
 ```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
@@ -18,7 +20,7 @@ $ sudo apt install raspberrypi-kernel-headers build-essential
 $ ./build_install.bash
 ```
 
-### Ubuntuの場合
+### for Ubuntu
 
 ```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
@@ -27,7 +29,7 @@ $ sudo apt install linux-headers-$(uname -r) build-essential
 $ ./build_install.bash
 ```
 
-## マニュアルインストール
+### Manual installation
 
 ```sh
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
@@ -36,9 +38,11 @@ $ make
 $ sudo insmod rtmouse.ko
 ```
 
-## ドライバの導入の際の注意
+## Notes for the installation (ドライバの導入の際の注意)
 
-### Raspbian
+### for Raspbian
+
+Enable SPI and I2C functions via `raspi-config` command.
 
 以下の設定を確認ください。
 `raspi-config` コマンドで設定します。
@@ -51,7 +55,9 @@ rtmouseをインストールして不具合が出た場合のみ以下の設定�
 
 * Device Tree機能を「切」にする。
 
-### arm64版Ubuntu18.04
+### for arm64 Ubuntu18.04
+
+Add a following new line in `/boot/firmware/config.txt` to change the i2c_baudrate to 62.5 kHz.
 
 I2Cのbaudrateをデフォルト値より下げる必要があります（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）。
 
@@ -61,13 +67,17 @@ I2Cのbaudrateをデフォルト値より下げる必要があります（[issue
 dtparam=i2c_baudrate=62500
 ```
 
+The following command shows current i2c baudrate value.
+
 現在設定されているI2Cのbaudrateは以下のコマンドを実行することで確認できます。
 
 ```
 $ printf "%d\n" 0x$(xxd -ps /sys/class/i2c-adapter/i2c-1/of_node/clock-frequency)
 ```
 
-### Raspberry Pi 4
+### for Raspberry Pi 4
+
+Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from '2' to '4'.
 
 Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
 Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えて手動でビルドする必要があります。
@@ -81,7 +91,7 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 #define RASPBERRYPI 2
 ```
 
-### その他
+## その他
 
 その他のよくある質問については[wiki](https://github.com/rt-net/RaspberryPiMouse/wiki#%E3%82%88%E3%81%8F%E3%81%82%E3%82%8B%E8%B3%AA%E5%95%8F)にまとめています。
 
