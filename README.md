@@ -60,7 +60,6 @@ rtmouseをインストールして不具合が出た場合のみ以下の設定�
 According to
 [issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13),
 it may be necessary to set the I2C baudrate lower than the default value.
-
 Add a following new line in `/boot/firmware/config.txt` to change the i2c_baudrate to 62.5 kHz.
 
 I2Cのbaudrateをデフォルト値より下げる必要があります（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）。
