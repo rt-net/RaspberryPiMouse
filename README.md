@@ -91,6 +91,117 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 #define RASPBERRYPI 2
 ```
 
+## Device files
+
+For example code of device files, please refer to [SampleProgram](./SampleProgram/README.md).
+
+デバイスファイルの使用例は[サンプルプログラム](./SampleProgram/README.md)を参考にしてください。
+
+### LED x4 (Output)
+
+Write 1/0 to `/dev/rtled0` ~ `/dev/rtled3` to turn on/off the LEDs.
+
+`/dev/rtled0` ~ `/dev/rtled3` に1/0を書き込みLEDを点灯/消灯します。
+
+```sh
+# echo 0(OFF) or 1(ON) > /dev/rtled[0,1,2,3]
+$ echo 1 > /dev/rtled0
+$ echo 0 > /dev/rtled1
+```
+
+### Buzzer (Output)
+
+Write 0 ~ 20000 to `/dev/rtbuzzer0` to beep the buzzer.
+
+`/dev/rtbuzzer0` に0 ~ 20000を書き込みブザーを鳴らします。
+
+```sh
+# echo 0 ~ 20000(Hz) > /dev/rtbuzzer0
+$ echo 440 > /dev/rtbuzzer0
+$ echo 0 > /dev/rtbuzzer0
+```
+
+### Switch x3 (Input)
+
+Read `/dev/rtswitch0` ~ `/dev/rtswitch2` to get the switches on/off state.
+
+`/dev/rtswitch0` ~ `/dev/rtswitch2` を読み取りスイッチのON/OFF状態を取得します。
+
+```sh
+# cat /dev/rtswitch[0,1]
+# Return value: 1(Open), 0(Pressed)
+$ cat /dev/rtswitch0
+```
+
+### Motor enable (Output)
+
+Write 1/0 to `/dev/rtmotoren0` to enable/disable motors control.
+
+`/dev/rtmotoren0` に 1/0 を書き込みモータ操作を可能/無効にします。
+
+```sh
+# echo 0(disable) or 1(enable) > /dev/rtmotoren0
+$ echo 1 > /dev/rtmotoren0
+```
+
+### PWM frequency for left/right motor driver (Output)
+
+Write 0 ~ 10000 to `/dev/rtmotor_raw_l0` or `/dev/rtmotor_raw_r0` to set PWM frequency for motor drivers.
+
+`/dev/rtmotor_raw_l0` または `/dev/rtmotor_raw_r0` に 0 ~ 10000 を書き込み、モータドライバへのPWM周波数を設定します。
+
+```sh
+# echo 0 ~ 10000(Hz) > /dev/rtmotor_raw_[l0, r0]
+$ echo 1 > /dev/rtmotoren0
+$ echo 400 > /dev/rtmotor_raw_l0
+```
+
+### PWM frequencies and drive duration (Output)
+
+Write left and right PWM frequencies and drive duration to `/dev/rtmotor0` to drive both motors.
+
+`/dev/rtmotor0`に左右のPWM周波数と動作時間を書き込み、左右のモータを回します。
+
+```sh
+# echo [left_freq Hz] [right_freq Hz] [duration ms] > /dev/rtmotor0
+$ echo 1 > /dev/rtmotoren0
+$ echo 400 800 1000 > /dev/rtmotor0
+```
+
+### Light sensor x4 (Input)
+
+Read `/dev/rtlightsensor0` to get proximity (0:far ~ 4095:close) of objects detected by light sensors.
+
+`/dev/rtlightsensor0`を読み取り、光センサで検出された物体の近接度 (0:遠い ~ 4095:近い)を取得します。
+
+```sh
+# cat /dev/rtlightsensor0
+# Return value: [front right] [right] [left] [front left]
+$ cat /dev/rtlightsensor0
+9 2 13 3
+```
+
+### Pulse counter x2 (Input/Output)
+
+Read `/dev/rtcounter_*` to get pulse counts of PWM for motor drivers or write values to reset counts.
+
+`/dev/rtcounter_*`を読み取りモータドライバへのPWMパルス数を取得します。また、値を書き込みカウントをリセットします。
+
+- unsigned counters : `/dev/rtcounter_l0`, `/dev/rtcounter_r0`
+- signed counters : `/dev/rtcounter_l1`, `/dev/rtcounter_r1`
+
+```sh
+# cat /dev/rtcounter_[l0, r0]
+# Return value: 0 ~ 65565 (counts of PWM pulse)
+# cat /dev/rtcounter_[l1, r1]
+# Return value: -32767 ~ 32767 (counts of PWM pulse)
+$ cat /dev/rtcounter_l0
+1104
+$ echo 0 > /dev/rtcounter_l0
+$ cat /dev/rtcounter_l0
+0
+```
+
 ## その他
 
 その他のよくある質問については[wiki](https://github.com/rt-net/RaspberryPiMouse/wiki#%E3%82%88%E3%81%8F%E3%81%82%E3%82%8B%E8%B3%AA%E5%95%8F)にまとめています。
