@@ -100,16 +100,29 @@ For example code of device files, please refer to [SampleProgram](./SampleProgra
 
 デバイスファイルの使用例は[サンプルプログラム](./SampleProgram/README.md)を参考にしてください。
 
-### LED x4 (Output)
+### Light sensor x4 (Input)
 
-Write 1/0 to `/dev/rtled0` ~ `/dev/rtled3` to turn on/off the LEDs.
+Read `/dev/rtlightsensor0` to get proximity (0:far ~ 4095:close) of objects detected by light sensors.
 
-`/dev/rtled0` ~ `/dev/rtled3` に1/0を書き込みLEDを点灯/消灯します。
+`/dev/rtlightsensor0`を読み取り、光センサで検出された物体の近接度 (0:遠い ~ 4095:近い)を取得します。
 
 ```sh
-# echo 0(OFF) or 1(ON) > /dev/rtled[0,1,2,3]
-$ echo 1 > /dev/rtled0
-$ echo 0 > /dev/rtled1
+# cat /dev/rtlightsensor0
+# Return value: [front right] [right] [left] [front left]
+$ cat /dev/rtlightsensor0
+9 2 13 3
+```
+
+### Switch x3 (Input)
+
+Read `/dev/rtswitch0` ~ `/dev/rtswitch2` to get the switches on/off state.
+
+`/dev/rtswitch0` ~ `/dev/rtswitch2` を読み取りスイッチのON/OFF状態を取得します。
+
+```sh
+# cat /dev/rtswitch[0,1]
+# Return value: 1(Open), 0(Pressed)
+$ cat /dev/rtswitch0
 ```
 
 ### Buzzer (Output)
@@ -124,16 +137,16 @@ $ echo 440 > /dev/rtbuzzer0
 $ echo 0 > /dev/rtbuzzer0
 ```
 
-### Switch x3 (Input)
+### LED x4 (Output)
 
-Read `/dev/rtswitch0` ~ `/dev/rtswitch2` to get the switches on/off state.
+Write 1/0 to `/dev/rtled0` ~ `/dev/rtled3` to turn on/off the LEDs.
 
-`/dev/rtswitch0` ~ `/dev/rtswitch2` を読み取りスイッチのON/OFF状態を取得します。
+`/dev/rtled0` ~ `/dev/rtled3` に1/0を書き込みLEDを点灯/消灯します。
 
 ```sh
-# cat /dev/rtswitch[0,1]
-# Return value: 1(Open), 0(Pressed)
-$ cat /dev/rtswitch0
+# echo 0(OFF) or 1(ON) > /dev/rtled[0,1,2,3]
+$ echo 1 > /dev/rtled0
+$ echo 0 > /dev/rtled1
 ```
 
 ### Motor enable (Output)
@@ -169,19 +182,6 @@ Write left and right PWM frequencies and drive duration to `/dev/rtmotor0` to dr
 # echo [left_freq Hz] [right_freq Hz] [duration ms] > /dev/rtmotor0
 $ echo 1 > /dev/rtmotoren0
 $ echo 400 800 1000 > /dev/rtmotor0
-```
-
-### Light sensor x4 (Input)
-
-Read `/dev/rtlightsensor0` to get proximity (0:far ~ 4095:close) of objects detected by light sensors.
-
-`/dev/rtlightsensor0`を読み取り、光センサで検出された物体の近接度 (0:遠い ~ 4095:近い)を取得します。
-
-```sh
-# cat /dev/rtlightsensor0
-# Return value: [front right] [right] [left] [front left]
-$ cat /dev/rtlightsensor0
-9 2 13 3
 ```
 
 ### Pulse counter x2 (Input/Output)
