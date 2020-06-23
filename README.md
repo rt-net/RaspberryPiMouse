@@ -140,7 +140,7 @@ $ cat /dev/rtswitch0
 
 Write 1/0 to `/dev/rtmotoren0` to enable/disable motors control.
 
-`/dev/rtmotoren0` に 1/0 を書き込みモータ操作を可能/無効にします。
+`/dev/rtmotoren0` に 1/0 を書き込みモータ操作を有効/無効にします。
 
 ```sh
 # echo 0(disable) or 1(enable) > /dev/rtmotoren0
