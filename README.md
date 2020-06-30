@@ -219,9 +219,9 @@ https://github.com/ryuichiueda/RPiM
 
 ## License
 
-This repository is licensed under the GPLv3 License, see [LICENSE](./LICENSE).
+This repository is licensed under the GPLv2 License, see [LICENSE](./LICENSE).
 
-このリポジトリはGPLv3ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
+このリポジトリはGPLv2ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
 
 ### Includings
 
