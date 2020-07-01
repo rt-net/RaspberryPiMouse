@@ -219,7 +219,7 @@ https://github.com/ryuichiueda/RPiM
 
 ## License
 
-This repository is licensed under the GPLv2 License, see [LICENSE](./LICENSE).
+This repository is licensed under the [GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html) License, see [LICENSE](./LICENSE).
 
 このリポジトリはGPLv2ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
 
