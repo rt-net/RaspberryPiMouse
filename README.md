@@ -55,29 +55,6 @@ rtmouseをインストールして不具合が出た場合のみ以下の設定�
 
 * Device Tree機能を「切」にする。
 
-### for arm64 Ubuntu18.04
-
-According to
-[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13),
-it may be necessary to set the I2C baudrate lower than the default value.
-Add a following new line in `/boot/firmware/config.txt` to change the i2c_baudrate to 62.5 kHz.
-
-I2Cのbaudrateをデフォルト値より下げる必要があります（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）。
-
-`/boot/firmware/config.txt`に以下の1行を追加することでI2Cのbaudrateを62.5kHzに固定することができます。
-
-```
-dtparam=i2c_baudrate=62500
-```
-
-The following command shows current i2c baudrate value.
-
-現在設定されているI2Cのbaudrateは以下のコマンドを実行することで確認できます。
-
-```
-$ printf "%d\n" 0x$(xxd -ps /sys/class/i2c-adapter/i2c-1/of_node/clock-frequency)
-```
-
 ### for Raspberry Pi 4
 
 Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from '2' to '4'.
@@ -92,6 +69,25 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
 #define RASPBERRYPI 2
+```
+
+### パルスカウンタについて
+
+パルスカウンタは値の読み取りにI2Cを使用しています。仕様上は400kHzまでbaudrateを上げることができます（※1）。  
+I2Cのbaudrateを上げると通信に失敗する組み合わせがある（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）ので、基本的にはI2Cのbaudrateはデフォルト値（※2）から変更して62.5kHzに固定してください。  
+According to
+[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13),
+it may be necessary to set the I2C baudrate lower than the default value.
+Add a following new line in `/boot/firmware/config.txt` to change the i2c_baudrate to 62.5 kHz.
+
+`/boot/firmware/config.txt`に以下の1行を追加することでI2Cのbaudrateを62.5kHzに固定することができます。
+```
+dtparam=i2c_baudrate=62500
+```
+※1　Raspberry Pi 4 Model B（Ubuntu 18.04とUbuntu 20.04）を搭載して400kHzで通信できることを確認しています。  
+※2　現在設定されているI2Cのbaudrateは以下のコマンドを実行することで確認できます。
+```
+$ printf "%d\n" 0x$(xxd -ps /sys/class/i2c-adapter/i2c-1/of_node/clock-frequency)
 ```
 
 ## Device files
