@@ -74,7 +74,7 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 ### パルスカウンタについて
 
 パルスカウンタは値の読み取りにI2Cを使用しています。仕様上は400kHzまでbaudrateを上げることができます（※1）。  
-I2Cのbaudrateを上げると通信に失敗する組み合わせがある（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）ので、基本的にはI2Cのbaudrateはデフォルト値（※2）から変更して62.5kHzに固定してください。  
+I2Cのbaudrateを上げると通信に失敗する場合がある（[issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13)）ので、基本的にはI2Cのbaudrateはデフォルト値（※2）から変更して62.5kHzに固定してください。  
 According to
 [issues#13](https://github.com/rt-net/RaspberryPiMouse/issues/13),
 it may be necessary to set the I2C baudrate lower than the default value.
