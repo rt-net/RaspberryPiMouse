@@ -8,8 +8,8 @@ while 1:
     for filename in files:
         with open(filename, 'w') as f:
             f.write("1")
-        time.sleep(0.5)
-        for filename in files:
-            with open(filename, 'w') as f:
-                f.write("0")
-        time.sleep(0.5)
+    time.sleep(0.5)
+    for filename in files:
+        with open(filename, 'w') as f:
+            f.write("0")
+    time.sleep(0.5)
