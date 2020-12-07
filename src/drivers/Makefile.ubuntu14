@@ -1,15 +1,15 @@
-#Reference: http://www.devdrv.co.jp/linux/kernel26-makefile.htm
-TARGET:= rtmouse.ko
+MODULE:= rtmouse
+obj-m:= $(MODULE).o
+clean-files:= *.o *.ko *.mod.[co] *~
 
-all: ${TARGET}
+LINUX_SRC_DIR:=/usr/src/linux-headers-$(shell uname -r)
+VERBOSE:=0
 
 rtmouse.ko: rtmouse.c
-	make -C /usr/src/linux-headers-`uname -r` M=`pwd` V=1 modules
+	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) modules
 
 clean:
-	make -C /usr/src/linux-headers-`uname -r` M=`pwd` V=1 clean
-
-obj-m:= rtmouse.o
+	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) clean
 
 install: rtmouse.ko
 	cp ../../50-rtmouse.rules /etc/udev/rules.d/
@@ -17,4 +17,4 @@ install: rtmouse.ko
 uninstall:
 	rm /etc/udev/rules.d/50-rtmouse.rules
 
-clean-files := *.o *.ko *.mod.[co] *~
+#Reference: http://www.devdrv.co.jp/linux/kernel26-makefile.htm
