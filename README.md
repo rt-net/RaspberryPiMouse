@@ -216,9 +216,13 @@ https://github.com/ryuichiueda/RPiM
 
 ## License
 
-This repository is licensed under the [GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html) License, see [LICENSE](./LICENSE).
+This repository except for `SampleProgram` directory is licensed under the [GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html) License, see [LICENSE](./LICENSE).
 
-このリポジトリは[GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
+`SampleProgram` directory is licensed under the Apache 2.0 License, see [SampleProgram / LICENSE](./SamplePRogram/LICENSE).
+
+このリポジトリは`SampleProgram`ディレクトリを除き[GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
+
+`SampleProgram`ディレクトリはApache 2.0ライセンスで公開されています。詳細は[SampleProgram / LICENSE](./SampleProgram/LICENSE)を確認してください。
 
 ### Includings
 

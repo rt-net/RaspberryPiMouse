@@ -4,6 +4,11 @@
 
 This directory contains examples how to use RaspberryPiMouse's peripherals like LEDs, switches, buzzer, etc.
 
+このディレクトリはApache 2.0ライセンスで公開されています。詳細は[SampleProgram / LICENSE](./LICENSE)を確認してください。
+
+This directory is licensed under the Apache 2.0 License, see [SampleProgram / LICENSE](./LICENSE).
+
+
 # How To Use
 
 各機能ごとにShell Script、C、Pythonで書かれたサンプルコードを用意しています。
