@@ -222,7 +222,7 @@ This repository except for `SampleProgram` directory is licensed under the [GPL-
 
 このリポジトリは`SampleProgram`ディレクトリを除き[GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)ライセンスで公開されています。詳細は[LICENSE](./LICENSE)を確認してください。
 
-`SampleProgram`ディレクトリはApache 2.0ライセンスで公開されています。詳細は[SampleProgram / LICENSE](./SampleProgram/LICENSE)を確認してください。
+`SampleProgram`ディレクトリは[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)ライセンスで公開されています。詳細は[SampleProgram / LICENSE](./SampleProgram/LICENSE)を確認してください。
 
 ### Includings
 
