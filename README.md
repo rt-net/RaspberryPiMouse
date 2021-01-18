@@ -61,7 +61,7 @@ Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a
 
 Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
 Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えてビルドする必要があります。  
-※付属の[build_install.bash](./utils/build_install.bash)を使用する場合はRaspberry Piのモデルを自動で判別して[`rtmouse.c`](./src/drivers/rtmouse.c)を[必要に応じて自動書き換え](https://github.com/rt-net/RaspberryPiMouse/blob/a9af4fa2b2a8e34c0f93a6ce5cf88ebd50ff39c2/utils/build_install.raspi4ubuntu.bash#L13-L14)しています。
+※[`./utils/build_install.bash`](./utils/build_install.bash)を実行すると、Raspberry Piのモデルに合わせて[`rtmouse.c`](./src/drivers/rtmouse.c)が[自動で書き換わります](https://github.com/rt-net/RaspberryPiMouse/blob/a9af4fa2b2a8e34c0f93a6ce5cf88ebd50ff39c2/utils/build_install.raspi4ubuntu.bash#L13-L14)。
 
 ```c
 // define the Raspberry Pi version here
