@@ -16,6 +16,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         env:
           - { RPI_LINUX_VER: rpi-4.1.y, CONFIG_FILE: config-4.1.21-v7+, RPI_LINUX_COMMIT_HASH: ff45bc0, GCC_VER: 4.8 }
