@@ -1,8 +1,14 @@
 This directory stores configuration files and scripts for build test.
 
+To run build test on your local machine, modify config in  `test.sh` and execute `./test.sh`.
+
+# Appendix
+
 ## GCC Versions
 
 ### https://github.com/raspberrypi/tools
+
+GCC 4.8 or 4.9
 
 
 ```
@@ -23,9 +29,11 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ### Raspbian Stretch
 
-
+GCC 6.3
 
 ### Raspbian Buster
+
+GCC 8.3
 
 ```
 $ lsb_release -a
@@ -41,7 +49,7 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
 
-# REF
+## REF
 
 https://gcc.gnu.org/gcc-4.9/changes.html
 
