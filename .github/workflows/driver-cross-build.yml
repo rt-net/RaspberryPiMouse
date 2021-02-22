@@ -75,6 +75,8 @@ jobs:
           make CROSS_COMPILE=${CROSS_COMPILE_PATH} ARCH=arm -j 8
 
       - name: Build kernel module
+        env:
+          CROSS_COMPILE_PATH: ${{ steps.gcc.outputs.path }}
         run: |
           cd ${GITHUB_WORKSPACE}/src/drivers
           make CROSS_COMPILE=${CROSS_COMPILE_PATH} -f ${GITHUB_WORKSPACE}/.test/Makefile.crosscompile
