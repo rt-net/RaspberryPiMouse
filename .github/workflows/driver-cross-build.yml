@@ -30,6 +30,8 @@ jobs:
 
       - name: Install cross-build settings
         id: gcc
+        env:
+          GCC_VER: ${{ matrix.env.GCC_VER }}
         run: |
           mkdir -p ${HOME}/repo/raspberrypi
           if [ "${GCC_VER}" = "4.8" ]; then
