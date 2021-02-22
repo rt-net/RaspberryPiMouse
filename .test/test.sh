@@ -17,7 +17,7 @@ echo "prepare cross compiler"
 echo "==========================================="
 if [ "${GCC_VER}" = "4.8" ]; then
     if [ -e ${HOME}/repo/raspberrypi/tools ]; then (cd ${HOME}/repo/raspberrypi/tools && git pull); else (cd ${HOME}/repo/raspberrypi && git clone --depth 1 https://github.com/raspberrypi/tools.git); fi
-    export CROSS_COMPILE_PATH=${HOME}/repo/raspberrypi/tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin
+    export CROSS_COMPILE_PATH="${HOME}/repo/raspberrypi/tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-"
 fi
 if [ "${GCC_VER}" = "6.3" ]; then
     if [ ! -e ${HOME}/repo/raspberrypi/cross-pi-gcc-6.3.0-2 ]; then
@@ -27,7 +27,7 @@ if [ "${GCC_VER}" = "6.3" ]; then
         fi
         tar xvf cross-gcc-6.3.0-pi_3+.tar.gz
     fi
-    export CROSS_COMPILE_PATH=${HOME}/repo/raspberrypi/cross-pi-gcc-6.3.0-2/bin/arm-linux-gnueabihf-
+    export CROSS_COMPILE_PATH="${HOME}/repo/raspberrypi/cross-pi-gcc-6.3.0-2/bin/arm-linux-gnueabihf-"
 fi
 if [ "${GCC_VER}" = "8.3" ]; then
     if [ ! -e ${HOME}/repo/raspberrypi/cross-pi-gcc-8.3.0-2 ]; then
@@ -37,7 +37,7 @@ if [ "${GCC_VER}" = "8.3" ]; then
         fi
         tar xvf cross-gcc-8.3.0-pi_3+.tar.gz
     fi
-    export CROSS_COMPILE_PATH=${HOME}/repo/raspberrypi/cross-pi-gcc-8.3.0-2/bin/arm-linux-gnueabihf-
+    export CROSS_COMPILE_PATH="${HOME}/repo/raspberrypi/cross-pi-gcc-8.3.0-2/bin/arm-linux-gnueabihf-"
 fi
 echo "==========================================="
 echo "build raspberrypi/linux"
