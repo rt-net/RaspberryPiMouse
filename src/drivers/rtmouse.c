@@ -5,7 +5,7 @@
  *
  * Version: 3.0.0
  *
- * Copyright (C) 2015-2020 RT Corporation <shop@rt-net.jp>
+ * Copyright (C) 2015-2021 RT Corporation <shop@rt-net.jp>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -752,15 +752,15 @@ static int gpio_map(void)
 	static int clk_status = 1;
 
 	if (gpio_base == NULL) {
-		gpio_base = ioremap_nocache(RPI_GPIO_BASE, RPI_GPIO_SIZE);
+		gpio_base = ioremap(RPI_GPIO_BASE, RPI_GPIO_SIZE);
 	}
 
 	if (pwm_base == NULL) {
-		pwm_base = ioremap_nocache(RPI_PWM_BASE, RPI_PWM_SIZE);
+		pwm_base = ioremap(RPI_PWM_BASE, RPI_PWM_SIZE);
 	}
 
 	if (clk_base == NULL) {
-		clk_base = ioremap_nocache(RPI_CLK_BASE, RPI_CLK_SIZE);
+		clk_base = ioremap(RPI_CLK_BASE, RPI_CLK_SIZE);
 	}
 
 	/* kill */
@@ -2060,13 +2060,13 @@ static int i2c_counter_init(void)
 	 */
 	// printk(KERN_DEBUG "%s: adding i2c device", __func__);
 	i2c_adap_l = i2c_get_adapter(1);
-	i2c_client_l = i2c_new_device(i2c_adap_l, &i2c_board_info_l);
+	i2c_client_l = i2c_new_client_device(i2c_adap_l, &i2c_board_info_l);
 	i2c_put_adapter(i2c_adap_l);
 	// printk(KERN_DEBUG "%s: added i2c device rtcntl", __func__);
 
 	// printk(KERN_DEBUG "%s: adding i2c device", __func__);
 	i2c_adap_r = i2c_get_adapter(1);
-	i2c_client_r = i2c_new_device(i2c_adap_r, &i2c_board_info_r);
+	i2c_client_r = i2c_new_client_device(i2c_adap_r, &i2c_board_info_r);
 	i2c_put_adapter(i2c_adap_r);
 	// printk(KERN_DEBUG "%s: added i2c device rtcntr", __func__);
 
