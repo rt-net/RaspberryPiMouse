@@ -4,6 +4,15 @@ To run build test on your local machine, modify config in  `test.sh` and execute
 
 # Appendix
 
+## Dump kernel config file
+
+Run the following commands in Raspberry Pi OS to dump the kernel config file.
+
+```
+sudo modprobe configs
+zcat /proc/config.gz > config-$(uname -r)
+```
+
 ## GCC Versions
 
 ### https://github.com/raspberrypi/tools
