@@ -58,5 +58,5 @@ jobs:
           SRC_DIR: ${{ github.workspace }}
         run: |
           source ./.test/step2.sh
-          install_kernel_headers
+          build_kernel_module
 
