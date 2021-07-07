@@ -6,12 +6,12 @@ on:
       - master
     paths:
     - 'src/drivers/**'
-    - '.github/workflows/**'
+    - '.github/workflows/driver-cross-build.yml'
   pull_request:
     types: [opened, synchronize]
     paths:
     - 'src/drivers/**'
-    - '.github/workflows/**'
+    - '.github/workflows/driver-cross-build.yml'
 
 jobs:
   build:

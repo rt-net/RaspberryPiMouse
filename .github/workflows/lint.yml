@@ -6,13 +6,13 @@ on:
       - master
     paths:
     - 'src/drivers/**'
-    - '.github/workflows/**'
+    - '.github/workflows/lint.yml'
     - '.test/lint.sh'
   pull_request:
     types: [opened, synchronize]
     paths:
     - 'src/drivers/**'
-    - '.github/workflows/**'
+    - '.github/workflows/lint.yml'
     - '.test/lint.sh'
 
 jobs:
