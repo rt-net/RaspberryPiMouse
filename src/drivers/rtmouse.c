@@ -272,6 +272,9 @@ static struct mutex lock;
 #define CNT_ADDR_MSB 0x10
 #define CNT_ADDR_LSB 0x11
 
+/* Motor Parameter */
+#define MOTOR_UNCONTROLLABLE_FREQ 5
+
 /* --- Function Declarations --- */
 static void set_motor_r_freq(int freq);
 static void set_motor_l_freq(int freq);
@@ -467,6 +470,11 @@ static void set_motor_l_freq(int freq)
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
 
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
+
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
 		return;
@@ -497,6 +505,11 @@ static void set_motor_r_freq(int freq)
 	int dat;
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
 
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
