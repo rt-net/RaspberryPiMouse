@@ -160,12 +160,16 @@ $ echo 1 > /dev/rtmotoren0
 
 ### PWM frequency for left/right motor driver (Output)
 
-Write 0 ~ 10000 to `/dev/rtmotor_raw_l0` or `/dev/rtmotor_raw_r0` to set PWM frequency for motor drivers.
+Write 0 ~ ±10000 to `/dev/rtmotor_raw_l0` or `/dev/rtmotor_raw_r0` to set PWM frequency for motor drivers.
 
-`/dev/rtmotor_raw_l0` または `/dev/rtmotor_raw_r0` に 0 ~ 10000 を書き込み、モータドライバへのPWM周波数を設定します。
+※ 0 ~ ±4 Hz will be reset to 0 Hz.
+
+`/dev/rtmotor_raw_l0` または `/dev/rtmotor_raw_r0` に 0 ~ ±10000 を書き込み、モータドライバへのPWM周波数を設定します。
+
+※ 0 ~ ±4 Hzは0Hzへリセットされます
 
 ```sh
-# echo 0 ~ 10000(Hz) > /dev/rtmotor_raw_[l0, r0]
+# echo 0 ~ ±10000(Hz) > /dev/rtmotor_raw_[l0, r0]
 $ echo 1 > /dev/rtmotoren0
 $ echo 400 > /dev/rtmotor_raw_l0
 ```
