@@ -3,7 +3,7 @@
  * rtmouse.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 3.1.0
+ * Version: 3.2.0
  *
  * Copyright (C) 2015-2021 RT Corporation <shop@rt-net.jp>
  *
@@ -55,7 +55,7 @@
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("3.1.0");
+MODULE_VERSION("3.2.0");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
@@ -271,6 +271,9 @@ static struct mutex lock;
 #define CNT_ADDR_MSB 0x10
 #define CNT_ADDR_LSB 0x11
 
+/* Motor Parameter */
+#define MOTOR_UNCONTROLLABLE_FREQ 5
+
 /* --- Function Declarations --- */
 static void set_motor_r_freq(int freq);
 static void set_motor_l_freq(int freq);
@@ -470,6 +473,11 @@ static void set_motor_l_freq(int freq)
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
 
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
+
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
 		return;
@@ -500,6 +508,11 @@ static void set_motor_r_freq(int freq)
 	int dat;
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
 
 	if (freq == 0) {
 		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
@@ -852,59 +865,6 @@ static int i2c_dev_release(struct inode *inode, struct file *filep)
 	return 0;
 }
 
-/* Parse Frequency */
-static int parseFreq(const char __user *buf, size_t count, int *ret)
-{
-	char cval;
-	int error = 0, i = 0, tmp, bufcnt = 0, freq;
-	size_t readcount = count;
-	int sgn = 1;
-
-	char *newbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
-
-	while (readcount > 0) {
-		if (copy_from_user(&cval, buf + i, sizeof(char))) {
-			kfree(newbuf);
-			return -EFAULT;
-		}
-
-		if (cval == '-') {
-			if (bufcnt == 0) {
-				sgn = -1;
-			}
-		} else if (cval < '0' || cval > '9') {
-			newbuf[bufcnt] = 'e';
-			error = 1;
-		} else {
-			newbuf[bufcnt] = cval;
-		}
-
-		i++;
-		bufcnt++;
-		readcount--;
-
-		if (cval == '\n') {
-			break;
-		}
-	}
-
-	freq = 0;
-	for (i = 0, tmp = 1; i < bufcnt; i++) {
-		char c = newbuf[bufcnt - i - 1];
-
-		if (c >= '0' && c <= '9') {
-			freq += (newbuf[bufcnt - i - 1] - '0') * tmp;
-			tmp *= 10;
-		}
-	}
-
-	*ret = sgn * freq;
-
-	kfree(newbuf);
-
-	return bufcnt;
-}
-
 /* Parse motor command  */
 static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
 {
@@ -935,58 +895,6 @@ static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
 	return count;
 }
 
-/* Parse I2C pulse counter value */
-static int parse_count(const char __user *buf, size_t count, int *ret)
-{
-	char cval;
-	int error = 0, i = 0, tmp, bufcnt = 0, freq;
-	size_t readcount = count;
-	int sgn = 1;
-
-	char *newbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
-
-	while (readcount > 0) {
-		if (copy_from_user(&cval, buf + i, sizeof(char))) {
-			kfree(newbuf);
-			return -EFAULT;
-		}
-
-		if (cval == '-') {
-			if (bufcnt == 0) {
-				sgn = -1;
-			}
-		} else if (cval < '0' || cval > '9') {
-			newbuf[bufcnt] = 'e';
-			error = 1;
-		} else {
-			newbuf[bufcnt] = cval;
-		}
-
-		i++;
-		bufcnt++;
-		readcount--;
-
-		if (cval == '\n') {
-			break;
-		}
-	}
-
-	freq = 0;
-	for (i = 0, tmp = 1; i < bufcnt; i++) {
-		char c = newbuf[bufcnt - i - 1];
-
-		if (c >= '0' && c <= '9') {
-			freq += (newbuf[bufcnt - i - 1] - '0') * tmp;
-			tmp *= 10;
-		}
-	}
-
-	*ret = sgn * freq;
-
-	kfree(newbuf);
-
-	return bufcnt;
-}
 
 /*
  * led_write - Trun ON/OFF LEDs
@@ -1023,10 +931,15 @@ static ssize_t led_write(struct file *filep, const char __user *buf,
 static ssize_t buzzer_write(struct file *filep, const char __user *buf,
 			    size_t count, loff_t *f_pos)
 {
-	int bufcnt;
+	int ret;
 	int freq, dat;
 
-	bufcnt = parseFreq(buf, count, &freq);
+	ret = kstrtoint_from_user(buf, count, 10, &freq);
+	if (ret) {
+		printk(KERN_ERR "%s: error parsing string to int in %s()\n",
+		       DRIVER_NAME, __func__);
+		return ret;
+	}
 
 	if (freq != 0) {
 		if (freq < 1) {
@@ -1047,7 +960,7 @@ static ssize_t buzzer_write(struct file *filep, const char __user *buf,
 				      RPI_GPF_OUTPUT); // io is pwm out
 	}
 
-	return bufcnt;
+	return count;
 }
 
 /*
@@ -1057,12 +970,17 @@ static ssize_t buzzer_write(struct file *filep, const char __user *buf,
 static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
 				size_t count, loff_t *f_pos)
 {
-	int freq, bufcnt;
-	bufcnt = parseFreq(buf, count, &freq);
+	int freq, ret;
 
+	ret = kstrtoint_from_user(buf, count, 10, &freq);
+	if (ret) {
+		printk(KERN_ERR "%s: error parsing string to int in %s()\n",
+		       DRIVER_NAME, __func__);
+		return ret;
+	}
 	set_motor_l_freq(freq);
 
-	return bufcnt;
+	return count;
 }
 
 /*
@@ -1072,12 +990,18 @@ static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
 static ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
 				size_t count, loff_t *f_pos)
 {
-	int freq, bufcnt;
-	bufcnt = parseFreq(buf, count, &freq);
+	int freq, ret;
+
+	ret = kstrtoint_from_user(buf, count, 10, &freq);
+	if (ret) {
+		printk(KERN_ERR "%s: error parsing string to int in %s()\n",
+		       DRIVER_NAME, __func__);
+		return ret;
+	}
 
 	set_motor_r_freq(freq);
 
-	return bufcnt;
+	return count;
 }
 
 /*
@@ -1294,13 +1218,15 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 {
 	struct rtcnt_device_info *dev_info = filep->private_data;
 
-	int bufcnt = 0;
 	int rtcnt_count = 0;
+	int ret;
 
-	if (count < 0)
-		return 0;
-
-	bufcnt = parse_count(buf, count, &rtcnt_count);
+	ret = kstrtoint_from_user(buf, count, 10, &rtcnt_count);
+	if (ret) {
+		printk(KERN_ERR "%s: error parsing string to int in %s()\n",
+		       DRIVER_NAME, __func__);
+		return ret;
+	}
 
 	i2c_counter_set(dev_info, rtcnt_count);
 
@@ -1310,7 +1236,7 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 
 	printk(KERN_INFO "%s: set pulse counter value %d\n", DRIVER_NAME,
 	       rtcnt_count);
-	return bufcnt;
+	return count;
 }
 
 /* --- Device File Operations --- */
