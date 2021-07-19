@@ -895,7 +895,6 @@ static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
 	return count;
 }
 
-
 /*
  * led_write - Trun ON/OFF LEDs
  * Write function of /dev/rtled
