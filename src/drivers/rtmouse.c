@@ -10,12 +10,12 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
@@ -253,7 +253,6 @@ static struct mutex lock;
 #define RPI_PWM_RNG2 0x20
 #define RPI_PWM_DAT2 0x24
 
-
 #if RASPBERRYPI == 4
 #define PWM_BASECLK 27000000
 #else
@@ -299,7 +298,8 @@ struct mcp3204_drvdata {
 /* --- Static variables --- */
 /* SPI device ID */
 static struct spi_device_id mcp3204_id[] = {
-    {"mcp3204", 0}, {},
+    {"mcp3204", 0},
+    {},
 };
 
 /* SPI Info */
@@ -315,7 +315,8 @@ static struct spi_board_info mcp3204_info = {
 static struct spi_driver mcp3204_driver = {
     .driver =
 	{
-	    .name = DEVNAME_SENSOR, .owner = THIS_MODULE,
+	    .name = DEVNAME_SENSOR,
+	    .owner = THIS_MODULE,
 	},
     .id_table = mcp3204_id,
     .probe = mcp3204_probe,
@@ -343,19 +344,21 @@ static unsigned int motor_r_freq_is_positive = 1;
 
 /* I2C Device ID */
 static struct i2c_device_id i2c_counter_id[] = {
-    {DEVNAME_CNTL, 0}, {DEVNAME_CNTR, 1}, {},
+    {DEVNAME_CNTL, 0},
+    {DEVNAME_CNTR, 1},
+    {},
 };
 
 /* I2C Dirver Info */
 static struct i2c_driver i2c_counter_driver = {
-	.driver =
+    .driver =
 	{
-		.name = "rtcounter",
-		.owner = THIS_MODULE,
+	    .name = "rtcounter",
+	    .owner = THIS_MODULE,
 	},
-	.id_table = i2c_counter_id,
-	.probe = rtcnt_i2c_probe,
-	.remove = rtcnt_i2c_remove,
+    .id_table = i2c_counter_id,
+    .probe = rtcnt_i2c_probe,
+    .remove = rtcnt_i2c_remove,
 };
 
 /* -- Device Addition -- */
@@ -747,7 +750,8 @@ static int buzzer_init(void)
 	udelay(1000);
 	rpi_pwm_write32(RPI_PWM_CTRL, 0x00008181); // PWM1,2 enable
 
-	// printk(KERN_DEBUG "%s: rpi_pwm_ctrl:%08X\n", DRIVER_NAME, ioread32(pwm_base + RPI_PWM_CTRL));
+	// printk(KERN_DEBUG "%s: rpi_pwm_ctrl:%08X\n", DRIVER_NAME,
+	// ioread32(pwm_base + RPI_PWM_CTRL));
 
 	return 0;
 }
@@ -851,7 +855,7 @@ static int i2c_dev_open(struct inode *inode, struct file *filep)
 	if (dev_info == NULL || dev_info->client == NULL) {
 		printk(KERN_ERR "%s: i2c dev_open failed.\n", DRIVER_NAME);
 	}
-	dev_info->device_minor =  MINOR(inode->i_rdev);
+	dev_info->device_minor = MINOR(inode->i_rdev);
 	filep->private_data = dev_info;
 	return 0;
 }
@@ -890,7 +894,6 @@ static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
 
 	return count;
 }
-
 
 /*
  * led_write - Trun ON/OFF LEDs
@@ -1114,8 +1117,7 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
  * update_signed_count - update signed pulse count of dev_info
  * called by rtcnt_read()
  */
-void update_signed_count(struct rtcnt_device_info *dev_info,
-	int rtcnt_count)
+void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
 {
 	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
 
@@ -1123,26 +1125,26 @@ void update_signed_count(struct rtcnt_device_info *dev_info,
 	// ただし、それ以外でもdiffが負の値になることがある
 	// そのため、diffが十分に大きな負の値の場合に処理する
 	// if(diff_count < 0) では正常に動作しない
-	if(diff_count < -SIGNED_COUNT_SIZE){
+	if (diff_count < -SIGNED_COUNT_SIZE) {
 		diff_count += MAX_PULSE_COUNT;
 	}
 
-	if(dev_info->client->addr == DEV_ADDR_CNTL){
-		if(motor_l_freq_is_positive){
+	if (dev_info->client->addr == DEV_ADDR_CNTL) {
+		if (motor_l_freq_is_positive) {
 			dev_info->signed_pulse_count += diff_count;
-		}else{
+		} else {
 			dev_info->signed_pulse_count -= diff_count;
 		}
-	}else{
-		if(motor_r_freq_is_positive){
+	} else {
+		if (motor_r_freq_is_positive) {
 			dev_info->signed_pulse_count += diff_count;
-		}else{
+		} else {
 			dev_info->signed_pulse_count -= diff_count;
 		}
 	}
 
-	if(dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
-		dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE){
+	if (dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
+	    dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE) {
 		dev_info->signed_pulse_count = 0;
 	}
 }
@@ -1151,14 +1153,13 @@ void update_signed_count(struct rtcnt_device_info *dev_info,
  * reset_signed_count - reset signed pulse count of dev_info
  * called by rtcnt_write()
  */
-void reset_signed_count(struct rtcnt_device_info *dev_info,
-	int rtcnt_count)
+void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
 {
 	int raw_count;
 
-	if(rtcnt_count > SIGNED_COUNT_SIZE){
+	if (rtcnt_count > SIGNED_COUNT_SIZE) {
 		rtcnt_count = SIGNED_COUNT_SIZE;
-	}else if(rtcnt_count < - SIGNED_COUNT_SIZE){
+	} else if (rtcnt_count < -SIGNED_COUNT_SIZE) {
 		rtcnt_count = -SIGNED_COUNT_SIZE;
 	}
 	dev_info->signed_pulse_count = rtcnt_count;
@@ -1183,11 +1184,11 @@ static ssize_t rtcnt_read(struct file *filep, char __user *buf, size_t count,
 		return 0; /* close device */
 	i2c_counter_read(dev_info, &rtcnt_count);
 
-	if(dev_info->device_minor == 1){
+	if (dev_info->device_minor == 1) {
 		update_signed_count(dev_info, rtcnt_count);
 		dev_info->raw_pulse_count = rtcnt_count;
 		rtcnt_count = dev_info->signed_pulse_count;
-	}else{
+	} else {
 		dev_info->raw_pulse_count = rtcnt_count;
 	}
 
@@ -1228,7 +1229,7 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 
 	i2c_counter_set(dev_info, rtcnt_count);
 
-	if(dev_info->device_minor == 1){
+	if (dev_info->device_minor == 1) {
 		reset_signed_count(dev_info, rtcnt_count);
 	}
 
@@ -1240,35 +1241,51 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 /* --- Device File Operations --- */
 /* /dev/rtled */
 static struct file_operations led_fops = {
-    .open = dev_open, .release = dev_release, .write = led_write,
+    .open = dev_open,
+    .release = dev_release,
+    .write = led_write,
 };
 /* /dev/rtbuzzer */
 static struct file_operations buzzer_fops = {
-    .open = dev_open, .release = dev_release, .write = buzzer_write,
+    .open = dev_open,
+    .release = dev_release,
+    .write = buzzer_write,
 };
 /* /dev/rtswitch */
 static struct file_operations sw_fops = {
-    .open = dev_open, .read = sw_read, .release = dev_release,
+    .open = dev_open,
+    .read = sw_read,
+    .release = dev_release,
 };
 /* /dev/rtlightsensor */
 static struct file_operations sensor_fops = {
-    .open = dev_open, .read = sensor_read, .release = dev_release,
+    .open = dev_open,
+    .read = sensor_read,
+    .release = dev_release,
 };
 /* /dev/rtmotor_raw_r */
 static struct file_operations motorrawr_fops = {
-    .open = dev_open, .write = rawmotor_r_write, .release = dev_release,
+    .open = dev_open,
+    .write = rawmotor_r_write,
+    .release = dev_release,
 };
 /* /dev/rtmotor_raw_l */
 static struct file_operations motorrawl_fops = {
-    .open = dev_open, .write = rawmotor_l_write, .release = dev_release,
+    .open = dev_open,
+    .write = rawmotor_l_write,
+    .release = dev_release,
 };
 /* /dev/rtmotoren */
 static struct file_operations motoren_fops = {
-    .open = dev_open, .write = motoren_write, .release = dev_release,
+    .open = dev_open,
+    .write = motoren_write,
+    .release = dev_release,
 };
 /* /dev/rtmotor */
 static struct file_operations motor_fops = {
-    .open = dev_open, .write = motor_write, .release = dev_release,
+    .open = dev_open,
+    .write = motor_write,
+    .release = dev_release,
 };
 /* /dev/rtcounter_* */
 static struct file_operations rtcnt_fops = {
@@ -1293,7 +1310,7 @@ static int led_register_dev(void)
 				     DEV_MINOR, /* ベースマイナー番号 */
 				     NUM_DEV_LED, /* デバイスの数 */
 				     DEVNAME_LED /* デバイスドライバの名前 */
-				     );
+	);
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1342,7 +1359,7 @@ static int buzzer_register_dev(void)
 				     DEV_MINOR, /* ベースマイナー番号 */
 				     NUM_DEV_BUZZER, /* デバイスの数 */
 				     DEVNAME_BUZZER /* デバイスドライバの名前 */
-				     );
+	);
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1388,7 +1405,7 @@ static int motorrawr_register_dev(void)
 				DEV_MINOR, /* ベースマイナー番号 */
 				NUM_DEV_MOTORRAWR, /* デバイスの数 */
 				DEVNAME_MOTORRAWR /* デバイスドライバの名前 */
-				);
+	    );
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1436,7 +1453,7 @@ static int motorrawl_register_dev(void)
 				DEV_MINOR, /* ベースマイナー番号 */
 				NUM_DEV_MOTORRAWL, /* デバイスの数 */
 				DEVNAME_MOTORRAWL /* デバイスドライバの名前 */
-				);
+	    );
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1483,7 +1500,7 @@ static int switch_register_dev(void)
 				     DEV_MINOR, /* ベースマイナー番号 */
 				     NUM_DEV_SWITCH, /* デバイスの数 */
 				     DEVNAME_SWITCH /* デバイスドライバの名前 */
-				     );
+	);
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1532,7 +1549,7 @@ static int sensor_register_dev(void)
 				     DEV_MINOR, /* ベースマイナー番号 */
 				     NUM_DEV_SENSOR, /* デバイスの数 */
 				     DEVNAME_SENSOR /* デバイスドライバの名前 */
-				     );
+	);
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1578,7 +1595,7 @@ static int motoren_register_dev(void)
 				DEV_MINOR, /* ベースマイナー番号 */
 				NUM_DEV_MOTOREN, /* デバイスの数 */
 				DEVNAME_MOTOREN /* デバイスドライバの名前 */
-				);
+	    );
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1623,7 +1640,7 @@ static int motor_register_dev(void)
 				     DEV_MINOR, /* ベースマイナー番号 */
 				     NUM_DEV_MOTOR, /* デバイスの数 */
 				     DEVNAME_MOTOR /* デバイスドライバの名前 */
-				     );
+	);
 
 	if (retval < 0) {
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -1846,7 +1863,7 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* 取得したdev( = メジャー番号 +  マイナー番号)
-     * からメジャー番号を取得して保持しておく */
+	 * からメジャー番号を取得して保持しておく */
 	dev_info->device_major = MAJOR(dev);
 	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
@@ -1896,7 +1913,7 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* 取得したdev( = メジャー番号 + マイナー番号)
-     * からメジャー番号を取得して保持しておく */
+	 * からメジャー番号を取得して保持しておく */
 	dev_info->device_major = MAJOR(dev);
 	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
@@ -1944,8 +1961,8 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
 	if ((msb < 0) || (lsb < 0)) {
 		printk(KERN_INFO
-		    "%s: rtcounter not found, or wrong i2c device probed",
-		    DRIVER_NAME);
+		       "%s: rtcounter not found, or wrong i2c device probed",
+		       DRIVER_NAME);
 		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
 		//        client->addr, msb, lsb);
 		return -ENODEV;
@@ -1971,7 +1988,6 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 
 	return 0;
 }
-
 
 /*
  * i2c_counter_init - initialize I2C counter
@@ -2066,7 +2082,8 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
 static int rtcnt_i2c_remove(struct i2c_client *client)
 {
 	struct rtcnt_device_info *dev_info;
-	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__, client->addr);
+	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+	// client->addr);
 	dev_info = i2c_get_clientdata(client);
 	rtcnt_i2c_delete_cdev(dev_info);
 	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
@@ -2093,8 +2110,7 @@ int dev_init_module(void)
 	retval = i2c_counter_init();
 	if (retval == 0) {
 		registered_devices += 2 * NUM_DEV_CNT;
-	}
-	else{
+	} else {
 		printk(KERN_ALERT
 		       "%s: i2c counter device driver register failed.\n",
 		       DRIVER_NAME);
@@ -2226,7 +2242,7 @@ int dev_init_module(void)
 	}
 
 	printk(KERN_INFO "%s: %d devices loaded.\n", DRIVER_NAME,
-	       registered_devices+NUM_DEV_TOTAL);
+	       registered_devices + NUM_DEV_TOTAL);
 
 	printk(KERN_INFO "%s: module installed at %lu\n", DRIVER_NAME, jiffies);
 	return 0;
