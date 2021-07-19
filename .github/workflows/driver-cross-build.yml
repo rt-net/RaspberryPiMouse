@@ -5,16 +5,33 @@ on:
     branches:
       - master
     paths:
-    - 'src/drivers/**'
     - '.github/workflows/driver-cross-build.yml'
+    - '.test/bin/**'
+    - '.test/lint.sh'
+    - 'src/drivers/**'
   pull_request:
     types: [opened, synchronize]
     paths:
-    - 'src/drivers/**'
     - '.github/workflows/driver-cross-build.yml'
+    - '.test/bin/**'
+    - '.test/lint.sh'
+    - 'src/drivers/**'
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Lint
+        run: |
+          ./.test/lint.sh
   build:
+    needs: lint
     strategy:
       fail-fast: false
       matrix:
