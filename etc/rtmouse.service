@@ -1,0 +1,11 @@
+[Unit]
+Description=rtmouse driver
+
+[Service]
+Type=oneshot
+ExecStart=/etc/init.d/rtmouse.sh start
+ExecReload=/etc/init.d/rtmouse.sh restart
+ExecStopt=/etc/init.d/rtmouse.sh stop
+
+[Install]
+WantedBy=multi-user.target

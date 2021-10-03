@@ -2,7 +2,7 @@ MODULE:= rtmouse
 obj-m:= $(MODULE).o
 clean-files:= *.o *.ko *.mod.[co] *~
 
-LINUX_SRC_DIR:=/usr/src/linux
+LINUX_SRC_DIR:=/usr/src/linux-headers-$(shell uname -r)
 VERBOSE:=0
 
 rtmouse.ko: rtmouse.c
@@ -10,3 +10,16 @@ rtmouse.ko: rtmouse.c
 
 clean:
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) clean
+
+install: rtmouse.ko
+	cp rtmouse.ko /lib/modules/$(shell uname -r)/kernel/drivers/
+	cp ../../etc/50-rtmouse.rules /etc/udev/rules.d/
+	cp ../../etc/rtmouse.sh /etc/init.d/
+	chmod 755 /etc/init.d/rtmouse.sh
+	cp ../../etc/rtmouse.service /etc/systemd/system/
+	systemctl enable rtmouse
+
+uninstall:
+	rm /etc/udev/rules.d/50-rtmouse.rules
+
+#Reference: http://www.devdrv.co.jp/linux/kernel26-makefile.htm
