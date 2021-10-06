@@ -4,14 +4,18 @@ set -eu
 SRC_DIR=$(cd $(dirname ${BASH_SOURCE:-$0})/../; pwd)
 
 if [ -e /usr/src/linux ]; then
-	# Raspbian/Raspberry Pi OS
-	$SRC_DIR/utils/build_install.raspbian.bash && exit 0
-elif [ "$(ls /usr/src/linux-* 2> /dev/null)" != '' ]; then
-	# Ubuntu
+	# build with linux headers installed from source
 	if grep -q "Raspberry Pi 4" /proc/cpuinfo; then
-		$SRC_DIR/utils/build_install.raspi4ubuntu.bash && exit 0
+		$SRC_DIR/utils/build_install_header_from_source_raspi4.bash && exit 0
 	else
-		$SRC_DIR/utils/build_install.ubuntu14.bash && exit 0
+		$SRC_DIR/utils/build_install_header_from_source_raspi2.bash && exit 0
+	fi
+elif [ "$(ls /usr/src/linux-* 2> /dev/null)" != '' ]; then
+	# build with linux headers installed with apt
+	if grep -q "Raspberry Pi 4" /proc/cpuinfo; then
+		$SRC_DIR/utils/build_install_header_from_apt_raspi4.bash && exit 0
+	else
+		$SRC_DIR/utils/build_install_header_from_apt_raspi2.bash && exit 0
 	fi
 else
 	# Error

@@ -8,7 +8,7 @@ SRC_DIR=$(cd $(dirname ${BASH_SOURCE:-$0})/../; pwd)
 # build and install the driver
 cd $SRC_DIR/src/drivers/
 rm Makefile
-ln -s Makefile.raspbian Makefile
+ln -s Makefile.header_from_source Makefile
 make clean
 make 
 sudo insmod rtmouse.ko
