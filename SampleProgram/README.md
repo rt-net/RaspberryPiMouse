@@ -15,6 +15,10 @@ This directory is licensed under the Apache 2.0 License, see [SampleProgram / LI
 
 Each peripheral example has sample code files written Shell Script, C and Python.
 
+RT Software Tutorialsでは動画つきで説明しています。
+
+https://rt-net.github.io/tutorials/raspimouse/driver/samples.html
+
 ## Shell Script
 
 ```sh
@@ -96,3 +100,37 @@ Read the lightsensors values.
 モータを回して、パルスカウンタの値を読み込みます。
 
 Drive the motors and read the pulse counters values.
+
+# Step7
+
+車体速度![v_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Bfw%7D)、
+車体角速度![v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Brot%7D)で指令するサンプルプログラムです。
+
+サンプルでは車体速度と車体角速度を指定しての移動が実装されています。
+
+## 解説
+
+左右のモータへの制御信号を![\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D)(Hz)で入力したときの、
+車体の並進方向のスピードを![v_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Bfw%7D)(m/s)とします。  
+右のモータへの制御信号を![\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D)(Hz)、
+左のモータへ![\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D)(Hz)としたとき、
+ロボットが旋回するときの角速度を![v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Brot%7D)(rad/s)とします。
+
+このとき、ホイールの直径を![\phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cphi)、車体のトレッドを![t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+t)、モータ1回転のための制御信号を![p](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+p)とします。
+
+モータ1回転につき車体が並進方向に進む距離は以下のように表現できます。
+
+![v_{fw} : \omega_{fw} = \pi \phi  : p](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+v_%7Bfw%7D+%3A+%5Comega_%7Bfw%7D+%3D+%5Cpi+%5Cphi++%3A+p)
+
+並進方向についても同様に考えます。
+車体が1回転するときのホイールの移動距離は![\pi t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+t)(m)です。
+モータ1回転でホイールは![\pi \phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+%5Cphi)(m)移動するので、
+モータ1回転につき車体が旋回する角度は以下のように表現できます。
+
+![v_{rot} : \omega_{rot} = \frac{2\pi} {\pi t / \pi \phi}  : p](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+v_%7Brot%7D+%3A+%5Comega_%7Brot%7D+%3D+%5Cfrac%7B2%5Cpi%7D+%7B%5Cpi+t+%2F+%5Cpi+%5Cphi%7D++%3A+p)
+
+これらを整理するとモータ制御信号は以下の2つの式にまとめられます。
+
+![\omega_{fw} = \frac{p} {\pi \phi} v_{fw} ](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D+%3D+%5Cfrac%7Bp%7D+%7B%5Cpi+%5Cphi%7D+v_%7Bfw%7D+)
+
+![\omega_{rot} = \frac {tp}{2\pi \phi} v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D+%3D+%5Cfrac+%7Btp%7D%7B2%5Cpi+%5Cphi%7D+v_%7Brot%7D)
