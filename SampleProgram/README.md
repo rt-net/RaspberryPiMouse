@@ -112,7 +112,7 @@ Drive the motors and read the pulse counters values.
 
 ホイールの直径を![\phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cphi)[m]、車体のトレッドを![t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+t)[m]、モータ1回転のための制御信号を![p](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+p)[Hz]とします。
 
-左右のモータへの制御信号を![\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D)[Hz]で入力したときの、
+左右のモータへの制御信号を![\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D)[Hz]で入力したときの、
 車体の並進方向の速度を![v_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Bfw%7D)[m/s]とします。  
 このときのそれぞれの関係は以下のように表現できます。
 
@@ -121,7 +121,7 @@ Drive the motors and read the pulse counters values.
 旋回方向についても同様に考えます。  
 車体が1回転するときのホイールが円弧を描くように移動する距離は![\pi t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+t)[m]で計算できます。
 モータ1回転でホイールの表面が移動する距離は![\pi \phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+%5Cphi)[m]で計算できます。  
-左右のモータへの制御信号をそれぞれ![-\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+-%5Comega_%7Bfw%7D)[Hz]と![\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D)[Hz]としたとき、
+左右のモータへの制御信号をそれぞれ![-\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+-%5Comega_%7Brot%7D)[Hz]と![\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D)[Hz]としたとき、
 ロボットが旋回するときの角速度を![v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Brot%7D)[rad/s]とします。  
 このときのそれぞれの関係は以下のように表現できます。
 
