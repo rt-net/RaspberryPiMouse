@@ -103,32 +103,32 @@ Drive the motors and read the pulse counters values.
 
 # Step7
 
-車体速度![v_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Bfw%7D)、
-車体角速度![v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Brot%7D)で指令するサンプルプログラムです。
+車体速度 $v_{fw}$ 、
+車体角速度 $v_{rot}$ で指令するサンプルプログラムです。
 
 サンプルでは車体速度と車体角速度を指定しての移動が実装されています。
 
 ## 解説
 
-ホイールの直径を![\phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cphi)[m]、車体のトレッドを![t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+t)[m]、モータ1回転のための制御信号を![p](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+p)[Hz]とします。
+ホイールの直径を $\phi$ [m]、車体のトレッドを $t$ [m]、モータ1回転のための制御信号を $p$ [Hz]とします。
 
-左右のモータへの制御信号を![\omega_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D)[Hz]で入力したときの、
-車体の並進方向の速度を![v_{fw}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Bfw%7D)[m/s]とします。  
+左右のモータへの制御信号を $\omega_{fw}$ [Hz]で入力したときの、
+車体の並進方向の速度を $v_{fw}$ [m/s]とします。  
 このときのそれぞれの関係は以下のように表現できます。
 
-![v_{fw} : \omega_{fw} = \pi \phi  : p](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+v_%7Bfw%7D+%3A+%5Comega_%7Bfw%7D+%3D+%5Cpi+%5Cphi++%3A+p)
+$$v_{fw} : \omega_{fw} = \pi \phi  : p$$
 
 旋回方向についても同様に考えます。  
-車体が1回転するときのホイールが円弧を描くように移動する距離は![\pi t](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+t)[m]で計算できます。
-モータ1回転でホイールの表面が移動する距離は![\pi \phi](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cpi+%5Cphi)[m]で計算できます。  
-左右のモータへの制御信号をそれぞれ![-\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+-%5Comega_%7Brot%7D)[Hz]と![\omega_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D)[Hz]としたとき、
-ロボットが旋回するときの角速度を![v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+v_%7Brot%7D)[rad/s]とします。  
+車体が1回転するときのホイールが円弧を描くように移動する距離は $\pi t$ [m]で計算できます。
+モータ1回転でホイールの表面が移動する距離は $\pi \phi$ [m]で計算できます。  
+左右のモータへの制御信号をそれぞれ $-\omega_{rot}$ [Hz]と $\omega_{rot}$ [Hz]としたとき、
+ロボットが旋回するときの角速度を $v_{rot}$ [rad/s]とします。  
 このときのそれぞれの関係は以下のように表現できます。
 
-![v_{rot} : \omega_{rot} = \frac{2\pi} {\pi t / \pi \phi}  : p](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+v_%7Brot%7D+%3A+%5Comega_%7Brot%7D+%3D+%5Cfrac%7B2%5Cpi%7D+%7B%5Cpi+t+%2F+%5Cpi+%5Cphi%7D++%3A+p)
+$$v_{rot} : \omega_{rot} = \frac{2\pi} {\pi t / \pi \phi}  : p$$
 
 これらを整理するとモータ制御信号は以下の2つの式にまとめられます。
 
-![\omega_{fw} = \frac{p} {\pi \phi} v_{fw} ](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Bfw%7D+%3D+%5Cfrac%7Bp%7D+%7B%5Cpi+%5Cphi%7D+v_%7Bfw%7D+)
+$$\omega_{fw} = \frac{p} {\pi \phi} v_{fw}$$
 
-![\omega_{rot} = \frac {tp}{2\pi \phi} v_{rot}](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Comega_%7Brot%7D+%3D+%5Cfrac+%7Btp%7D%7B2%5Cpi+%5Cphi%7D+v_%7Brot%7D)
+$$\omega_{rot} = \frac {tp}{2\pi \phi} v_{rot}$$
