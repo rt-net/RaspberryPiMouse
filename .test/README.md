@@ -4,7 +4,19 @@ To run build test on your local machine, modify config in  `test.sh` and execute
 
 # Appendix
 
-## Dump kernel config file
+## How to set env in `test.sh`
+
+* **RPI_LINUX_VER**
+  * select branch from here https://github.com/raspberrypi/linux/branches
+  * e.g.) `rpi-5.15.y`
+* **CONFIG_FILE**
+  * e.g.) `config-5.15.61-v7l+`
+* **RPI_LINUX_COMMIT_HASH**
+  * e.g.) `6af8ae3`
+* **GCC_VER**
+  * e.g.) `10.2`
+
+## How to dump kernel config file
 
 Run the following commands in Raspberry Pi OS to dump the kernel config file.
 
@@ -13,34 +25,31 @@ sudo modprobe configs
 zcat /proc/config.gz > config-$(uname -r)
 ```
 
+## How to get kernel commit hash
+
+1. Check kernel release version
+
+```
+$ dpkg -l | grep raspberrypi-kernel
+ii  raspberrypi-kernel                   1:1.20221104-1                   armhf        Raspberry Pi bootloader
+ii  raspberrypi-kernel-headers           1:1.20221104-1                   armhf        Header files for the Raspberry Pi Linux kernel
+```
+
+2. Find the release from raspberrypi/linux
+
+https://github.com/raspberrypi/linux/tags
+
+3. Copy the commit hash
+
+![](./docs/images/rpi_linux_commit_hash.png)
+
 ## GCC Versions
-
-### https://github.com/raspberrypi/tools
-
-GCC 4.8 or 4.9
-
-
-```
-$ ./tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc --version
-arm-linux-gnueabihf-gcc (crosstool-NG crosstool-ng-1.22.0-88-g8460611) 4.9.3
-Copyright (C) 2015 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-```
-
-```
-$ ./tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-gcc --version
-arm-linux-gnueabihf-gcc (crosstool-NG linaro-1.13.1+bzr2650 - Linaro GCC 2014.03) 4.8.3 20140303 (prerelease)
-Copyright (C) 2013 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-```
 
 ### Raspbian Stretch
 
 GCC 6.3
 
-### Raspbian Buster
+### Raspberry Pi OS Buster
 
 GCC 8.3
 
@@ -54,6 +63,24 @@ Codename:	buster
 $ gcc --version
 gcc (Raspbian 8.3.0-6+rpi1) 8.3.0
 Copyright (C) 2018 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
+### Raspberry Pi OS Bullseye
+
+GCC 10.2
+
+```
+$ lsb_release -a
+No LSB modules are available.
+Distributor ID:	Raspbian
+Description:	Raspbian GNU/Linux 11 (bullseye)
+Release:	11
+Codename:	bullseye
+$ gcc --version
+gcc (Raspbian 10.2.1-6+rpi1) 10.2.1 20210110
+Copyright (C) 2020 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```

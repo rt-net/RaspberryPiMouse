@@ -13,5 +13,5 @@ build_kernel_module () {
     modinfo rtmouse.ko
     echo "==========================================="
     echo "==========================================="
-    make CROSS_COMPILE=${CROSS_COMPILE_PATH} -f ${SRC_DIR}/.test/Makefile.crosscompile clean
+    # make CROSS_COMPILE=${CROSS_COMPILE_PATH} -f ${SRC_DIR}/.test/Makefile.crosscompile clean
 }
