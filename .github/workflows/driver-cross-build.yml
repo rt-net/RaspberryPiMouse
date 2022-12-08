@@ -36,9 +36,6 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - { RPI_LINUX_VER: rpi-4.1.y, CONFIG_FILE: config-4.1.21-v7+, RPI_LINUX_COMMIT_HASH: ff45bc0, GCC_VER: 4.8 }
-          - { RPI_LINUX_VER: rpi-4.4.y, CONFIG_FILE: config-4.4.38-v7+, RPI_LINUX_COMMIT_HASH: c95b7f1, GCC_VER: 4.8 }
-          - { RPI_LINUX_VER: rpi-4.14.y, CONFIG_FILE: config-4.14.34-v7+, RPI_LINUX_COMMIT_HASH: f70eae4, GCC_VER: 4.8 }
           - { RPI_LINUX_VER: rpi-5.4.y, CONFIG_FILE: config-5.4.83-v7+, RPI_LINUX_COMMIT_HASH: 76c49e6, GCC_VER: 6.3 }
           - { RPI_LINUX_VER: rpi-5.4.y, CONFIG_FILE: config-5.4.83-v7+, RPI_LINUX_COMMIT_HASH: 76c49e6, GCC_VER: 8.3 }
           - { RPI_LINUX_VER: rpi-5.10.y, CONFIG_FILE: config-5.10.11-v7+, RPI_LINUX_COMMIT_HASH: 6af8ae3, GCC_VER: 6.3 }
