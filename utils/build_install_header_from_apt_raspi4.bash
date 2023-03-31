@@ -10,8 +10,6 @@ cd $SRC_DIR/src/drivers/
 rm Makefile
 ln -s Makefile.header_from_apt Makefile
 make clean
-# Update for Raspberry Pi 4
-sed -i -e "s/#define RASPBERRYPI 2/#define RASPBERRYPI 4/g" rtmouse.c
 make
 sudo insmod rtmouse.ko
 

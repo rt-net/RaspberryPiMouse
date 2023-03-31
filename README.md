@@ -55,13 +55,13 @@ rtmouseをインストールして不具合が出た場合のみ以下の設定�
 
 * Device Tree機能を「切」にする。
 
-### for Raspberry Pi 4
+### for Raspberry Pi 2/3
 
-Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from '2' to '4'.
+Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/3.2.0/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from '4' to '2'.
 
-Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
-Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えてビルドする必要があります。  
-※[`./utils/build_install.bash`](./utils/build_install.bash)を実行すると、Raspberry Piのモデルに合わせて[`rtmouse.c`](./src/drivers/rtmouse.c)が[自動で書き換わります](https://github.com/rt-net/RaspberryPiMouse/blob/a9af4fa2b2a8e34c0f93a6ce5cf88ebd50ff39c2/utils/build_install.raspi4ubuntu.bash#L13-L14)。
+Raspberry Pi 2/3ではCPUのレジスタがRaspberry Pi 4とは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。  
+Raspberry Pi 2/3で本ドライバを使用する際には`rtmouse.c`の以下の行（2022年4月現在の最新版の3.2.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/3.2.0/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 2`に書き換えてビルドする必要があります。  
+※[`./utils/build_install.bash`](./utils/build_install.bash)を実行すると、Raspberry Piのモデルに合わせて[`rtmouse.c`](./src/drivers/rtmouse.c)が自動で書き換わります。
 
 ```c
 // define the Raspberry Pi version here
