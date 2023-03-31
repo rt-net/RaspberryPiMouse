@@ -12,7 +12,12 @@ clean:
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) clean
 
 install: rtmouse.ko
-	cp ../../50-rtmouse.rules /etc/udev/rules.d/
+	cp rtmouse.ko /lib/modules/$(shell uname -r)/kernel/drivers/
+	cp ../../etc/50-rtmouse.rules /etc/udev/rules.d/
+	cp ../../etc/rtmouse.sh /etc/init.d/
+	chmod 755 /etc/init.d/rtmouse.sh
+	cp ../../etc/rtmouse.service /etc/systemd/system/
+	systemctl enable rtmouse.service
 
 uninstall:
 	rm /etc/udev/rules.d/50-rtmouse.rules
