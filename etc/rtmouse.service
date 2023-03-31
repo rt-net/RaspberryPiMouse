@@ -1,11 +1,17 @@
 [Unit]
 Description=rtmouse driver
+After=network.target
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
+Restart=no
 ExecStart=/etc/init.d/rtmouse.sh start
 ExecReload=/etc/init.d/rtmouse.sh restart
 ExecStopt=/etc/init.d/rtmouse.sh stop
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rtmouse
 
 [Install]
 WantedBy=multi-user.target

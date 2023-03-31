@@ -7,8 +7,8 @@
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:
-# Short-Description: RT_Mouse_Driver
-# Description:       RaspPiMouse Driver
+# Short-Description: RasPiMouse_Driver
+# Description:       Rasoberry Pi Mouse Driver by RT Corporation
 ### END INIT INFO
 
 SCRIPTNAME=rtmouse.sh
