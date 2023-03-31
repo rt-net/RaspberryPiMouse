@@ -10,6 +10,8 @@ elif [ "$(ls /usr/src/linux-* 2> /dev/null)" != '' ]; then
 	# Ubuntu
 	if grep -q "Raspberry Pi 4" /proc/cpuinfo; then
 		$SRC_DIR/utils/build_install.raspi4ubuntu.bash && exit 0
+	elif grep -q "Raspberry Pi" /proc/cpuinfo; then
+		$SRC_DIR/utils/build_install.raspbian.bash && exit 0
 	else
 		$SRC_DIR/utils/build_install.ubuntu14.bash && exit 0
 	fi
