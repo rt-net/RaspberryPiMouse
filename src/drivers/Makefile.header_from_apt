@@ -17,9 +17,14 @@ install: rtmouse.ko
 	cp ../../etc/rtmouse.sh /etc/init.d/
 	chmod 755 /etc/init.d/rtmouse.sh
 	cp ../../etc/rtmouse.service /etc/systemd/system/
+	systemctl daemon-reload
 	systemctl enable rtmouse.service
 
 uninstall:
 	rm /etc/udev/rules.d/50-rtmouse.rules
+	-systemctl stop rtmouse.service
+	systemctl disable rtmouse.service
+	rm /etc/init.d/rtmouse.sh
+	rm /etc/systemd/system/rtmouse.sh
 
 #Reference: http://www.devdrv.co.jp/linux/kernel26-makefile.htm
