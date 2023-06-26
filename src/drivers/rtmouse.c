@@ -1717,7 +1717,6 @@ static int mcp3204_probe(struct spi_device *spi)
 	data->xfer.bits_per_word = 8;
 	data->xfer.len = MCP320X_PACKET_SIZE;
 	data->xfer.cs_change = 0;
-	data->xfer.delay_usecs = 0;
 	data->xfer.speed_hz = 100000;
 
 	spi_message_init_with_transfers(&data->msg, &data->xfer, 1);
