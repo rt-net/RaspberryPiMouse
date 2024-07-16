@@ -1319,7 +1319,12 @@ static int led_register_dev(void)
 	_major_led = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_led = class_create(THIS_MODULE, DEVNAME_LED);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_led = class_create(THIS_MODULE, DEVNAME_LED);
+	# else
+		class_led = class_create(DEVNAME_LED);
+	#endif
+
 	if (IS_ERR(class_led)) {
 		return PTR_ERR(class_led);
 	}
@@ -1368,7 +1373,11 @@ static int buzzer_register_dev(void)
 	_major_buzzer = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
+	else
+		class_buzzer = class_create(DEVNAME_BUZZER);
+	#endif
 	if (IS_ERR(class_buzzer)) {
 		return PTR_ERR(class_buzzer);
 	}
@@ -1414,7 +1423,11 @@ static int motorrawr_register_dev(void)
 	_major_motorrawr = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
+	#else
+		class_motorrawr = class_create(DEVNAME_MOTORRAWR);
+	#endif
 	if (IS_ERR(class_motorrawr)) {
 		return PTR_ERR(class_motorrawr);
 	}
@@ -1462,7 +1475,11 @@ static int motorrawl_register_dev(void)
 	_major_motorrawl = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
+	#else
+		class_motorrawl = class_create(DEVNAME_MOTORRAWL);
+	#endif
 	if (IS_ERR(class_motorrawl)) {
 		return PTR_ERR(class_motorrawl);
 	}
@@ -1509,7 +1526,11 @@ static int switch_register_dev(void)
 	_major_switch = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_switch = class_create(THIS_MODULE, DEVNAME_SWITCH);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_switch = class_create(THIS_MODULE, DEVNAME_SWITCH);
+	#else
+		class_switch = class_create(DEVNAME_SWITCH);
+	#endif
 	if (IS_ERR(class_switch)) {
 		return PTR_ERR(class_switch);
 	}
@@ -1558,7 +1579,11 @@ static int sensor_register_dev(void)
 	_major_sensor = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_sensor = class_create(THIS_MODULE, DEVNAME_SENSOR);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_sensor = class_create(THIS_MODULE, DEVNAME_SENSOR);
+	#else
+		class_sensor = class_create(DEVNAME_SENSOR);
+	#endif
 	if (IS_ERR(class_sensor)) {
 		return PTR_ERR(class_sensor);
 	}
@@ -1604,7 +1629,11 @@ static int motoren_register_dev(void)
 	_major_motoren = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_motoren = class_create(THIS_MODULE, DEVNAME_MOTOREN);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_motoren = class_create(THIS_MODULE, DEVNAME_MOTOREN);
+	#else
+		class_motoren = class_create(DEVNAME_MOTOREN);
+	#endif
 	if (IS_ERR(class_motoren)) {
 		return PTR_ERR(class_motoren);
 	}
@@ -1649,7 +1678,11 @@ static int motor_register_dev(void)
 	_major_motor = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	class_motor = class_create(THIS_MODULE, DEVNAME_MOTOR);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		class_motor = class_create(THIS_MODULE, DEVNAME_MOTOR);
+	#else
+		class_motor = class_create(DEVNAME_MOTOR);
+	#endif
 	if (IS_ERR(class_motor)) {
 		return PTR_ERR(class_motor);
 	}
@@ -1879,7 +1912,11 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
+	#else
+		dev_info->device_class = class_create(DEVNAME_CNTR);
+	#endif
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
@@ -1929,7 +1966,11 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+	#else
+		dev_info->device_class = class_create(DEVNAME_CNTL);
+	#endif
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
