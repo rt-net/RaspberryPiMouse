@@ -277,7 +277,11 @@ static struct mutex lock;
 /* --- Function Declarations --- */
 static void set_motor_r_freq(int freq);
 static void set_motor_l_freq(int freq);
-static int mcp3204_remove(struct spi_device *spi);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+	static int mcp3204_remove(struct spi_device *spi);
+#else
+	static void mcp3204_remove(struct spi_device *spi);
+#endif
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
 static int rtcnt_i2c_probe(struct i2c_client *client,
@@ -1706,16 +1710,28 @@ static int motor_register_dev(void)
 }
 
 /* mcp3204_remove - remove function lined with spi_dirver */
-static int mcp3204_remove(struct spi_device *spi)
-{
-	struct mcp3204_drvdata *data;
-	/* get drvdata */
-	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
-	/* free kernel memory */
-	kfree(data);
-	printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
-	return 0;
-}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+	static int mcp3204_remove(struct spi_device *spi)
+	{
+		struct mcp3204_drvdata *data;
+		/* get drvdata */
+		data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+		/* free kernel memory */
+		kfree(data);
+		printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
+		return 0;
+	}
+#else
+	static void mcp3204_remove(struct spi_device *spi)
+	{
+		struct mcp3204_drvdata *data;
+		/* get drvdata */
+		data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+		/* free kernel memory */
+		kfree(data);
+		printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
+	}
+#endif
 
 /* mcp3204_probe - probe function lined with spi_dirver */
 static int mcp3204_probe(struct spi_device *spi)
