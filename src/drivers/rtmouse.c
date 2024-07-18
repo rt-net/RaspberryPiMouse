@@ -286,7 +286,12 @@ static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
 static int rtcnt_i2c_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id);
-static int rtcnt_i2c_remove(struct i2c_client *client);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
+	static int rtcnt_i2c_remove(struct i2c_client *client);
+#else
+	static void rtcnt_i2c_remove(struct i2c_client *client);
+#endif
 
 /* --- Variable Type definitions --- */
 /* SPI */
@@ -2135,17 +2140,30 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
  * i2c_counter_remove - I2C pulse counter
  * called when I2C pulse counter removed
  */
-static int rtcnt_i2c_remove(struct i2c_client *client)
-{
-	struct rtcnt_device_info *dev_info;
-	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
-	// client->addr);
-	dev_info = i2c_get_clientdata(client);
-	rtcnt_i2c_delete_cdev(dev_info);
-	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-	       client->addr);
-	return 0;
-}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
+	static int rtcnt_i2c_remove(struct i2c_client *client)
+	{
+		struct rtcnt_device_info *dev_info;
+		// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+		// client->addr);
+		dev_info = i2c_get_clientdata(client);
+		rtcnt_i2c_delete_cdev(dev_info);
+		printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+			client->addr);
+		return 0;
+	}
+#else
+	static void rtcnt_i2c_remove(struct i2c_client *client)
+	{
+		struct rtcnt_device_info *dev_info;
+		// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+		// client->addr);
+		dev_info = i2c_get_clientdata(client);
+		rtcnt_i2c_delete_cdev(dev_info);
+		printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+			client->addr);
+	}
+#endif
 
 /*
  * dev_init_module - register driver module
