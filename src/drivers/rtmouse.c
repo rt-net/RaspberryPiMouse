@@ -277,6 +277,7 @@ static struct mutex lock;
 /* --- Function Declarations --- */
 static void set_motor_r_freq(int freq);
 static void set_motor_l_freq(int freq);
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
 	static int mcp3204_remove(struct spi_device *spi);
 #else
@@ -284,8 +285,13 @@ static void set_motor_l_freq(int freq);
 #endif
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
-static int rtcnt_i2c_probe(struct i2c_client *client,
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+	static int rtcnt_i2c_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id);
+#else
+	static int rtcnt_i2c_probe(struct i2c_client *client);
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
 	static int rtcnt_i2c_remove(struct i2c_client *client);
@@ -2009,46 +2015,89 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	return 0;
 }
 
-static int rtcnt_i2c_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct rtcnt_device_info *dev_info;
-	int msb = 0, lsb = 0;
-	// printk(KERN_DEBUG "%s: probing i2c device", __func__);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+	static int rtcnt_i2c_probe(struct i2c_client *client,
+				const struct i2c_device_id *id)
+	{
+		struct rtcnt_device_info *dev_info;
+		int msb = 0, lsb = 0;
+		// printk(KERN_DEBUG "%s: probing i2c device", __func__);
 
-	/* check i2c device */
-	// printk(KERN_DEBUG "%s: checking i2c device", __func__);
-	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
-	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
-	if ((msb < 0) || (lsb < 0)) {
-		printk(KERN_INFO
-		       "%s: rtcounter not found, or wrong i2c device probed",
-		       DRIVER_NAME);
-		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
-		//        client->addr, msb, lsb);
-		return -ENODEV;
-	}
-	printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
-			 "id.driver_data=%d, addr=0x%x\n",
-	       DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+		/* check i2c device */
+		// printk(KERN_DEBUG "%s: checking i2c device", __func__);
+		msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+		lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+		if ((msb < 0) || (lsb < 0)) {
+			printk(KERN_INFO
+				"%s: rtcounter not found, or wrong i2c device probed",
+				DRIVER_NAME);
+			// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
+			//        client->addr, msb, lsb);
+				return -ENODEV;
+			}
+			printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
+					"id.driver_data=%d, addr=0x%x\n",
+				DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
-	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
-	    &client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
-	dev_info->client = client;
-	i2c_set_clientdata(client, dev_info);
-	mutex_init(&dev_info->lock);
+			dev_info = (struct rtcnt_device_info *)devm_kzalloc(
+				&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+			dev_info->client = client;
+			i2c_set_clientdata(client, dev_info);
+			mutex_init(&dev_info->lock);
 
-	/* create character device */
-	if ((int)(id->driver_data) == 0) {
-		if (rtcntl_i2c_create_cdev(dev_info))
-			return -ENOMEM;
-	} else if ((int)(id->driver_data) == 1) {
-		if (rtcntr_i2c_create_cdev(dev_info))
-			return -ENOMEM;
-	}
+			/* create character device */
+			if ((int)(id->driver_data) == 0) {
+				if (rtcntl_i2c_create_cdev(dev_info))
+					return -ENOMEM;
+			} else if ((int)(id->driver_data) == 1) {
+				if (rtcntr_i2c_create_cdev(dev_info))
+					return -ENOMEM;
+			}
 
-	return 0;
-}
+			return 0;
+		}
+#else
+	static int rtcnt_i2c_probe(struct i2c_client *client)
+	{
+		const struct i2c_device_id *id = i2c_client_get_device_id(client);
+		struct rtcnt_device_info *dev_info;
+		int msb = 0, lsb = 0;
+		// printk(KERN_DEBUG "%s: probing i2c device", __func__);
+
+		/* check i2c device */
+		// printk(KERN_DEBUG "%s: checking i2c device", __func__);
+		msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+		lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+		if ((msb < 0) || (lsb < 0)) {
+			printk(KERN_INFO
+				"%s: rtcounter not found, or wrong i2c device probed",
+				DRIVER_NAME);
+			// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
+			//        client->addr, msb, lsb);
+				return -ENODEV;
+			}
+			printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
+					"id.driver_data=%d, addr=0x%x\n",
+				DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+
+			dev_info = (struct rtcnt_device_info *)devm_kzalloc(
+				&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+			dev_info->client = client;
+			i2c_set_clientdata(client, dev_info);
+			mutex_init(&dev_info->lock);
+
+			/* create character device */
+			if ((int)(id->driver_data) == 0) {
+				if (rtcntl_i2c_create_cdev(dev_info))
+					return -ENOMEM;
+			} else if ((int)(id->driver_data) == 1) {
+				if (rtcntr_i2c_create_cdev(dev_info))
+					return -ENOMEM;
+			}
+
+			return 0;
+		}
+#endif
 
 /*
  * i2c_counter_init - initialize I2C counter
