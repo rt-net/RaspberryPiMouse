@@ -286,7 +286,7 @@ static void set_motor_l_freq(int freq);
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 	static int rtcnt_i2c_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id);
 #else
@@ -2015,7 +2015,7 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 	static int rtcnt_i2c_probe(struct i2c_client *client,
 				const struct i2c_device_id *id)
 	{
