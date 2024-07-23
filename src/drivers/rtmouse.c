@@ -299,6 +299,10 @@ static unsigned int mcp3204_get_value(int channel);
 	static void rtcnt_i2c_remove(struct i2c_client *client);
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+static struct spi_master* spi_get_master(const char *spi_name);
+#endif
+
 /* --- Variable Type definitions --- */
 /* SPI */
 struct mcp3204_drvdata {
@@ -1804,7 +1808,11 @@ static unsigned int mcp3204_get_value(int channel)
 	unsigned int r = 0;
 	unsigned char c = channel & 0x03;
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+		master = spi_get_master("spi0");
+	#else
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#endif
 	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
 		 mcp3204_info.chip_select);
 
@@ -1852,6 +1860,34 @@ static void spi_remove_device(struct spi_master *master, unsigned int cs)
 	}
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+/*
+ * spi_get_master - get master info
+ * get from Device-Tree
+ */
+static struct spi_master* spi_get_master(const char *spi_name)
+{
+	struct device_node *np;
+   	struct device_node *spi_node;
+
+  	// get SPI node from device tree
+    np = of_find_node_by_name(NULL, spi_name);
+    if (!np) {
+    	printk(KERN_ERR "%s: of_find_node_by_name returned NULL\n");
+    	return -ENODEV;
+   	}
+
+	strcut device *dev;
+
+	dev = bus_find_device(&spi_bus_type, NULL, np, (void *)of_node_to_dev);
+	if (!dev)
+		printf("Couldn't find Device\n");
+    	return NULL;
+
+	return container_of(dev, struct spi_master, dev);
+}
+#endif
+
 /*
  * mcp3204_init - initialize MCP3204
  * called by 'dev_init_module'
@@ -1866,7 +1902,11 @@ static int mcp3204_init(void)
 	mcp3204_info.bus_num = spi_bus_num;
 	mcp3204_info.chip_select = spi_chip_select;
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+		master = spi_get_master("spi0");
+	#else
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#endif
 
 	if (!master) {
 		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
@@ -1895,7 +1935,11 @@ static void mcp3204_exit(void)
 {
 	struct spi_master *master;
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+		master = spi_get_master("spi0");
+	#else
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#endif
 
 	if (master) {
 		spi_remove_device(master, mcp3204_info.chip_select);

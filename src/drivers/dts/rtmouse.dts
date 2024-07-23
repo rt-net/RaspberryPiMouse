@@ -1,0 +1,22 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2711";
+
+    fragment@0 {
+        target = <&spi0>;
+        __overlay__ {
+            status = "okay";
+            mcp3208: mcp3208@0 {
+                compatible = "microchip,mcp3208";
+                reg = <0>;
+                spi-max-frequency = <62500>;
+                // vref-supply = <&vref_reg>; // reference defined Vref
+                spi-cpha;
+                spi-cpol;
+                #io-channel-cells = <1>;
+            };
+        };
+    };
+};
