@@ -40,6 +40,8 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/spi/spi.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
 #include <linux/stat.h>
 #include <linux/timer.h>
 #include <linux/types.h>
@@ -51,7 +53,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 2
+#define RASPBERRYPI 4
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
@@ -1877,11 +1879,14 @@ static struct spi_master* spi_get_master(const char *spi_name)
     	return -ENODEV;
    	}
 
-	strcut device *dev;
+	struct platform_device *pdev;
+	struct device *dev;
 
-	dev = bus_find_device(&spi_bus_type, NULL, np, (void *)of_node_to_dev);
+	pdev = of_find_device_by_node(np);
+	dev = &pdev->dev;
+
 	if (!dev)
-		printf("Couldn't find Device\n");
+		printk("Couldn't find Device\n");
     	return NULL;
 
 	return container_of(dev, struct spi_master, dev);

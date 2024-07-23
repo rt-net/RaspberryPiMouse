@@ -8,6 +8,9 @@
         target = <&spi0>;
         __overlay__ {
             status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+
             mcp3208: mcp3208@0 {
                 compatible = "microchip,mcp3208";
                 reg = <0>;
