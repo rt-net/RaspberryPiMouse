@@ -445,6 +445,90 @@ static int motor_motion_pop(t_motor_motion **ret)
 }
 #endif
 
+/* --- MCP3208 settings--- */
+static struct spi_device *mcp3208_spi_device = NULL;
+
+
+// SPIデバイスドライバのプローブ関数
+static int mcp3208_probe(struct spi_device *spi) {
+    pr_info("MCP3208: Entering probe function\n");
+
+    mcp3208_spi_device = spi;
+    pr_info("MCP3208: SPI device probed successfully\n");
+    return 0;
+}
+
+// SPIデバイスドライバのリムーブ関数
+static void mcp3208_remove(struct spi_device *spi) {
+    mcp3208_spi_device = NULL;
+    pr_info("MCP3208: SPI device removed\n");
+}
+
+static const struct of_device_id mcp3208_of_match[] = {
+    { .compatible = "microchip,mcp3208" },
+    { }
+};
+MODULE_DEVICE_TABLE(of, mcp3208_of_match);
+
+static struct spi_driver mcp3208_driver = {
+    .driver = {
+        .name = "mcp3208",
+        .of_match_table = mcp3208_of_match,
+    },
+    .probe = mcp3208_probe,
+    .remove = mcp3208_remove,
+};
+
+static int __init mcp3208_init(void) {
+    int ret;
+
+    pr_info("MCP3208: Initializing the MCP3208 LKM\n");
+
+    // SPIドライバの登録
+    ret = spi_register_driver(&mcp3208_driver);
+    if (ret < 0) {
+        pr_err("MCP3208: Failed to register SPI driver\n");
+        return ret;
+    }
+
+    pr_info("MCP3208: SPI driver registered successfully\n");
+    return 0;
+}
+
+static void __exit mcp3208_exit(void) {
+    spi_unregister_driver(&mcp3208_driver);
+    pr_info("MCP3208: Goodbye from the LKM!\n");
+}
+
+int mcp3208_read_data(uint8_t channel) {
+    uint8_t tx_buf[3] = { 0x06 | ((channel & 0x07) >> 2), (channel & 0x07) << 6, 0x00 };
+    uint8_t rx_buf[3] = { 0 };
+    struct spi_transfer transfer = {
+        .tx_buf = tx_buf,
+        .rx_buf = rx_buf,
+        .len = 3,
+    };
+    struct spi_message message;
+    int ret;
+
+    if (!mcp3208_spi_device) {
+        pr_err("MCP3208: SPI device is not available\n");
+        return -ENODEV;
+    }
+
+    spi_message_init(&message);
+    spi_message_add_tail(&transfer, &message);
+
+    ret = spi_sync(mcp3208_spi_device, &message);
+    if (ret) {
+        pr_err("MCP3208: SPI transfer failed\n");
+        return ret;
+    }
+
+    int adc_value = ((rx_buf[1] & 0x0F) << 8) | rx_buf[2];
+    return adc_value;
+}
+
 /* --- GPIO Operation --- */
 /* getPWMCount function for GPIO Operation */
 static int getPWMCount(int freq)
@@ -663,31 +747,31 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 
 	/* get values through MCP3204 */
 	/* Right side */
-	or = mcp3204_get_value(R_AD_CH);
+	or = mcp3208_read_data(R_AD_CH);
 	rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << R_LED_BASE);
 	udelay(usecs);
-	r = mcp3204_get_value(R_AD_CH);
+	r = mcp3208_read_data(R_AD_CH);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << R_LED_BASE);
 	udelay(usecs);
 	/* Left side */
-	ol = mcp3204_get_value(L_AD_CH);
+	ol = mcp3208_read_data(L_AD_CH);
 	rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << L_LED_BASE);
 	udelay(usecs);
-	l = mcp3204_get_value(L_AD_CH);
+	l = mcp3208_read_data(L_AD_CH);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << L_LED_BASE);
 	udelay(usecs);
 	/* Right front side */
-	orf = mcp3204_get_value(RF_AD_CH);
+	orf = mcp3208_read_data(RF_AD_CH);
 	rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	udelay(usecs);
-	rf = mcp3204_get_value(RF_AD_CH);
+	rf = mcp3208_read_data(RF_AD_CH);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << RF_LED_BASE);
 	udelay(usecs);
 	/* Left front side */
-	olf = mcp3204_get_value(LF_AD_CH);
+	olf = mcp3208_read_data(LF_AD_CH);
 	rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 	udelay(usecs);
-	lf = mcp3204_get_value(LF_AD_CH);
+	lf = mcp3208_read_data(LF_AD_CH);
 	rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LF_LED_BASE);
 	udelay(usecs);
 
@@ -2405,7 +2489,8 @@ int dev_init_module(void)
 		return retval;
 	}
 
-	retval = mcp3204_init();
+	// retval = mcp3204_init();
+	retval = mcp3208_init();
 	if (retval != 0) {
 		printk(KERN_ALERT
 		       "%s: optical sensor driver register failed.\n",
@@ -2486,7 +2571,8 @@ void dev_cleanup_module(void)
 	class_destroy(class_motor);
 
 	/* remove MCP3204 */
-	mcp3204_exit();
+	// mcp3204_exit();
+	mcp3208_exit();
 
 	/* remove I2C device */
 	i2c_counter_exit();
