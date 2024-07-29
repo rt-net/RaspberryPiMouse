@@ -1,17 +1,20 @@
-MODULE:= rtmouse
+MODULE:= rtmouse_mod
+DESIRED_MODULE:= rtmouse
 obj-m:= $(MODULE).o
+$(MODULE)-objs := rtmouse.o spi_lib.o
 clean-files:= *.o *.ko *.mod.[co] *~
 
 LINUX_SRC_DIR:=/usr/src/linux-headers-$(shell uname -r)
 VERBOSE:=0
 
-rtmouse.ko: rtmouse.c
+all:
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) modules
+	mv $(MODULE).ko $(DESIRED_MODULE).ko
 
 clean:
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) clean
 
-install: rtmouse.ko
+install: $(DESIRED_MODULE).ko
 	cp ../../50-rtmouse.rules /etc/udev/rules.d/
 
 uninstall:

@@ -51,7 +51,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 2
+#define RASPBERRYPI 4
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
@@ -86,6 +86,10 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define DEVNAME_CNTL "rtcounter_l"
 
 #define DRIVER_NAME "rtmouse"
+
+/* --- Declare External Functions --- */
+extern struct spi_controller *spi_busnum_to_master(int bus_num);
+
 
 /* --- Device Major and Minor Numbers --- */
 #define DEV_MAJOR 0
@@ -425,7 +429,7 @@ static int motor_motion_pop(t_motor_motion **ret)
 
 	if (motor_motion_tail == motor_motion_head) {
 		return -1;
-	}
+	}/home/ubuntu/.ssh
 
 	if (next_head >= MAX_MOTORBUFLEN) {
 		next_head = 0;
