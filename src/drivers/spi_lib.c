@@ -1,69 +1,15 @@
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <linux/types.h>
-#include <linux/version.h>
+#include "spi_lib.h"
 
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 6)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
-/**
- * struct spi_statistics - statistics for spi transfers
- * @lock:          lock protecting this structure
- *
- * @messages:      number of spi-messages handled
- * @transfers:     number of spi_transfers handled
- * @errors:        number of errors during spi_transfer
- * @timedout:      number of timeouts during spi_transfer
- *
- * @spi_sync:      number of times spi_sync is used
- * @spi_sync_immediate:
- *                 number of times spi_sync is executed immediately
- *                 in calling context without queuing and scheduling
- * @spi_async:     number of times spi_async is used
- *
- * @bytes:         number of bytes transferred to/from device
- * @bytes_tx:      number of bytes sent to device
- * @bytes_rx:      number of bytes received from device
- *
- * @transfer_bytes_histo:
- *                 transfer bytes histogramm
- *
- * @transfers_split_maxsize:
- *                 number of transfers that have been split because of
- *                 maxsize limit
- */
-struct spi_statistics {
-	spin_t lock; /* lock for the whole structure */
-
-	unsigned long messages;
-	unsigned long transfers;
-	unsigned long errors;
-	unsigned long timedout;
-
-	unsigned long spi_sync;
-	unsigned long spi_sync_immediate;
-	unsigned long spi_async;
-
-	unsigned long long bytes;
-	unsigned long long bytes_rx;
-	unsigned long long bytes_tx;
-
-#define SPI_STATISTICS_HISTO_SIZE 17
-	unsigned long transfer_bytes_histo[SPI_STATISTICS_HISTO_SIZE];
-
-	unsigned long transfers_split_maxsize;
-};
-
-static void spi_controller_release(struct device *dev);
 
 #define SPI_STATISTICS_ATTRS(field, file)                                      \
 	static ssize_t spi_controller_##field##_show(                          \
 	    struct device *dev, struct device_attribute *attr, char *buf)      \
 	{                                                                      \
-		struct spi_controller *ctlr =                                  \
-		    container_of(dev, struct spi_controller, dev);             \
+		struct spi_controller_alt *ctlr =                                  \
+		    container_of(dev, struct spi_controller_alt, dev);             \
 		return spi_statistics_##field##_show(&ctlr->statistics, buf);  \
 	}                                                                      \
 	static struct device_attribute dev_attr_spi_controller_##field = {     \
@@ -83,7 +29,7 @@ static void spi_controller_release(struct device *dev);
 
 #define SPI_STATISTICS_SHOW_NAME(name, file, field, format_string)             \
 	static ssize_t spi_statistics_##name##_show(                           \
-	    struct spi_statistics *stat, char *buf)                            \
+	    struct spi_statistics_alt *stat, char *buf)                            \
 	{                                                                      \
 		unsigned long flags;                                           \
 		ssize_t len;                                                   \
@@ -183,15 +129,15 @@ static struct class spi_master_class = {
     .dev_groups = spi_master_groups,
 };
 
-struct spi_controller *spi_busnum_to_master_alt(u16 bus_num)
+struct spi_controller_alt *spi_busnum_to_master_alt(u16 bus_num)
 {
 	struct device *dev;
-	struct spi_controller *ctlr = NULL;
+	struct spi_controller_alt *ctlr = NULL;
 
 	// dev = class_find_device(&spi_master_class, NULL, &bus_num,
 	// 			__spi_controller_match);
 	// if (dev)
-	// 	ctlr = container_of(dev, struct spi_controller, dev);
+	// 	ctlr = container_of(dev, struct spi_controller_alt, dev);
 	// /* reference got in class_find_device */
 	return ctlr;
 }
@@ -200,7 +146,7 @@ static void spi_controller_release(struct device *dev)
 {
 	struct spi_controller *ctlr;
 
-	ctlr = container_of(dev, struct spi_controller, dev);
+	ctlr = container_of(dev, struct spi_controller_alt, dev);
 	kfree(ctlr);
 }
 
