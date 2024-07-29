@@ -6,13 +6,13 @@ LINUX_SRC_DIR := /usr/src/linux-headers-$(shell uname -r)
 VERBOSE := 0
 
 DTS_DIR := ./dts
-DTS_FILE := $(DTS_DIR)/mcp3208-overlay.dts
-DTBO_FILE := $(DTS_DIR)/mcp3208-overlay.dtbo
+DTS_FILE := $(DTS_DIR)/rtmouse.dts
+DTBO_FILE := $(DTS_DIR)/rtmouse.dtbo
 
 all: rtmouse.ko $(DTBO_FILE)
 
 $(DTBO_FILE): $(DTS_FILE)
-	@echo "Building $(DTBO_FILE)..."s
+	@echo "Building $(DTBO_FILE)..."
 	dtc -@ -I dts -O dtb -o $@ $<
 	@echo "Built $(DTBO_FILE)"
 
@@ -24,14 +24,17 @@ rtmouse.ko: rtmouse.c $(DTBO_FILE)
 clean:
 	@echo "Cleaning up..."
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) clean
+	rm -f $(clean-files)
 
 install: rtmouse.ko $(DTBO_FILE)
 	@echo "Installing..."
 	cp ../../50-rtmouse.rules /etc/udev/rules.d/
+	cp $(DTBO_FILE) /boot/firmware/overlays/
 	@echo "Installed."
-
+	
 
 uninstall:
 	@echo "Uninstalling..."
 	rm /etc/udev/rules.d/50-rtmouse.rules
+	rm /boot/firmware/overlays/rtmouse.dtbo
 	@echo "Uninstalled."

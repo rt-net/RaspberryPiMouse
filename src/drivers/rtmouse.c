@@ -461,6 +461,7 @@ static int mcp3208_probe(struct spi_device *spi) {
 // SPIデバイスドライバのリムーブ関数
 static void mcp3208_remove(struct spi_device *spi) {
     mcp3208_spi_device = NULL;
+	pr_info("ZUZU: %d\n", mcp3208_spi_device);
     pr_info("MCP3208: SPI device removed\n");
 }
 
@@ -468,13 +469,25 @@ static const struct of_device_id mcp3208_of_match[] = {
     { .compatible = "microchip,mcp3208" },
     { }
 };
+
 MODULE_DEVICE_TABLE(of, mcp3208_of_match);
+
+static const struct spi_device_id;
+
+static const struct spi_device_id mcp3208_id[] = {
+    { "mcp3208", 0 },
+    { }
+};
+
+MODULE_DEVICE_TABLE(spi, mcp3208_id);
+
 
 static struct spi_driver mcp3208_driver = {
     .driver = {
         .name = "mcp3208",
         .of_match_table = mcp3208_of_match,
     },
+	.id_table = mcp3208_id,
     .probe = mcp3208_probe,
     .remove = mcp3208_remove,
 };
@@ -486,13 +499,19 @@ static int __init mcp3208_init(void) {
 
     // SPIドライバの登録
     ret = spi_register_driver(&mcp3208_driver);
+	pr_info("ZU MCP3208 SPI ret: %d\n", ret);
     if (ret < 0) {
         pr_err("MCP3208: Failed to register SPI driver\n");
         return ret;
     }
+	if (mcp3208_spi_device==NULL) {
+		pr_info("ZU MCP208 is NULL\n");
+	}else{
+		pr_info("ZU MCP3208 is not NULL\n");
+	}
 
     pr_info("MCP3208: SPI driver registered successfully\n");
-    return 0;
+    return ret;
 }
 
 static void __exit mcp3208_exit(void) {
@@ -1956,6 +1975,7 @@ static struct spi_master* spi_get_master(const char *spi_name)
 	struct device_node *np;
    	struct device_node *spi_node;
 
+	printk("leggacy method of getting master\n");
   	// get SPI node from device tree
     np = of_find_node_by_name(NULL, spi_name);
     if (!np) {
@@ -2489,14 +2509,19 @@ int dev_init_module(void)
 		return retval;
 	}
 
+	printk("ZU: mcp3208 init Start");
 	// retval = mcp3204_init();
 	retval = mcp3208_init();
+	printk("ZU: mcp3208 init retval: %d", retval);
+
 	if (retval != 0) {
 		printk(KERN_ALERT
 		       "%s: optical sensor driver register failed.\n",
 		       DRIVER_NAME);
 		return retval;
 	}
+	printk("ZU: mcp3208 init Finished");
+
 
 	printk(KERN_INFO "%s: %d devices loaded.\n", DRIVER_NAME,
 	       registered_devices + NUM_DEV_TOTAL);
