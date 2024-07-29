@@ -88,7 +88,7 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define DRIVER_NAME "rtmouse"
 
 /* --- Declare External Functions --- */
-extern struct spi_controller *spi_busnum_to_master(int bus_num);
+extern struct spi_controller *spi_busnum_to_master_alt(int bus_num);
 
 
 /* --- Device Major and Minor Numbers --- */
