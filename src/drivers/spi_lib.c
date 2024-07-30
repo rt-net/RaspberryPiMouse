@@ -4,45 +4,47 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
 
-#define SPI_STATISTICS_ATTRS(field, file)                                      \
-	static ssize_t spi_controller_##field##_show(                          \
-	    struct device *dev, struct device_attribute *attr, char *buf)      \
-	{                                                                      \
-		struct spi_controller_alt *ctlr =                                  \
-		    container_of(dev, struct spi_controller_alt, dev);             \
-		return spi_statistics_##field##_show(&ctlr->statistics, buf);  \
-	}                                                                      \
-	static struct device_attribute dev_attr_spi_controller_##field = {     \
-	    .attr = {.name = file, .mode = 0444},                              \
-	    .show = spi_controller_##field##_show,                             \
-	};                                                                     \
-	static ssize_t spi_device_##field##_show(                              \
-	    struct device *dev, struct device_attribute *attr, char *buf)      \
-	{                                                                      \
-		struct spi_device *spi = to_spi_device(dev);                   \
-		return spi_statistics_##field##_show(&spi->statistics, buf);   \
-	}                                                                      \
-	static struct device_attribute dev_attr_spi_device_##field = {         \
-	    .attr = {.name = file, .mode = 0444},                              \
-	    .show = spi_device_##field##_show,                                 \
-	}
+#define SPI_STATISTICS_ATTRS(field, file)				\
+static ssize_t spi_controller_##field##_show(struct device *dev,	\
+					     struct device_attribute *attr, \
+					     char *buf)			\
+{									\
+	struct spi_controller *ctlr = container_of(dev,			\
+					 struct spi_controller_alt, dev);	\
+	return spi_statistics_##field##_show(&ctlr->statistics, buf);	\
+}									\
+static struct device_attribute dev_attr_spi_controller_##field = {	\
+	.attr = { .name = file, .mode = 0444 },				\
+	.show = spi_controller_##field##_show,				\
+};									\
+static ssize_t spi_device_##field##_show(struct device *dev,		\
+					 struct device_attribute *attr,	\
+					char *buf)			\
+{									\
+	struct spi_device_alt *spi = to_spi_device(dev);			\
+	return spi_statistics_##field##_show(&spi->statistics, buf);	\
+}									\
+static struct device_attribute dev_attr_spi_device_##field = {		\
+	.attr = { .name = file, .mode = 0444 },				\
+	.show = spi_device_##field##_show,				\
+}
 
-#define SPI_STATISTICS_SHOW_NAME(name, file, field, format_string)             \
-	static ssize_t spi_statistics_##name##_show(                           \
-	    struct spi_statistics_alt *stat, char *buf)                            \
-	{                                                                      \
-		unsigned long flags;                                           \
-		ssize_t len;                                                   \
-		spin_lock_irqsave(&stat->lock, flags);                         \
-		len = sprintf(buf, format_string, stat->field);                \
-		spin_unlock_irqrestore(&stat->lock, flags);                    \
-		return len;                                                    \
-	}                                                                      \
-	SPI_STATISTICS_ATTRS(name, file)
+#define SPI_STATISTICS_SHOW_NAME(name, file, field, format_string)	\
+static ssize_t spi_statistics_##name##_show(struct spi_statistics_alt *stat, \
+					    char *buf)			\
+{									\
+	unsigned long flags;						\
+	ssize_t len;							\
+	spin_lock_irqsave(&stat->lock, flags);				\
+	len = sprintf(buf, format_string, stat->field);			\
+	spin_unlock_irqrestore(&stat->lock, flags);			\
+	return len;							\
+}									\
+SPI_STATISTICS_ATTRS(name, file)
 
-#define SPI_STATISTICS_SHOW(field, format_string)                              \
-	SPI_STATISTICS_SHOW_NAME(field, __stringify(field), field,             \
-				 format_string)
+#define SPI_STATISTICS_SHOW(field, format_string)			\
+	SPI_STATISTICS_SHOW_NAME(field, __stringify(field),		\
+				 field, format_string)
 
 SPI_STATISTICS_SHOW(messages, "%lu");
 SPI_STATISTICS_SHOW(transfers, "%lu");
@@ -57,20 +59,20 @@ SPI_STATISTICS_SHOW(bytes, "%llu");
 SPI_STATISTICS_SHOW(bytes_rx, "%llu");
 SPI_STATISTICS_SHOW(bytes_tx, "%llu");
 
-#define SPI_STATISTICS_TRANSFER_BYTES_HISTO(index, number)                     \
-	SPI_STATISTICS_SHOW_NAME(transfer_bytes_histo##index,                  \
-				 "transfer_bytes_histo_" number,               \
-				 transfer_bytes_histo[index], "%lu")
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(0, "0-1");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(1, "2-3");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(2, "4-7");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(3, "8-15");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(4, "16-31");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(5, "32-63");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(6, "64-127");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(7, "128-255");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(8, "256-511");
-SPI_STATISTICS_TRANSFER_BYTES_HISTO(9, "512-1023");
+#define SPI_STATISTICS_TRANSFER_BYTES_HISTO(index, number)		\
+	SPI_STATISTICS_SHOW_NAME(transfer_bytes_histo##index,		\
+				 "transfer_bytes_histo_" number,	\
+				 transfer_bytes_histo[index],  "%lu")
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(0,  "0-1");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(1,  "2-3");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(2,  "4-7");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(3,  "8-15");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(4,  "16-31");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(5,  "32-63");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(6,  "64-127");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(7,  "128-255");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(8,  "256-511");
+SPI_STATISTICS_TRANSFER_BYTES_HISTO(9,  "512-1023");
 SPI_STATISTICS_TRANSFER_BYTES_HISTO(10, "1024-2047");
 SPI_STATISTICS_TRANSFER_BYTES_HISTO(11, "2048-4095");
 SPI_STATISTICS_TRANSFER_BYTES_HISTO(12, "4096-8191");
@@ -131,8 +133,8 @@ static struct class spi_master_class = {
 
 struct spi_controller_alt *spi_busnum_to_master_alt(u16 bus_num)
 {
-	struct device *dev;
-	struct spi_controller_alt *ctlr = NULL;
+	// struct device *dev;
+	struct spi_master *ctlr = NULL;
 
 	// dev = class_find_device(&spi_master_class, NULL, &bus_num,
 	// 			__spi_controller_match);
@@ -144,10 +146,74 @@ struct spi_controller_alt *spi_busnum_to_master_alt(u16 bus_num)
 
 static void spi_controller_release(struct device *dev)
 {
-	struct spi_controller *ctlr;
+	struct spi_controller_alt *ctlr;
 
 	ctlr = container_of(dev, struct spi_controller_alt, dev);
 	kfree(ctlr);
+}
+
+
+/**
+ * spi_new_device_alt - instantiate one new SPI device
+ * @ctlr: Controller to which device is connected
+ * @chip: Describes the SPI device
+ * Context: can sleep
+ *
+ * On typical mainboards, this is purely internal; and it's not needed
+ * after board init creates the hard-wired devices.  Some development
+ * platforms may not be able to use spi_register_board_info though, and
+ * this is exported so that for example a USB or parport based adapter
+ * driver could add devices (which it would learn about out-of-band).
+ *
+ * Return: the new device, or NULL.
+ */
+struct spi_device *spi_new_device_alt(struct spi_controller_alt *ctlr,
+				  struct spi_board_info *chip)
+{
+	struct spi_device	*proxy;
+	int			status;
+
+	/* NOTE:  caller did any chip->bus_num checks necessary.
+	 *
+	 * Also, unless we change the return value convention to use
+	 * error-or-pointer (not NULL-or-pointer), troubleshootability
+	 * suggests syslogged diagnostics are best here (ugh).
+	 */
+
+	proxy = spi_alloc_device(ctlr);
+	if (!proxy)
+		return NULL;
+
+	WARN_ON(strlen(chip->modalias) >= sizeof(proxy->modalias));
+
+	proxy->chip_select = chip->chip_select;
+	proxy->max_speed_hz = chip->max_speed_hz;
+	proxy->mode = chip->mode;
+	proxy->irq = chip->irq;
+	strlcpy(proxy->modalias, chip->modalias, sizeof(proxy->modalias));
+	proxy->dev.platform_data = (void *) chip->platform_data;
+	proxy->controller_data = chip->controller_data;
+	proxy->controller_state = NULL;
+
+	if (chip->swnode) {
+		status = device_add_software_node(&proxy->dev, chip->swnode);
+		if (status) {
+			dev_err(&ctlr->dev, "failed to add software node to '%s': %d\n",
+				chip->modalias, status);
+			goto err_dev_put;
+		}
+	}
+
+	status = spi_add_device(proxy);
+	if (status < 0)
+		goto err_dev_put;
+
+	return proxy;
+
+err_dev_put:
+	device_remove_software_node(&proxy->dev);
+	spi_dev_put(proxy);
+	return NULL;
 }
 
 #endif

@@ -7,6 +7,8 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
+#undef spi_master  // <linux/spi/spi.h>の"spi_controller"の定義を解く
+#define spi_master spi_controller_alt  // 代替構造体と紐付け
 
 /**
  * struct spi_statistics_alt - statistics for spi transfers
@@ -408,7 +410,12 @@ struct spi_controller_alt {
 };
 
 
+/* --- Declare External Functions --- */
+
 static void spi_controller_release(struct device *dev);
 
+struct spi_controller_alt *spi_busnum_to_master_alt(u16 bus_num);
+
+struct spi_device *spi_new_device_alt(struct spi_controller_alt *ctlr, struct spi_board_info *chip);
 
 #endif

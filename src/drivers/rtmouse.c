@@ -39,7 +39,7 @@
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
-#include <linux/spi/spi.h>
+// #include <linux/spi/spi.h>
 #include <linux/stat.h>
 #include <linux/timer.h>
 #include <linux/types.h>
@@ -52,7 +52,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 4
+#define RASPBERRYPI 2
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
@@ -87,12 +87,6 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define DEVNAME_CNTL "rtcounter_l"
 
 #define DRIVER_NAME "rtmouse"
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-	/* --- Declare External Functions --- */
-	extern struct spi_controller_alt *spi_busnum_to_master_alt(u16 bus_num);
-#endif
-
 
 
 /* --- Device Major and Minor Numbers --- */
@@ -1813,7 +1807,7 @@ static unsigned int mcp3204_get_value(int channel)
 	unsigned char c = channel & 0x03;
 
 	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-		master = spi_busnum_to_master_alt(mcp3204_info.bus_num);
+		// master = spi_busnum_to_master_alt(mcp3204_info.bus_num);
 	#else
 		master = spi_busnum_to_master(mcp3204_info.bus_num);
 	#endif
@@ -1879,7 +1873,7 @@ static int mcp3204_init(void)
 	mcp3204_info.chip_select = spi_chip_select;
 
 	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-		master = spi_busnum_to_master_alt(mcp3204_info.bus_num);
+		// master = spi_busnum_to_master_alt(mcp3204_info.bus_num);
 	#else
 		master = spi_busnum_to_master(mcp3204_info.bus_num);
 	#endif
@@ -1893,7 +1887,12 @@ static int mcp3204_init(void)
 
 	spi_remove_device(master, mcp3204_info.chip_select);
 
-	spi_device = spi_new_device(master, &mcp3204_info);
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+		spi_device = spi_new_device_alt(master, &mcp3204_info);
+	#else
+		spi_device = spi_new_device(master, &mcp3204_info);
+	#endif
+
 	if (!spi_device) {
 		printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
 		spi_unregister_driver(&mcp3204_driver);
