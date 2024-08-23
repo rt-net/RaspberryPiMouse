@@ -51,7 +51,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 2
+#define RASPBERRYPI 4
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
@@ -325,6 +325,9 @@ static struct spi_board_info mcp3204_info = {
     .chip_select = 0,
     .mode = SPI_MODE_3,
 };
+
+static struct device *mcp320x_dev;
+
 
 /* SPI Dirver Info */
 static struct spi_driver mcp3204_driver = {
@@ -1799,19 +1802,28 @@ static unsigned int mcp3204_get_value(int channel)
 	struct mcp3204_drvdata *data;
 	struct spi_device *spi;
 	char str[128];
-	struct spi_master *master;
 
 	unsigned int r = 0;
 	unsigned char c = channel & 0x03;
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
-	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
-		 mcp3204_info.chip_select);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
 
-	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
+		struct spi_master *master;
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
+		snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
+			mcp3204_info.chip_select);
+
+		dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
+
+	#else
+
+		if (mcp320x_dev == NULL)  return 0;
+  		dev = mcp320x_dev;
+
+	#endif
+
 	spi = to_spi_device(dev);
-	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
-
+  	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
 	mutex_lock(&data->lock);
 	data->tx[0] = 1 << 2;  // start bit
 	data->tx[0] |= 1 << 1; // Single
@@ -1820,7 +1832,7 @@ static unsigned int mcp3204_get_value(int channel)
 
 	if (spi_sync(data->spi, &data->msg)) {
 		printk(KERN_INFO "%s: spi_sync_transfer returned non zero\n",
-		       __func__);
+			__func__);
 	}
 
 	mutex_unlock(&data->lock);
@@ -1852,37 +1864,54 @@ static void spi_remove_device(struct spi_master *master, unsigned int cs)
 	}
 }
 
+/* spiをサーチする関数 */
+static int __callback_find_mcp3204(struct device *dev, void *data)
+{
+  printk(KERN_INFO "    device_name: %s\n", dev->driver->name);
+  if(mcp320x_dev == NULL && strcmp(dev->driver->name, "mcp320x") == 0){
+    mcp320x_dev = dev;
+    mcp3204_probe(to_spi_device(dev));
+  }
+  return 0;
+}
+
+
 /*
  * mcp3204_init - initialize MCP3204
  * called by 'dev_init_module'
  */
 static int mcp3204_init(void)
 {
-	struct spi_master *master;
-	struct spi_device *spi_device;
 
-	spi_register_driver(&mcp3204_driver);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+		struct spi_master *master;
+		struct spi_device *spi_device;
 
-	mcp3204_info.bus_num = spi_bus_num;
-	mcp3204_info.chip_select = spi_chip_select;
+		spi_register_driver(&mcp3204_driver);  // ここifdefで囲っていいかも
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
+		mcp3204_info.bus_num = spi_bus_num;
+		mcp3204_info.chip_select = spi_chip_select;
 
-	if (!master) {
-		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
-		       __func__);
-		spi_unregister_driver(&mcp3204_driver);
-		return -ENODEV;
-	}
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
 
-	spi_remove_device(master, mcp3204_info.chip_select);
+		if (!master) {
+			printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
+				__func__);
+			spi_unregister_driver(&mcp3204_driver);
+			return -ENODEV;
+		}
 
-	spi_device = spi_new_device(master, &mcp3204_info);
-	if (!spi_device) {
-		printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
-		spi_unregister_driver(&mcp3204_driver);
-		return -ENODEV;
-	}
+		spi_remove_device(master, mcp3204_info.chip_select);
+
+		spi_device = spi_new_device(master, &mcp3204_info);
+		if (!spi_device) {
+			printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
+			spi_unregister_driver(&mcp3204_driver);
+			return -ENODEV;
+		}
+	#else
+		bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
+	#endif
 
 	return 0;
 }
@@ -1893,17 +1922,25 @@ static int mcp3204_init(void)
  */
 static void mcp3204_exit(void)
 {
-	struct spi_master *master;
 
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+		struct spi_master *master;
 
-	if (master) {
-		spi_remove_device(master, mcp3204_info.chip_select);
-	} else {
-		printk(KERN_ERR "mcp3204 remove error\n");
-	}
+		master = spi_busnum_to_master(mcp3204_info.bus_num);
 
-	spi_unregister_driver(&mcp3204_driver);
+		if (master) {
+			spi_remove_device(master, mcp3204_info.chip_select);
+		} else {
+			printk(KERN_ERR "mcp3204 remove error\n");
+		}
+
+		spi_unregister_driver(&mcp3204_driver);
+	#else
+  		printk(KERN_INFO "   mcp3204_exit\n");
+  		if (mcp320x_dev) {
+    		mcp3204_remove(to_spi_device(mcp320x_dev));
+  		}
+	#endif
 }
 
 static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
