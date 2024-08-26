@@ -1339,7 +1339,7 @@ static int led_register_dev(void)
 	/* デバイスクラスを作成する */
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 		class_led = class_create(THIS_MODULE, DEVNAME_LED);
-	# else
+	#else
 		class_led = class_create(DEVNAME_LED);
 	#endif
 
@@ -1393,7 +1393,7 @@ static int buzzer_register_dev(void)
 	/* デバイスクラスを作成する */
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 		class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
-	else
+	#else
 		class_buzzer = class_create(DEVNAME_BUZZER);
 	#endif
 	if (IS_ERR(class_buzzer)) {
