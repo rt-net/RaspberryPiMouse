@@ -326,6 +326,7 @@ static struct spi_board_info mcp3204_info = {
     .mode = SPI_MODE_3,
 };
 
+
 static struct device *mcp320x_dev;
 
 
@@ -1881,20 +1882,18 @@ static unsigned int mcp3204_get_value(int channel)
 	unsigned int r = 0;
 	unsigned char c = channel & 0x03;
 
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
+		if (mcp320x_dev == NULL)  return 0;
+  		dev = mcp320x_dev;
+
+	#else
 		struct spi_master *master;
 		master = spi_busnum_to_master(mcp3204_info.bus_num);
 		snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
 			mcp3204_info.chip_select);
 
 		dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
-
-	#else
-
-		if (mcp320x_dev == NULL)  return 0;
-  		dev = mcp320x_dev;
-
 	#endif
 
 	spi = to_spi_device(dev);
@@ -1939,17 +1938,18 @@ static void spi_remove_device(struct spi_master *master, unsigned int cs)
 	}
 }
 
-/* spiをサーチする関数 */
-static int __callback_find_mcp3204(struct device *dev, void *data)
-{
-  printk(KERN_INFO "    device_name: %s\n", dev->driver->name);
-  if(mcp320x_dev == NULL && strcmp(dev->driver->name, "mcp320x") == 0){
-    mcp320x_dev = dev;
-    mcp3204_probe(to_spi_device(dev));
-  }
-  return 0;
-}
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+	/* spiをサーチする関数 */
+	static int __callback_find_mcp3204(struct device *dev, void *data)
+	{
+	printk(KERN_INFO "    device_name: %s\n", dev->driver->name);
+	if(mcp320x_dev == NULL && strcmp(dev->driver->name, "mcp320x") == 0){
+		mcp320x_dev = dev;
+		mcp3204_probe(to_spi_device(dev));
+	}
+	return 0;
+	}
+#endif
 
 /*
  * mcp3204_init - initialize MCP3204
@@ -1958,7 +1958,9 @@ static int __callback_find_mcp3204(struct device *dev, void *data)
 static int mcp3204_init(void)
 {
 
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+		bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
+	#else
 		struct spi_master *master;
 		struct spi_device *spi_device;
 
@@ -1984,8 +1986,6 @@ static int mcp3204_init(void)
 			spi_unregister_driver(&mcp3204_driver);
 			return -ENODEV;
 		}
-	#else
-		bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
 	#endif
 
 	return 0;
@@ -1998,9 +1998,13 @@ static int mcp3204_init(void)
 static void mcp3204_exit(void)
 {
 
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+  		printk(KERN_INFO "   mcp3204_exit\n");
+  		if (mcp320x_dev) {
+    		mcp3204_remove(to_spi_device(mcp320x_dev));
+  		}
+	#else
 		struct spi_master *master;
-
 		master = spi_busnum_to_master(mcp3204_info.bus_num);
 
 		if (master) {
@@ -2010,11 +2014,6 @@ static void mcp3204_exit(void)
 		}
 
 		spi_unregister_driver(&mcp3204_driver);
-	#else
-  		printk(KERN_INFO "   mcp3204_exit\n");
-  		if (mcp320x_dev) {
-    		mcp3204_remove(to_spi_device(mcp320x_dev));
-  		}
 	#endif
 }
 
