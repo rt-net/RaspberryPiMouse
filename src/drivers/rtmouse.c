@@ -1360,8 +1360,18 @@ static int led_register_dev(void)
 			       _minor_led + i);
 		} else {
 			/* デバイスノードの作成 */
-			device_create(class_led, NULL, devno, NULL,
+			struct device *dev_ret;
+			dev_ret = device_create(class_led, NULL, devno, NULL,
 				      DEVNAME_LED "%u", _minor_led + i);
+
+			/* デバイスファイル作成の可否を判定 */
+			if (IS_ERR(dev_ret)) {
+				/* デバイスファイルの作成に失敗した */
+				printk(KERN_ERR "device_create failed minor = %d\n", _minor_led + i);
+				/* リソースリークを避けるために登録された状態cdevを削除する */
+				cdev_del(&(cdev_array[cdev_index]));
+				return PTR_ERR(dev_ret);
+			}
 		}
 		cdev_index++;
 	}
@@ -1410,8 +1420,18 @@ static int buzzer_register_dev(void)
 		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_buzzer);
 	} else {
 		/* デバイスノードの作成 */
-		device_create(class_buzzer, NULL, devno, NULL,
+		struct device *dev_ret;
+		dev_ret = device_create(class_buzzer, NULL, devno, NULL,
 			      DEVNAME_BUZZER "%u", _minor_buzzer);
+
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_buzzer);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 	cdev_index++;
 
@@ -1461,8 +1481,17 @@ static int motorrawr_register_dev(void)
 		       _minor_motorrawr);
 	} else {
 		/* デバイスノードの作成 */
+		struct device *dev_ret;
 		device_create(class_motorrawr, NULL, devno, NULL,
 			      DEVNAME_MOTORRAWR "%u", _minor_motorrawr);
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motorrawr);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	cdev_index++;
@@ -1512,8 +1541,18 @@ static int motorrawl_register_dev(void)
 		       _minor_motorrawl);
 	} else {
 		/* デバイスノードの作成 */
+		struct device *dev_ret;
 		device_create(class_motorrawl, NULL, devno, NULL,
 			      DEVNAME_MOTORRAWL "%u", _minor_motorrawl);
+
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motorrawl);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	cdev_index++;
@@ -1566,8 +1605,17 @@ static int switch_register_dev(void)
 			       _minor_switch + i);
 		} else {
 			/* デバイスノードの作成 */
+			struct device *dev_ret;
 			device_create(class_switch, NULL, devno, NULL,
 				      DEVNAME_SWITCH "%u", _minor_switch + i);
+			/* デバイスファイル作成の可否を判定 */
+			if (IS_ERR(dev_ret)) {
+				/* デバイスファイルの作成に失敗した */
+				printk(KERN_ERR "device_create failed minor = %d\n", _minor_switch + i);
+				/* リソースリークを避けるために登録された状態cdevを削除する */
+				cdev_del(&(cdev_array[cdev_index]));
+				return PTR_ERR(dev_ret);
+			}
 		}
 		cdev_index++;
 	}
@@ -1616,8 +1664,17 @@ static int sensor_register_dev(void)
 		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_sensor);
 	} else {
 		/* デバイスノードの作成 */
-		device_create(class_sensor, NULL, devno, NULL,
+		struct device *dev_ret;
+		dev_ret = device_create(class_sensor, NULL, devno, NULL,
 			      DEVNAME_SENSOR "%u", _minor_sensor);
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_sensor);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 	cdev_index++;
 
@@ -1665,8 +1722,17 @@ static int motoren_register_dev(void)
 		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_motoren);
 	} else {
 		/* デバイスノードの作成 */
-		device_create(class_motoren, NULL, devno, NULL,
+		struct device *dev_ret;
+		dev_ret = device_create(class_motoren, NULL, devno, NULL,
 			      DEVNAME_MOTOREN "%u", _minor_motoren);
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motoren);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	cdev_index++;
@@ -1714,8 +1780,17 @@ static int motor_register_dev(void)
 		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_motor);
 	} else {
 		/* デバイスノードの作成 */
-		device_create(class_motor, NULL, devno, NULL,
+		struct device *dev_ret;
+		dev_ret = device_create(class_motor, NULL, devno, NULL,
 			      DEVNAME_MOTOR "%u", _minor_motor);
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motor);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	cdev_index++;
@@ -1989,9 +2064,20 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
-		device_create(dev_info->device_class, NULL,
+
+		struct device *dev_ret;
+		dev_ret = device_create(dev_info->device_class, NULL,
 			      MKDEV(dev_info->device_major, minor), NULL,
 			      "rtcounter_r%d", minor);
+
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", minor);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	return 0;
@@ -2044,9 +2130,20 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 	/* /sys/class/mydevice/mydevice* を作る */
 	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
-		device_create(dev_info->device_class, NULL,
+
+		struct device *dev_ret;
+		dev_ret = device_create(dev_info->device_class, NULL,
 			      MKDEV(dev_info->device_major, minor), NULL,
 			      "rtcounter_l%d", minor);
+
+		/* デバイスファイル作成の可否を判定 */
+		if (IS_ERR(dev_ret)) {
+			/* デバイスファイルの作成に失敗した */
+			printk(KERN_ERR "device_create failed minor = %d\n", minor);
+			/* リソースリークを避けるために登録された状態cdevを削除する */
+			cdev_del(&(cdev_array[cdev_index]));
+			return PTR_ERR(dev_ret);
+		}
 	}
 
 	return 0;
