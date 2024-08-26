@@ -326,9 +326,9 @@ static struct spi_board_info mcp3204_info = {
     .mode = SPI_MODE_3,
 };
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 static struct device *mcp320x_dev;
-
+#endif
 
 /* SPI Dirver Info */
 static struct spi_driver mcp3204_driver = {
@@ -1964,7 +1964,7 @@ static int mcp3204_init(void)
 		struct spi_master *master;
 		struct spi_device *spi_device;
 
-		spi_register_driver(&mcp3204_driver);  // ここifdefで囲っていいかも
+		spi_register_driver(&mcp3204_driver);
 
 		mcp3204_info.bus_num = spi_bus_num;
 		mcp3204_info.chip_select = spi_chip_select;
