@@ -279,24 +279,25 @@ static void set_motor_r_freq(int freq);
 static void set_motor_l_freq(int freq);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
-	static int mcp3204_remove(struct spi_device *spi);
+static int mcp3204_remove(struct spi_device *spi);
 #else
-	static void mcp3204_remove(struct spi_device *spi);
+static void mcp3204_remove(struct spi_device *spi);
 #endif
+
 static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
-	static int rtcnt_i2c_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id);
+static int rtcnt_i2c_probe(
+				struct i2c_client *client,const struct i2c_device_id *id);
 #else
-	static int rtcnt_i2c_probe(struct i2c_client *client);
+static int rtcnt_i2c_probe(struct i2c_client *client);
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
-	static int rtcnt_i2c_remove(struct i2c_client *client);
+static int rtcnt_i2c_remove(struct i2c_client *client);
 #else
-	static void rtcnt_i2c_remove(struct i2c_client *client);
+static void rtcnt_i2c_remove(struct i2c_client *client);
 #endif
 
 /* --- Variable Type definitions --- */
@@ -1338,11 +1339,11 @@ static int led_register_dev(void)
 	_major_led = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_led = class_create(THIS_MODULE, DEVNAME_LED);
-	#else
-		class_led = class_create(DEVNAME_LED);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_led = class_create(THIS_MODULE, DEVNAME_LED);
+#else
+	class_led = class_create(DEVNAME_LED);
+#endif
 
 	if (IS_ERR(class_led)) {
 		return PTR_ERR(class_led);
@@ -1402,11 +1403,12 @@ static int buzzer_register_dev(void)
 	_major_buzzer = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
-	#else
-		class_buzzer = class_create(DEVNAME_BUZZER);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
+#else
+	class_buzzer = class_create(DEVNAME_BUZZER);
+#endif
+
 	if (IS_ERR(class_buzzer)) {
 		return PTR_ERR(class_buzzer);
 	}
@@ -1462,11 +1464,12 @@ static int motorrawr_register_dev(void)
 	_major_motorrawr = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
-	#else
-		class_motorrawr = class_create(DEVNAME_MOTORRAWR);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
+#else
+	class_motorrawr = class_create(DEVNAME_MOTORRAWR);
+#endif
+
 	if (IS_ERR(class_motorrawr)) {
 		return PTR_ERR(class_motorrawr);
 	}
@@ -1523,11 +1526,12 @@ static int motorrawl_register_dev(void)
 	_major_motorrawl = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
-	#else
-		class_motorrawl = class_create(DEVNAME_MOTORRAWL);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
+#else
+	class_motorrawl = class_create(DEVNAME_MOTORRAWL);
+#endif
+
 	if (IS_ERR(class_motorrawl)) {
 		return PTR_ERR(class_motorrawl);
 	}
@@ -1584,11 +1588,12 @@ static int switch_register_dev(void)
 	_major_switch = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_switch = class_create(THIS_MODULE, DEVNAME_SWITCH);
-	#else
-		class_switch = class_create(DEVNAME_SWITCH);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_switch = class_create(THIS_MODULE, DEVNAME_SWITCH);
+#else
+	class_switch = class_create(DEVNAME_SWITCH);
+#endif
+
 	if (IS_ERR(class_switch)) {
 		return PTR_ERR(class_switch);
 	}
@@ -1646,11 +1651,12 @@ static int sensor_register_dev(void)
 	_major_sensor = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_sensor = class_create(THIS_MODULE, DEVNAME_SENSOR);
-	#else
-		class_sensor = class_create(DEVNAME_SENSOR);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_sensor = class_create(THIS_MODULE, DEVNAME_SENSOR);
+#else
+	class_sensor = class_create(DEVNAME_SENSOR);
+#endif
+
 	if (IS_ERR(class_sensor)) {
 		return PTR_ERR(class_sensor);
 	}
@@ -1705,11 +1711,12 @@ static int motoren_register_dev(void)
 	_major_motoren = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_motoren = class_create(THIS_MODULE, DEVNAME_MOTOREN);
-	#else
-		class_motoren = class_create(DEVNAME_MOTOREN);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_motoren = class_create(THIS_MODULE, DEVNAME_MOTOREN);
+#else
+	class_motoren = class_create(DEVNAME_MOTOREN);
+#endif
+
 	if (IS_ERR(class_motoren)) {
 		return PTR_ERR(class_motoren);
 	}
@@ -1763,11 +1770,12 @@ static int motor_register_dev(void)
 	_major_motor = MAJOR(dev);
 
 	/* デバイスクラスを作成する */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		class_motor = class_create(THIS_MODULE, DEVNAME_MOTOR);
-	#else
-		class_motor = class_create(DEVNAME_MOTOR);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	class_motor = class_create(THIS_MODULE, DEVNAME_MOTOR);
+#else
+	class_motor = class_create(DEVNAME_MOTOR);
+#endif
+
 	if (IS_ERR(class_motor)) {
 		return PTR_ERR(class_motor);
 	}
@@ -1882,19 +1890,18 @@ static unsigned int mcp3204_get_value(int channel)
 	unsigned int r = 0;
 	unsigned char c = channel & 0x03;
 
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
-		if (mcp320x_dev == NULL)  return 0;
-  		dev = mcp320x_dev;
+	if (mcp320x_dev == NULL)  return 0;
+  	dev = mcp320x_dev;
 
-	#else
-		struct spi_master *master;
-		master = spi_busnum_to_master(mcp3204_info.bus_num);
-		snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
-			mcp3204_info.chip_select);
-
-		dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
-	#endif
+#else
+	struct spi_master *master;
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	snprintf(
+		str, sizeof(str), "%s.%u", dev_name(&master->dev),mcp3204_info.chip_select);
+	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
+#endif
 
 	spi = to_spi_device(dev);
   	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
@@ -1958,35 +1965,35 @@ static void spi_remove_device(struct spi_master *master, unsigned int cs)
 static int mcp3204_init(void)
 {
 
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-		bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
-	#else
-		struct spi_master *master;
-		struct spi_device *spi_device;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+	bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
+#else
+	struct spi_master *master;
+	struct spi_device *spi_device;
 
-		spi_register_driver(&mcp3204_driver);
+	spi_register_driver(&mcp3204_driver);
 
-		mcp3204_info.bus_num = spi_bus_num;
-		mcp3204_info.chip_select = spi_chip_select;
+	mcp3204_info.bus_num = spi_bus_num;
+	mcp3204_info.chip_select = spi_chip_select;
 
-		master = spi_busnum_to_master(mcp3204_info.bus_num);
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
 
-		if (!master) {
-			printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
-				__func__);
-			spi_unregister_driver(&mcp3204_driver);
-			return -ENODEV;
-		}
+	if (!master) {
+		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
+			__func__);
+		spi_unregister_driver(&mcp3204_driver);
+		return -ENODEV;
+	}
 
-		spi_remove_device(master, mcp3204_info.chip_select);
+	spi_remove_device(master, mcp3204_info.chip_select);
 
-		spi_device = spi_new_device(master, &mcp3204_info);
-		if (!spi_device) {
-			printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
-			spi_unregister_driver(&mcp3204_driver);
-			return -ENODEV;
-		}
-	#endif
+	spi_device = spi_new_device(master, &mcp3204_info);
+	if (!spi_device) {
+		printk(KERN_ERR "%s: spi_new_device returned NULL\n", __func__);
+		spi_unregister_driver(&mcp3204_driver);
+		return -ENODEV;
+	}
+#endif
 
 	return 0;
 }
@@ -1998,23 +2005,23 @@ static int mcp3204_init(void)
 static void mcp3204_exit(void)
 {
 
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-  		printk(KERN_INFO "   mcp3204_exit\n");
-  		if (mcp320x_dev) {
-    		mcp3204_remove(to_spi_device(mcp320x_dev));
-  		}
-	#else
-		struct spi_master *master;
-		master = spi_busnum_to_master(mcp3204_info.bus_num);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+	printk(KERN_INFO "   mcp3204_exit\n");
+	if (mcp320x_dev) {
+		mcp3204_remove(to_spi_device(mcp320x_dev));
+	}
+#else
+	struct spi_master *master;
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
 
-		if (master) {
-			spi_remove_device(master, mcp3204_info.chip_select);
-		} else {
-			printk(KERN_ERR "mcp3204 remove error\n");
-		}
+	if (master) {
+		spi_remove_device(master, mcp3204_info.chip_select);
+	} else {
+		printk(KERN_ERR "mcp3204 remove error\n");
+	}
 
-		spi_unregister_driver(&mcp3204_driver);
-	#endif
+	spi_unregister_driver(&mcp3204_driver);
+#endif
 }
 
 static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
@@ -2050,11 +2057,12 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
-	#else
-		dev_info->device_class = class_create(DEVNAME_CNTR);
-	#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
+#else
+	dev_info->device_class = class_create(DEVNAME_CNTR);
+#endif
+
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
@@ -2114,12 +2122,13 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 		return -1;
 	}
 
-	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
-	#else
-		dev_info->device_class = class_create(DEVNAME_CNTL);
-	#endif
+/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+#else
+	dev_info->device_class = class_create(DEVNAME_CNTL);
+#endif
+
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
@@ -2149,87 +2158,83 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
-	static int rtcnt_i2c_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-	{
-		struct rtcnt_device_info *dev_info;
-		int msb = 0, lsb = 0;
-		// printk(KERN_DEBUG "%s: probing i2c device", __func__);
+static int rtcnt_i2c_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct rtcnt_device_info *dev_info;
+	int msb = 0, lsb = 0;
+	// printk(KERN_DEBUG "%s: probing i2c device", __func__);
 
-		/* check i2c device */
-		// printk(KERN_DEBUG "%s: checking i2c device", __func__);
-		msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
-		lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
-		if ((msb < 0) || (lsb < 0)) {
-			printk(KERN_INFO
-				"%s: rtcounter not found, or wrong i2c device probed",
-				DRIVER_NAME);
-			// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
-			//        client->addr, msb, lsb);
-				return -ENODEV;
-			}
-			printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
-					"id.driver_data=%d, addr=0x%x\n",
-				DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+	/* check i2c device */
+	// printk(KERN_DEBUG "%s: checking i2c device", __func__);
+	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+	if ((msb < 0) || (lsb < 0)) {
+		printk(KERN_INFO
+			"%s: rtcounter not found, or wrong i2c device probed",
+			DRIVER_NAME);
+		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
+		//        client->addr, msb, lsb);
+		return -ENODEV;
+	}
+	printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
+			"id.driver_data=%d, addr=0x%x\n",
+			DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
-			dev_info = (struct rtcnt_device_info *)devm_kzalloc(
-				&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
-			dev_info->client = client;
-			i2c_set_clientdata(client, dev_info);
-			mutex_init(&dev_info->lock);
+	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
+					&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+	dev_info->client = client;
+	i2c_set_clientdata(client, dev_info);
+	mutex_init(&dev_info->lock);
 
-			/* create character device */
-			if ((int)(id->driver_data) == 0) {
-				if (rtcntl_i2c_create_cdev(dev_info))
-					return -ENOMEM;
-			} else if ((int)(id->driver_data) == 1) {
-				if (rtcntr_i2c_create_cdev(dev_info))
-					return -ENOMEM;
-			}
+	/* create character device */
+	if ((int)(id->driver_data) == 0) {
+		if (rtcntl_i2c_create_cdev(dev_info)) return -ENOMEM;
+	} else if ((int)(id->driver_data) == 1) {
+		if (rtcntr_i2c_create_cdev(dev_info)) return -ENOMEM;
+	}
 
-			return 0;
-		}
+	return 0;
+}
 #else
-	static int rtcnt_i2c_probe(struct i2c_client *client)
-	{
-		const struct i2c_device_id *id = i2c_client_get_device_id(client);
-		struct rtcnt_device_info *dev_info;
-		int msb = 0, lsb = 0;
-		// printk(KERN_DEBUG "%s: probing i2c device", __func__);
+static int rtcnt_i2c_probe(struct i2c_client *client)
+{
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
+	struct rtcnt_device_info *dev_info;
+	int msb = 0, lsb = 0;
+	// printk(KERN_DEBUG "%s: probing i2c device", __func__);
 
-		/* check i2c device */
-		// printk(KERN_DEBUG "%s: checking i2c device", __func__);
-		msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
-		lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
-		if ((msb < 0) || (lsb < 0)) {
-			printk(KERN_INFO
-				"%s: rtcounter not found, or wrong i2c device probed",
-				DRIVER_NAME);
-			// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
-			//        client->addr, msb, lsb);
-				return -ENODEV;
-			}
-			printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
-					"id.driver_data=%d, addr=0x%x\n",
-				DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+	/* check i2c device */
+	// printk(KERN_DEBUG "%s: checking i2c device", __func__);
+	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
+	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
+	if ((msb < 0) || (lsb < 0)) {
+		printk(KERN_INFO
+			"%s: rtcounter not found, or wrong i2c device probed",
+			DRIVER_NAME);
+		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
+		//        client->addr, msb, lsb);
+		return -ENODEV;
+	}
+	printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
+			"id.driver_data=%d, addr=0x%x\n",
+			DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
-			dev_info = (struct rtcnt_device_info *)devm_kzalloc(
-				&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
-			dev_info->client = client;
-			i2c_set_clientdata(client, dev_info);
-			mutex_init(&dev_info->lock);
+	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
+					&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+	dev_info->client = client;
+	i2c_set_clientdata(client, dev_info);
+	mutex_init(&dev_info->lock);
 
-			/* create character device */
-			if ((int)(id->driver_data) == 0) {
-				if (rtcntl_i2c_create_cdev(dev_info))
-					return -ENOMEM;
-			} else if ((int)(id->driver_data) == 1) {
-				if (rtcntr_i2c_create_cdev(dev_info))
-					return -ENOMEM;
-			}
+	/* create character device */
+	if ((int)(id->driver_data) == 0) {
+		if (rtcntl_i2c_create_cdev(dev_info)) return -ENOMEM;
+	} else if ((int)(id->driver_data) == 1) {
+		if (rtcntr_i2c_create_cdev(dev_info)) return -ENOMEM;
+	}
 
-			return 0;
-		}
+	return 0;
+}
 #endif
 
 /*
@@ -2280,7 +2285,7 @@ static int i2c_counter_init(void)
 	i2c_adap_r = i2c_get_adapter(1);
 	i2c_client_r = i2c_new_client_device(i2c_adap_r, &i2c_board_info_r);
 	i2c_put_adapter(i2c_adap_r);
-// printk(KERN_DEBUG "%s: added i2c device rtcntr", __func__);
+	// printk(KERN_DEBUG "%s: added i2c device rtcntr", __func__);
 #endif
 
 	return retval;
@@ -2323,28 +2328,28 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
  * called when I2C pulse counter removed
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
-	static int rtcnt_i2c_remove(struct i2c_client *client)
-	{
-		struct rtcnt_device_info *dev_info;
-		// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
-		// client->addr);
-		dev_info = i2c_get_clientdata(client);
-		rtcnt_i2c_delete_cdev(dev_info);
-		printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-			client->addr);
-		return 0;
-	}
+static int rtcnt_i2c_remove(struct i2c_client *client)
+{
+	struct rtcnt_device_info *dev_info;
+	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+	// client->addr);
+	dev_info = i2c_get_clientdata(client);
+	rtcnt_i2c_delete_cdev(dev_info);
+	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+		client->addr);
+	return 0;
+}
 #else
-	static void rtcnt_i2c_remove(struct i2c_client *client)
-	{
-		struct rtcnt_device_info *dev_info;
-		// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
-		// client->addr);
-		dev_info = i2c_get_clientdata(client);
-		rtcnt_i2c_delete_cdev(dev_info);
-		printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-			client->addr);
-	}
+static void rtcnt_i2c_remove(struct i2c_client *client)
+{
+	struct rtcnt_device_info *dev_info;
+	// printk(KERN_DEBUG "%s: removing i2c device 0x%x\n", __func__,
+	// client->addr);
+	dev_info = i2c_get_clientdata(client);
+	rtcnt_i2c_delete_cdev(dev_info);
+	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
+		client->addr);
+}
 #endif
 
 /*
