@@ -288,8 +288,8 @@ static int mcp3204_probe(struct spi_device *spi);
 static unsigned int mcp3204_get_value(int channel);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
-static int rtcnt_i2c_probe(
-				struct i2c_client *client,const struct i2c_device_id *id);
+static int rtcnt_i2c_probe(struct i2c_client *client,
+			   const struct i2c_device_id *id);
 #else
 static int rtcnt_i2c_probe(struct i2c_client *client);
 #endif
@@ -1363,14 +1363,18 @@ static int led_register_dev(void)
 		} else {
 			/* デバイスノードの作成 */
 			struct device *dev_ret;
-			dev_ret = device_create(class_led, NULL, devno, NULL,
-				      DEVNAME_LED "%u", _minor_led + i);
+			dev_ret =
+			    device_create(class_led, NULL, devno, NULL,
+					  DEVNAME_LED "%u", _minor_led + i);
 
 			/* デバイスファイル作成の可否を判定 */
 			if (IS_ERR(dev_ret)) {
 				/* デバイスファイルの作成に失敗した */
-				printk(KERN_ERR "device_create failed minor = %d\n", _minor_led + i);
-				/* リソースリークを避けるために登録された状態cdevを削除する */
+				printk(KERN_ERR
+				       "device_create failed minor = %d\n",
+				       _minor_led + i);
+				/* リソースリークを避けるために登録された状態cdevを削除する
+				 */
 				cdev_del(&(cdev_array[cdev_index]));
 				return PTR_ERR(dev_ret);
 			}
@@ -1425,13 +1429,15 @@ static int buzzer_register_dev(void)
 		/* デバイスノードの作成 */
 		struct device *dev_ret;
 		dev_ret = device_create(class_buzzer, NULL, devno, NULL,
-			      DEVNAME_BUZZER "%u", _minor_buzzer);
+					DEVNAME_BUZZER "%u", _minor_buzzer);
 
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_buzzer);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_buzzer);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1491,8 +1497,10 @@ static int motorrawr_register_dev(void)
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motorrawr);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_motorrawr);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1553,8 +1561,10 @@ static int motorrawl_register_dev(void)
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motorrawl);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_motorrawl);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1617,8 +1627,11 @@ static int switch_register_dev(void)
 			/* デバイスファイル作成の可否を判定 */
 			if (IS_ERR(dev_ret)) {
 				/* デバイスファイルの作成に失敗した */
-				printk(KERN_ERR "device_create failed minor = %d\n", _minor_switch + i);
-				/* リソースリークを避けるために登録された状態cdevを削除する */
+				printk(KERN_ERR
+				       "device_create failed minor = %d\n",
+				       _minor_switch + i);
+				/* リソースリークを避けるために登録された状態cdevを削除する
+				 */
 				cdev_del(&(cdev_array[cdev_index]));
 				return PTR_ERR(dev_ret);
 			}
@@ -1673,12 +1686,14 @@ static int sensor_register_dev(void)
 		/* デバイスノードの作成 */
 		struct device *dev_ret;
 		dev_ret = device_create(class_sensor, NULL, devno, NULL,
-			      DEVNAME_SENSOR "%u", _minor_sensor);
+					DEVNAME_SENSOR "%u", _minor_sensor);
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_sensor);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_sensor);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1732,12 +1747,14 @@ static int motoren_register_dev(void)
 		/* デバイスノードの作成 */
 		struct device *dev_ret;
 		dev_ret = device_create(class_motoren, NULL, devno, NULL,
-			      DEVNAME_MOTOREN "%u", _minor_motoren);
+					DEVNAME_MOTOREN "%u", _minor_motoren);
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motoren);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_motoren);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1791,12 +1808,14 @@ static int motor_register_dev(void)
 		/* デバイスノードの作成 */
 		struct device *dev_ret;
 		dev_ret = device_create(class_motor, NULL, devno, NULL,
-			      DEVNAME_MOTOR "%u", _minor_motor);
+					DEVNAME_MOTOR "%u", _minor_motor);
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", _minor_motor);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       _minor_motor);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -1809,26 +1828,26 @@ static int motor_register_dev(void)
 
 /* mcp3204_remove - remove function lined with spi_dirver */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
-	static int mcp3204_remove(struct spi_device *spi)
-	{
-		struct mcp3204_drvdata *data;
-		/* get drvdata */
-		data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
-		/* free kernel memory */
-		kfree(data);
-		printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
-		return 0;
-	}
+static int mcp3204_remove(struct spi_device *spi)
+{
+	struct mcp3204_drvdata *data;
+	/* get drvdata */
+	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+	/* free kernel memory */
+	kfree(data);
+	printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
+	return 0;
+}
 #else
-	static void mcp3204_remove(struct spi_device *spi)
-	{
-		struct mcp3204_drvdata *data;
-		/* get drvdata */
-		data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
-		/* free kernel memory */
-		kfree(data);
-		printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
-	}
+static void mcp3204_remove(struct spi_device *spi)
+{
+	struct mcp3204_drvdata *data;
+	/* get drvdata */
+	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+	/* free kernel memory */
+	kfree(data);
+	printk(KERN_INFO "%s: mcp3204 removed\n", DRIVER_NAME);
+}
 #endif
 
 /* mcp3204_probe - probe function lined with spi_dirver */
@@ -1892,19 +1911,20 @@ static unsigned int mcp3204_get_value(int channel)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 
-	if (mcp320x_dev == NULL)  return 0;
-  	dev = mcp320x_dev;
+	if (mcp320x_dev == NULL)
+		return 0;
+	dev = mcp320x_dev;
 
 #else
 	struct spi_master *master;
 	master = spi_busnum_to_master(mcp3204_info.bus_num);
-	snprintf(
-		str, sizeof(str), "%s.%u", dev_name(&master->dev),mcp3204_info.chip_select);
+	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
+		 mcp3204_info.chip_select);
 	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
 #endif
 
 	spi = to_spi_device(dev);
-  	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
 	mutex_lock(&data->lock);
 	data->tx[0] = 1 << 2;  // start bit
 	data->tx[0] |= 1 << 1; // Single
@@ -1913,7 +1933,7 @@ static unsigned int mcp3204_get_value(int channel)
 
 	if (spi_sync(data->spi, &data->msg)) {
 		printk(KERN_INFO "%s: spi_sync_transfer returned non zero\n",
-			__func__);
+		       __func__);
 	}
 
 	mutex_unlock(&data->lock);
@@ -1939,23 +1959,23 @@ static void spi_remove_device(struct spi_master *master, unsigned int cs)
 	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev), cs);
 
 	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
-	//ここを参考にspi_deviceを取得するプログラムを作成する
+	// ここを参考にspi_deviceを取得するプログラムを作成する
 	if (dev) {
 		device_del(dev);
 	}
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-	/* spiをサーチする関数 */
-	static int __callback_find_mcp3204(struct device *dev, void *data)
-	{
+/* spiをサーチする関数 */
+static int __callback_find_mcp3204(struct device *dev, void *data)
+{
 	printk(KERN_INFO "    device_name: %s\n", dev->driver->name);
-	if(mcp320x_dev == NULL && strcmp(dev->driver->name, "mcp320x") == 0){
+	if (mcp320x_dev == NULL && strcmp(dev->driver->name, "mcp320x") == 0) {
 		mcp320x_dev = dev;
 		mcp3204_probe(to_spi_device(dev));
 	}
 	return 0;
-	}
+}
 #endif
 
 /*
@@ -1980,7 +2000,7 @@ static int mcp3204_init(void)
 
 	if (!master) {
 		printk(KERN_ERR "%s: spi_busnum_to_master returned NULL\n",
-			__func__);
+		       __func__);
 		spi_unregister_driver(&mcp3204_driver);
 		return -ENODEV;
 	}
@@ -2074,14 +2094,16 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
-			      MKDEV(dev_info->device_major, minor), NULL,
-			      "rtcounter_r%d", minor);
+					MKDEV(dev_info->device_major, minor),
+					NULL, "rtcounter_r%d", minor);
 
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", minor);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       minor);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -2141,14 +2163,16 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
-			      MKDEV(dev_info->device_major, minor), NULL,
-			      "rtcounter_l%d", minor);
+					MKDEV(dev_info->device_major, minor),
+					NULL, "rtcounter_l%d", minor);
 
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
 			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n", minor);
-			/* リソースリークを避けるために登録された状態cdevを削除する */
+			printk(KERN_ERR "device_create failed minor = %d\n",
+			       minor);
+			/* リソースリークを避けるために登録された状態cdevを削除する
+			 */
 			cdev_del(&(cdev_array[cdev_index]));
 			return PTR_ERR(dev_ret);
 		}
@@ -2159,7 +2183,7 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 static int rtcnt_i2c_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+			   const struct i2c_device_id *id)
 {
 	struct rtcnt_device_info *dev_info;
 	int msb = 0, lsb = 0;
@@ -2171,27 +2195,29 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
 	if ((msb < 0) || (lsb < 0)) {
 		printk(KERN_INFO
-			"%s: rtcounter not found, or wrong i2c device probed",
-			DRIVER_NAME);
+		       "%s: rtcounter not found, or wrong i2c device probed",
+		       DRIVER_NAME);
 		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
 		//        client->addr, msb, lsb);
 		return -ENODEV;
 	}
 	printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
-			"id.driver_data=%d, addr=0x%x\n",
-			DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+			 "id.driver_data=%d, addr=0x%x\n",
+	       DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
 	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
-					&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+	    &client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
 	dev_info->client = client;
 	i2c_set_clientdata(client, dev_info);
 	mutex_init(&dev_info->lock);
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcntl_i2c_create_cdev(dev_info)) return -ENOMEM;
+		if (rtcntl_i2c_create_cdev(dev_info))
+			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcntr_i2c_create_cdev(dev_info)) return -ENOMEM;
+		if (rtcntr_i2c_create_cdev(dev_info))
+			return -ENOMEM;
 	}
 
 	return 0;
@@ -2210,27 +2236,29 @@ static int rtcnt_i2c_probe(struct i2c_client *client)
 	lsb = i2c_smbus_read_byte_data(client, CNT_ADDR_LSB);
 	if ((msb < 0) || (lsb < 0)) {
 		printk(KERN_INFO
-			"%s: rtcounter not found, or wrong i2c device probed",
-			DRIVER_NAME);
+		       "%s: rtcounter not found, or wrong i2c device probed",
+		       DRIVER_NAME);
 		// printk(KERN_DEBUG "%s: addr 0x%x, msb %d, lsb %d", __func__,
 		//        client->addr, msb, lsb);
 		return -ENODEV;
 	}
 	printk(KERN_INFO "%s: new i2c device probed, id.name=%s, "
-			"id.driver_data=%d, addr=0x%x\n",
-			DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
+			 "id.driver_data=%d, addr=0x%x\n",
+	       DRIVER_NAME, id->name, (int)(id->driver_data), client->addr);
 
 	dev_info = (struct rtcnt_device_info *)devm_kzalloc(
-					&client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
+	    &client->dev, sizeof(struct rtcnt_device_info), GFP_KERNEL);
 	dev_info->client = client;
 	i2c_set_clientdata(client, dev_info);
 	mutex_init(&dev_info->lock);
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcntl_i2c_create_cdev(dev_info)) return -ENOMEM;
+		if (rtcntl_i2c_create_cdev(dev_info))
+			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcntr_i2c_create_cdev(dev_info)) return -ENOMEM;
+		if (rtcntr_i2c_create_cdev(dev_info))
+			return -ENOMEM;
 	}
 
 	return 0;
@@ -2336,7 +2364,7 @@ static int rtcnt_i2c_remove(struct i2c_client *client)
 	dev_info = i2c_get_clientdata(client);
 	rtcnt_i2c_delete_cdev(dev_info);
 	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-		client->addr);
+	       client->addr);
 	return 0;
 }
 #else
@@ -2348,7 +2376,7 @@ static void rtcnt_i2c_remove(struct i2c_client *client)
 	dev_info = i2c_get_clientdata(client);
 	rtcnt_i2c_delete_cdev(dev_info);
 	printk(KERN_INFO "%s: i2c device 0x%x removed\n", DRIVER_NAME,
-		client->addr);
+	       client->addr);
 }
 #endif
 
