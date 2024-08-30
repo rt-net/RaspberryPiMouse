@@ -29,47 +29,54 @@ jobs:
       - name: Lint
         run: |
           ./.test/lint.sh
+
   build:
     needs: lint
     strategy:
       fail-fast: false
       matrix:
         env:
-          - { RPI_LINUX_VER: rpi-5.4.y, CONFIG_FILE: config-5.4.83-v7+, RPI_LINUX_COMMIT_HASH: 76c49e6, GCC_VER: 8.3 }
-          - { RPI_LINUX_VER: rpi-5.10.y, CONFIG_FILE: config-5.10.11-v7+, RPI_LINUX_COMMIT_HASH: 6af8ae3, GCC_VER: 8.3 }
-          - { RPI_LINUX_VER: rpi-5.15.y, CONFIG_FILE: config-5.15.61-v7l+, RPI_LINUX_COMMIT_HASH: 5b775d7, GCC_VER: 10.2 }
-          - { RPI_LINUX_VER: rpi-5.15.y, CONFIG_FILE: config-5.15.76-v7l+, RPI_LINUX_COMMIT_HASH: 45d339389bb85588b8045dd40a00c54d01e2e711, GCC_VER: 10.2 }
-    runs-on: ubuntu-latest
+          - { KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }
+          # - { KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }
+          # - { KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }
+
+    runs-on: ubuntu-22.04
+
     steps:
-      - uses: actions/checkout@v3
+    - name: Checkout source code
+      uses: actions/checkout@v4
 
-      - name: Install cross-build settings
-        id: gcc
-        env:
-          GCC_VER: ${{ matrix.env.GCC_VER }}
-          SRC_DIR: ${{ github.workspace }}
-        run: |
-          source ./.test/step0.sh
-          prepare_cross_compiler
-          echo "path=${CROSS_COMPILE_PATH}" >> $GITHUB_OUTPUT
+    - name: Set up cross-compilation toolchain
+      run: |
+        sudo apt update
+        sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          sudo apt install -y crossbuild-essential-armhf
+        else
+          sudo apt install -y crossbuild-essential-arm64
+        fi
 
-      - name: Install kernel headers
-        env:
-          RPI_LINUX_VER: ${{ matrix.env.RPI_LINUX_VER }}
-          CONFIG_FILE: ${{ matrix.env.CONFIG_FILE }}
-          RPI_LINUX_COMMIT_HASH: ${{ matrix.env.RPI_LINUX_COMMIT_HASH }}
-          GCC_VER: ${{ matrix.env.GCC_VER }}
-          CROSS_COMPILE_PATH: ${{ steps.gcc.outputs.path }}
-          SRC_DIR: ${{ github.workspace }}
-        run: |
-          source ./.test/step1.sh
-          install_kernel_headers
+    - name: Clone Raspberry Pi Linux Kernel
+      run: |
+        git clone --branch ${{ matrix.env.KERNEL_VER }} --depth=1 https://github.com/raspberrypi/linux
+        cd linux
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          KERNEL=kernel7l
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules_prepare
+        else
+          KERNEL=kernel8
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcm2711_defconfig
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
+        fi
 
-      - name: Build kernel module
-        env:
-          CROSS_COMPILE_PATH: ${{ steps.gcc.outputs.path }}
-          SRC_DIR: ${{ github.workspace }}
-        run: |
-          source ./.test/step2.sh
-          build_kernel_module
-
+    - name: Build the kernel module
+      run: |
+        cd linux
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers modules
+        else
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers modules
+        fi
