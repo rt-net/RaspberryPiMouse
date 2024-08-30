@@ -1,0 +1,66 @@
+name: Build check
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/build_check.yml'
+      - 'src/drivers/**'
+    workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/build_check.yml'
+      - 'src/drivers/**'
+
+jobs:
+  build_check:
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - { KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }
+          - { KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Set up cross-compilation toolchain
+      run: |
+        sudo apt update
+        sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          sudo apt install -y crossbuild-essential-armhf
+        else
+          sudo apt install -y crossbuild-essential-arm64
+        fi
+
+    - name: Clone Raspberry Pi Linux Kernel
+      run: |
+        git clone --branch ${{ matrix.env.KERNEL_VER }} --depth=1 https://github.com/raspberrypi/linux
+        cd linux
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          KERNEL=kernel7l
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules_prepare
+        else
+          KERNEL=kernel8
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcm2711_defconfig
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
+        fi
+
+    - name: Build the kernel module
+      run: |
+        cd linux
+        if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers modules
+        else
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers modules
+        fi
