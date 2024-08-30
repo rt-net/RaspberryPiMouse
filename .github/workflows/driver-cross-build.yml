@@ -76,7 +76,7 @@ jobs:
       run: |
         cd linux
         if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers modules
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers V=1 modules
         else
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers modules
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers V=1 modules
         fi
