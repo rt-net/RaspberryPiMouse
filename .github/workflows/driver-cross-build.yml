@@ -36,13 +36,13 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - { KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }
-          - { KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }
-          - { KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }
-          # - { KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }
-          # - { KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }
+          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }  # Debian 10 (Buster)
+          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
+          - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
+          # - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }  # Debian 12 (Bookworm) 32-bit
+          # - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }  # Debian 12 (Bookworm) 64-bit
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-${{ matrix.env.HOST }}
 
     steps:
     - name: Checkout source code
