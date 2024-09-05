@@ -26,3 +26,15 @@ if (( $(echo "$KERNEL_VERSION >= 5.16" | bc -l) )); then
         echo "Add  \"$DTOVERLAY\"  > $CONFIG_FILE"
     fi
 fi
+
+# replace "dtparam=i2c_arm=off" with "dtparam=i2c_arm=on"
+if grep -qxF 'dtparam=i2c_arm=off' "$CONFIG_FILE"; then
+    sudo sed -i 's/dtparam=i2c_arm=off/dtparam=i2c_arm=on/' "$CONFIG_FILE"
+    echo "changed \"dtparam=i2c_arm=off\" to \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
+fi
+
+# replace "dtparam=spi=off" with "dtparam=spi=on"
+if grep -qxF 'dtparam=spi=off' "$CONFIG_FILE"; then
+    sudo sed -i 's/dtparam=spi=off/dtparam=spi=on/' "$CONFIG_FILE"
+    echo "changed \"dtparam=spi=off\" to \"dtparam=spi=on\" in $CONFIG_FILE"
+fi
