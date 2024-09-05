@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -eu
 
-# dtoverlay-setting
+# OS architecture (32-bit or 64-bit)
+ARCHITECTURE=$(uname -m)
+
+# dtoverlay setting
 DTOVERLAY='dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000'
+
+# i2c_baudrate setting
 DTPARAM='dtparam=i2c_baudrate=62500'
 
 # config-file PATH
@@ -10,6 +15,13 @@ CONFIG_FILE='/boot/firmware/config.txt'
 
 # kernel version
 KERNEL_VERSION=$(uname -r | cut -d'.' -f1,2)
+
+if [[ "$ARCHITECTURE" == "armv7l" ]]; then
+    if ! grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
+        echo "arm_64bit=0" | sudo tee -a "$CONFIG_FILE"
+        echo " Add \"arm_64bit=0\"  > $CONFIG_FILE"
+    fi
+fi
 
 # add dtparam-setting for "/boot/firmware/config.txt"
 if ! grep -qxF "$DTPARAM" "$CONFIG_FILE"; then
