@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 set -eu
 
+# settings comment
+SETTING_COMMENT='# Raspberry Pi Mouse V3 settings'
+
 # OS architecture (32-bit or 64-bit)
 ARCHITECTURE=$(uname -m)
 
 # dtoverlay setting
 DTOVERLAY='dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000'
 
-# i2c_baudrate setting
+# i2c_baudrate-setting
 DTPARAM='dtparam=i2c_baudrate=62500'
 
 # config-file PATH
@@ -15,6 +18,12 @@ CONFIG_FILE='/boot/firmware/config.txt'
 
 # kernel version
 KERNEL_VERSION=$(uname -r | cut -d'.' -f1,2)
+
+
+# add Raspberry Pi Mouse V3 settings"
+if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
+    echo "$SETTING_COMMENT" | sudo tee -a "$CONFIG_FILE" > /dev/null
+fi
 
 if [[ "$ARCHITECTURE" == "armv7l" ]]; then
     if ! grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
