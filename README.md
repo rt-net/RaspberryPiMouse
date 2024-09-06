@@ -17,7 +17,7 @@ Run the installation script ([`./utils/build_install.bash`](https://github.com/r
 
 ```sh
 arm_64bit=0  # "64-bit"版では不要です
-dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000
+dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000  # カーネル5.16未満の場合は不要です
 dtparam=i2c_baudrate=62500
 ```
 
