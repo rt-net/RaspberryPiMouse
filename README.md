@@ -7,54 +7,36 @@ for the Raspberry Pi Mouse.
 
 ## Installation
 
-Run the installation script ([`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)).
+Run the following scripts.
 
-インストール用のシェルスクリプト（[`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)）を実行します。
+- setting script ([`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash))
+- installation script ([`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash))
 
-### for Raspberry Pi OS
+以下のスクリプトを実行します
+- setting script（[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)）
+- installation script（[`./utils/build_install.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/build_install.bash)）
 
-`/boot/firmware/config.txt`を編集し、ファイル末尾に以下の設定を追加します。
-
-```sh
-arm_64bit=0  # "64-bit"版では不要です
-dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000  # カーネル5.16未満の場合は不要です
-dtparam=i2c_baudrate=62500
-```
-
-Raspberry Piを再起動します。
+### for `Raspberry Pi OS`・`Ubuntu`
 
 以下のコマンドでインストールを実行します。
 
-```sh
+```bash
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd RaspberryPiMouse/utils
+$ ./set_configs.bash
+```
+
+PCを再起動した後、以下のコマンドを実行します。
+
+```bash
 $ sudo apt install raspberrypi-kernel-headers build-essential
-$ ./build_install.bash
-```
-
-### for Ubuntu
-
-`/boot/firmware/config.txt`を編集し、ファイル末尾に以下の設定を追加します。
-
-```sh
-dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000 # "Ubuntu Server 22.04"では不要です
-dtparam=i2c_baudrate=62500
-```
-
-Raspberry Piを再起動します。
-
-以下のコマンドでインストールを実行します。
-
-```sh
-$ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd RaspberryPiMouse/utils
-$ sudo apt install linux-headers-$(uname -r) build-essential
 $ ./build_install.bash
 ```
 
 ### Manual installation
 
-```sh
+```bash
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
 $ cd RaspberryPiMouse/src/drivers
 $ make
@@ -65,14 +47,28 @@ $ sudo insmod rtmouse.ko
 
 ### for Raspberry Pi OS
 
+以下の設定を確認ください。※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、設定は[自動で書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash#L51-#L61))。
+
+#### for SPI and I2C
+
 Enable SPI and I2C functions via `raspi-config` command.
 
-以下の設定を確認ください。
 `raspi-config` コマンドで設定します。
 
 * SPI機能を「入」にする。
 * I2C機能を「入」にする。
 
+#### for 32-bit OS
+
+Set 32bit-setting to `/boot/firmware/config.txt`.
+
+`/boot/firmware/config.txt`を編集し、ファイル末尾に以下の記述を追加します。
+
+```bash
+$ sudo nano /boot/firmware/config.txt
+
+arm_64bit=0
+```
 
 ### for Raspberry Pi 4
 
@@ -91,6 +87,16 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 #define RASPBERRYPI 2
 ```
 
+### デバイスツリーオーバーレイについて
+
+kernel `5.16`以降では`/boot/firmware/config.txt`で以下の設定を記述する必要があります。※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、設定は[自動で書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash#L35-#L49))。
+
+```bash
+$ sudo nano /boot/firmware/config.txt
+
+dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000
+```
+
 ### パルスカウンタについて
 
 パルスカウンタは値の読み取りにI2Cを使用しています。仕様上は400kHzまでbaudrateを上げることができます（※1）。
@@ -102,9 +108,11 @@ it may be necessary to set the I2C baudrate lower than the default value.
 Add a following new line in `/boot/firmware/config.txt` to change the i2c_baudrate to 62.5 kHz.
 
 `/boot/firmware/config.txt`に以下の1行を追加することでI2Cのbaudrateを62.5kHzに固定することができます。
-```
+
+```bash
 dtparam=i2c_baudrate=62500
 ```
+
 ※1　Raspberry Pi 4 Model B（Ubuntu Server `18.04` / `20.04` / `22.04` / `24.04`）を搭載して400kHzで通信できることを確認しています。
 ※2　現在設定されているI2Cのbaudrateは以下のコマンドを実行することで確認できます。
 ```
