@@ -62,11 +62,9 @@ Enable SPI and I2C functions via `raspi-config` command.
 
 Set 32bit-setting to `/boot/firmware/config.txt`.
 
-`/boot/firmware/config.txt`を編集し、ファイル末尾に以下の記述を追加します。
+32-bit版のOSではビルドするために、`/boot/firmware/config.txt`に以下の1行を追加する必要があります。
 
 ```bash
-$ sudo nano /boot/firmware/config.txt
-
 arm_64bit=0
 ```
 
@@ -89,11 +87,9 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 
 ### デバイスツリーオーバーレイについて
 
-kernel `5.16`以降では`/boot/firmware/config.txt`で以下の設定を記述する必要があります。※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、設定は[自動で書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash#L35-#L49))。
+kernel `5.16`以降では`/boot/firmware/config.txt`に以下の設定を記述し、dtoverlayを設定する必要があります。※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、設定は[自動で書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash#L35-#L49))。
 
 ```bash
-$ sudo nano /boot/firmware/config.txt
-
 dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000
 ```
 
