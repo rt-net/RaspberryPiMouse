@@ -39,8 +39,8 @@ jobs:
           - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }  # Debian 10 (Buster)
           - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
           - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
-          # - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }  # Debian 12 (Bookworm) 32-bit
-          # - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }  # Debian 12 (Bookworm) 64-bit
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }  # Debian 12 (Bookworm) 32-bit
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }  # Debian 12 (Bookworm) 64-bit
 
     runs-on: ubuntu-${{ matrix.env.HOST }}
 
@@ -76,7 +76,7 @@ jobs:
       run: |
         cd linux
         if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers V=1 modules
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- M=$GITHUB_WORKSPACE/src/drivers V=1 KBUILD_MODPOST_WARN=1 modules
         else
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers V=1 modules
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$GITHUB_WORKSPACE/src/drivers V=1 KBUILD_MODPOST_WARN=1 modules
         fi
