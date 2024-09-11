@@ -59,3 +59,15 @@ if grep -qxF 'dtparam=spi=off' "$CONFIG_FILE"; then
     sudo sed -i 's/dtparam=spi=off/dtparam=spi=on/' "$CONFIG_FILE"
     echo "changed \"dtparam=spi=off\" to \"dtparam=spi=on\" in $CONFIG_FILE"
 fi
+
+# uncomment "dtparam=i2c_arm=on" if it is commented
+if grep -qxF '#dtparam=i2c_arm=on' "$CONFIG_FILE"; then
+    sudo sed -i 's/#dtparam=i2c_arm=on/dtparam=i2c_arm=on/' "$CONFIG_FILE"
+    echo "uncommented \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
+fi
+
+# uncomment "dtparam=spi=on" if it is commented
+if grep -qxF '#dtparam=spi=on' "$CONFIG_FILE"; then
+    sudo sed -i 's/#dtparam=spi=on/dtparam=spi=on/' "$CONFIG_FILE"
+    echo "uncommented \"dtparam=spi=on\" in $CONFIG_FILE"
+fi
