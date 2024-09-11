@@ -28,7 +28,7 @@ fi
 if [[ "$ARCHITECTURE" == "armv7l" ]]; then
     if ! grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
         echo "arm_64bit=0" | sudo tee -a "$CONFIG_FILE"
-        echo " Add \"arm_64bit=0\"  > $CONFIG_FILE"
+        echo "Add \"arm_64bit=0\"  > $CONFIG_FILE"
     fi
 fi
 
