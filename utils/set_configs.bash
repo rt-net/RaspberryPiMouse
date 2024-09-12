@@ -5,7 +5,7 @@ set -eu
 SETTING_COMMENT='# Raspberry Pi Mouse V3 settings'
 
 # OS architecture (32-bit or 64-bit)
-ARCHITECTURE=$(uname -m)
+ARCHITECTURE=$(getconf LONG_BIT)
 
 # dtoverlay setting
 DTOVERLAY='dtoverlay=anyspi:spi0-0,dev="microchip,mcp3204",speed=1000000'
@@ -25,7 +25,8 @@ if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
     echo "$SETTING_COMMENT" | sudo tee -a "$CONFIG_FILE" > /dev/null
 fi
 
-if [[ "$ARCHITECTURE" == "armv7l" ]]; then
+# check if the OS is running in 32-bit mode
+if [[ "$ARCHITECTURE" == "32" ]]; then
     if ! grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
         echo "arm_64bit=0" | sudo tee -a "$CONFIG_FILE"
         echo "Add \"arm_64bit=0\"  > $CONFIG_FILE"
