@@ -17,9 +17,19 @@ DTPARAM='dtparam=i2c_baudrate=62500'
 CONFIG_FILE='/boot/firmware/config.txt'
 
 # kernel version
-KERNEL_VERSION=$(uname -r | cut -d'.' -f1,2)
+# remove the dot from the version number and pad single-digit minor versions
+KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
+KERNEL_VERSION_INT=$(echo "$KERNEL_VERSION" | awk -F. '{ printf "%d%02d", $1, $2 }')
 
-# add Raspberry Pi Mouse V3 settings
+# function to convert kernel version for comparison
+KERNEL_VERSION_INT() {
+  echo "$1" | awk -F. '{ printf "%d%02d", $1, $2 }'
+}
+
+# get the kernel version
+result=$(KERNEL_VERSION_INT $(uname -r | cut -d'-' -f1))
+
+# add raspberry pi mouse v3 settings
 if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
     echo "$SETTING_COMMENT" | sudo tee -a "$CONFIG_FILE" > /dev/null
 fi
@@ -45,7 +55,7 @@ if ! grep -qxF "$DTPARAM" "$CONFIG_FILE"; then
 fi
 
 # use device-tree-overlay when the kernel is 5.16 or higher
-if (( $(echo "$KERNEL_VERSION >= 5.16" | bc -l) )); then
+if (( KERNEL_VERSION_INT >= $(KERNEL_VERSION_INT 5.16) )); then
     # add dtoverlay-setting for "/boot/firmware/config.txt"
     if ! grep -qxF "$DTOVERLAY" "$CONFIG_FILE"; then
         echo "$DTOVERLAY" | sudo tee -a "$CONFIG_FILE" >> /dev/null
@@ -62,23 +72,23 @@ fi
 # replace "dtparam=i2c_arm=off" with "dtparam=i2c_arm=on"
 if grep -qxF 'dtparam=i2c_arm=off' "$CONFIG_FILE"; then
     sudo sed -i 's/dtparam=i2c_arm=off/dtparam=i2c_arm=on/' "$CONFIG_FILE"
-    echo "changed \"dtparam=i2c_arm=off\" to \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
+    echo "Changed \"dtparam=i2c_arm=off\" to \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
 fi
 
 # replace "dtparam=spi=off" with "dtparam=spi=on"
 if grep -qxF 'dtparam=spi=off' "$CONFIG_FILE"; then
     sudo sed -i 's/dtparam=spi=off/dtparam=spi=on/' "$CONFIG_FILE"
-    echo "changed \"dtparam=spi=off\" to \"dtparam=spi=on\" in $CONFIG_FILE"
+    echo "Changed \"dtparam=spi=off\" to \"dtparam=spi=on\" in $CONFIG_FILE"
 fi
 
 # uncomment "dtparam=i2c_arm=on" if it is commented
 if grep -qxF '#dtparam=i2c_arm=on' "$CONFIG_FILE"; then
     sudo sed -i 's/#dtparam=i2c_arm=on/dtparam=i2c_arm=on/' "$CONFIG_FILE"
-    echo "uncommented \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
+    echo "Uncommented \"dtparam=i2c_arm=on\" in $CONFIG_FILE"
 fi
 
 # uncomment "dtparam=spi=on" if it is commented
 if grep -qxF '#dtparam=spi=on' "$CONFIG_FILE"; then
     sudo sed -i 's/#dtparam=spi=on/dtparam=spi=on/' "$CONFIG_FILE"
-    echo "uncommented \"dtparam=spi=on\" in $CONFIG_FILE"
+    echo "Uncommented \"dtparam=spi=on\" in $CONFIG_FILE"
 fi
