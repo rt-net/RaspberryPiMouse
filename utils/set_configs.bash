@@ -19,8 +19,7 @@ CONFIG_FILE='/boot/firmware/config.txt'
 # kernel version
 KERNEL_VERSION=$(uname -r | cut -d'.' -f1,2)
 
-
-# add Raspberry Pi Mouse V3 settings"
+# add Raspberry Pi Mouse V3 settings
 if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
     echo "$SETTING_COMMENT" | sudo tee -a "$CONFIG_FILE" > /dev/null
 fi
@@ -30,6 +29,12 @@ if [[ "$ARCHITECTURE" == "32" ]]; then
     if ! grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
         echo "arm_64bit=0" | sudo tee -a "$CONFIG_FILE"
         echo "Add \"arm_64bit=0\"  > $CONFIG_FILE"
+    fi
+elif [[ "$ARCHITECTURE" == "64" ]]; then
+    # remove arm_64bit=0 if present in a 64-bit environment
+    if grep -qxF "arm_64bit=0" "$CONFIG_FILE"; then
+        sudo sed -i '/arm_64bit=0/d' "$CONFIG_FILE"
+        echo "Removed \"arm_64bit=0\" from $CONFIG_FILE"
     fi
 fi
 
@@ -41,11 +46,16 @@ fi
 
 # use device-tree-overlay when the kernel is 5.16 or higher
 if (( $(echo "$KERNEL_VERSION >= 5.16" | bc -l) )); then
-
     # add dtoverlay-setting for "/boot/firmware/config.txt"
     if ! grep -qxF "$DTOVERLAY" "$CONFIG_FILE"; then
         echo "$DTOVERLAY" | sudo tee -a "$CONFIG_FILE" >> /dev/null
         echo "Add  \"$DTOVERLAY\"  > $CONFIG_FILE"
+    fi
+else
+    # remove dtoverlay-setting if kernel is less than 5.16
+    if grep -qxF "$DTOVERLAY" "$CONFIG_FILE"; then
+        sudo sed -i "/$DTOVERLAY/d" "$CONFIG_FILE"
+        echo "Removed \"$DTOVERLAY\" from $CONFIG_FILE"
     fi
 fi
 
