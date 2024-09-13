@@ -26,10 +26,19 @@ $ cd RaspberryPiMouse/utils
 $ ./set_configs.bash
 ```
 
-PCを再起動した後、以下のコマンドを実行します。
+Raspberry Piを再起動し、以下のコマンドを実行してビルドに必要なファイルをインストールします。**`Ubuntu`と`Raspberry Pi OS`でコマンドが違います。**
 
 ```bash
+# Ubuntu Server の場合
+$ sudo apt install linux-headers-$(uname -r) build-essential
+
+# Raspberry Pi OSの場合
 $ sudo apt install raspberrypi-kernel-headers build-essential
+```
+
+以下のコマンドでビルドを実行します。
+
+```bash
 $ cd RaspberryPiMouse/utils
 $ ./build_install.bash
 ```
