@@ -36,11 +36,22 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf }  # Debian 10 (Buster)
-          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
-          - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf }  # Debian 11 (Bullseye)
-          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf }  # Debian 12 (Bookworm) 32-bit
-          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64 }  # Debian 12 (Bookworm) 64-bit
+          # Debian 10 (Buster)
+          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf, RASPI: 3}
+          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf, RASPI: 4}
+          # Debian 11 (Bullseye)
+          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf, RASPI: 3}
+          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf, RASPI: 4}
+          # Debian 11 (Bullseye)
+          - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf, RASPI: 3}
+          - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf, RASPI: 4}
+          # Debian 12 (Bookworm) 32-bit
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf, RASPI: 3}
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: armhf, RASPI: 4}
+          # Debian 12 (Bookworm) 64-bit
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64, RASPI: 3}
+          - { HOST: 24.04, KERNEL_VER: rpi-6.6.y, OS_BIT: arm64, RASPI: 4}
+
 
     runs-on: ubuntu-${{ matrix.env.HOST }}
 
@@ -63,8 +74,13 @@ jobs:
         git clone --branch ${{ matrix.env.KERNEL_VER }} --depth=1 https://github.com/raspberrypi/linux
         cd linux
         if [ "${{ matrix.env.OS_BIT }}" == "armhf" ]; then
-          KERNEL=kernel7l
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig
+          if [ "${{ matrix.env.RASPI }}" == "3" ]; then
+            KERNEL=kernel7
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2709_defconfig
+          elif [ "${{ matrix.env.RASPI }}" == "4" ]; then
+            KERNEL=kernel7l
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig
+          fi
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules_prepare
         else
           KERNEL=kernel8
