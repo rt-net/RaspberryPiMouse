@@ -15,6 +15,10 @@ This directory is licensed under the Apache 2.0 License, see [SampleProgram / LI
 
 Each peripheral example has sample code files written Shell Script, C and Python.
 
+RT Software Tutorialsでは動画つきで説明しています。
+
+https://rt-net.github.io/tutorials/raspimouse/driver/samples.html
+
 ## Shell Script
 
 ```sh
@@ -96,3 +100,35 @@ Read the lightsensors values.
 モータを回して、パルスカウンタの値を読み込みます。
 
 Drive the motors and read the pulse counters values.
+
+# Step7
+
+車体速度 $v_{fw}$ 、
+車体角速度 $v_{rot}$ で指令するサンプルプログラムです。
+
+サンプルでは車体速度と車体角速度を指定しての移動が実装されています。
+
+## 解説
+
+ホイールの直径を $\phi$ [m]、車体のトレッドを $t$ [m]、モータ1回転のための制御信号を $p$ [Hz]とします。
+
+左右のモータへの制御信号を $\omega_{fw}$ [Hz]で入力したときの、
+車体の並進方向の速度を $v_{fw}$ [m/s]とします。  
+このときのそれぞれの関係は以下のように表現できます。
+
+$$v_{fw} : \omega_{fw} = \pi \phi  : p$$
+
+旋回方向についても同様に考えます。  
+車体が1回転するときのホイールが円弧を描くように移動する距離は $\pi t$ [m]で計算できます。
+モータ1回転でホイールの表面が移動する距離は $\pi \phi$ [m]で計算できます。  
+左右のモータへの制御信号をそれぞれ $-\omega_{rot}$ [Hz]と $\omega_{rot}$ [Hz]としたとき、
+ロボットが旋回するときの角速度を $v_{rot}$ [rad/s]とします。  
+このときのそれぞれの関係は以下のように表現できます。
+
+$$v_{rot} : \omega_{rot} = \frac{2\pi} {\pi t / \pi \phi}  : p$$
+
+これらを整理するとモータ制御信号は以下の2つの式にまとめられます。
+
+$$\omega_{fw} = \frac{p} {\pi \phi} v_{fw}$$
+
+$$\omega_{rot} = \frac {tp}{2\pi \phi} v_{rot}$$
