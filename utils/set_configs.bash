@@ -50,7 +50,7 @@ fi
 
 # add dtparam-setting for "/boot/firmware/config.txt"
 if ! grep -qxF "$DTPARAM" "$CONFIG_FILE"; then
-    echo "$DTPARAM" | sudo tee -a "$CONFIG_FILE" >> /dev/null
+    echo "$DTPARAM" | sudo tee -a "$CONFIG_FILE" > /dev/null
     echo "Add  \"$DTPARAM\"  > $CONFIG_FILE"
 fi
 
@@ -58,7 +58,7 @@ fi
 if (( KERNEL_VERSION_INT >= $(KERNEL_VERSION_INT 5.16) )); then
     # add dtoverlay-setting for "/boot/firmware/config.txt"
     if ! grep -qxF "$DTOVERLAY" "$CONFIG_FILE"; then
-        echo "$DTOVERLAY" | sudo tee -a "$CONFIG_FILE" >> /dev/null
+        echo "$DTOVERLAY" | sudo tee -a "$CONFIG_FILE" > /dev/null
         echo "Add  \"$DTOVERLAY\"  > $CONFIG_FILE"
     fi
 else
