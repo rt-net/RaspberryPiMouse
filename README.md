@@ -1,6 +1,6 @@
 # RaspberryPiMouse
 
-![CI](https://github.com/rt-net/RaspberryPiMouse/workflows/CI/badge.svg?branch=master)
+[![CI](https://github.com/rt-net/RaspberryPiMouse/actions/workflows/driver-cross-build.yml/badge.svg)](https://github.com/rt-net/RaspberryPiMouse/actions/workflows/driver-cross-build.yml)
 
 This repository has the source code and kernel objects
 for the Raspberry Pi Mouse.
