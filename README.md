@@ -29,7 +29,7 @@ $ ./set_configs.bash
 Raspberry Piを再起動し、以下のコマンドを実行してビルドに必要なファイルをインストールします。**`Ubuntu`と`Raspberry Pi OS`でコマンドが違います。**
 
 ```bash
-# Ubuntu Server の場合
+# Ubuntu Serverの場合
 $ sudo apt install linux-headers-$(uname -r) build-essential
 
 # Raspberry Pi OSの場合
