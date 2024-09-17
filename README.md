@@ -54,9 +54,14 @@ $ sudo insmod rtmouse.ko
 
 ## Notes for the installation (ドライバの導入の際の注意)
 
+特定の機能の有効化や、プログラムのビルドのために設定が必要な項目があります。以下の設定をご確認ください。
+
+※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、[自動で適切な設定に書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash))。
+
+
 ### for Raspberry Pi OS
 
-以下の設定を確認ください。※[`./utils/set_configs.bash`](https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash)を実行すると、設定は[自動で書き換わります]((https://github.com/rt-net/RaspberryPiMouse/blob/master/utils/set_configs.bash#L51-#L61))。
+Raspberry Pi OSでは、SPIとI2Cがデフォルトで無効となっているため、有効化する必要があります。
 
 #### for SPI and I2C
 
@@ -67,22 +72,13 @@ Enable SPI and I2C functions via `raspi-config` command.
 * SPI機能を「入」にする。
 * I2C機能を「入」にする。
 
-#### for 32-bit OS
-
-Set 32bit-setting to `/boot/firmware/config.txt`.
-
-32-bit版のOSではビルドするために、`/boot/firmware/config.txt`に以下の1行を追加する必要があります。
-
-```bash
-arm_64bit=0
-```
-
 ### for Raspberry Pi 4
 
-Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from '2' to '4'.
+Edit [`rtmouse.c`](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54) to change the defined value `RASPBERRYPI` from`2`to`4`.
 
 Raspberry Pi 4ではCPUのレジスタがそれまでのRaspberry Piとは異なります（[issues#21](https://github.com/rt-net/RaspberryPiMouse/issues/21)）。
 Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の行（2020年4月13日現在の最新版のv2.1.0では[54行目](https://github.com/rt-net/RaspberryPiMouse/blob/dd0343449951a99b067e24aef3c03ae5ed9ab936/src/drivers/rtmouse.c#L54)）を`RASPBERRYPI 4`に書き換えてビルドする必要があります。
+
 ※[`./utils/build_install.bash`](./utils/build_install.bash)を実行すると、Raspberry Piのモデルに合わせて[`rtmouse.c`](./src/drivers/rtmouse.c)が[自動で書き換わります](https://github.com/rt-net/RaspberryPiMouse/blob/a9af4fa2b2a8e34c0f93a6ce5cf88ebd50ff39c2/utils/build_install.raspi4ubuntu.bash#L13-L14)。
 
 ```c
@@ -92,6 +88,16 @@ Raspberry Pi 4で本ドライバを使用する際には`rtmouse.c`の以下の�
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
 #define RASPBERRYPI 2
+```
+
+### for 32-bit OS
+
+Set 32bit-setting to `/boot/firmware/config.txt`.
+
+32-bit版のOSではビルドするために、`/boot/firmware/config.txt`に以下の1行を追加する必要があります。
+
+```bash
+arm_64bit=0
 ```
 
 ### デバイスツリーオーバーレイについて
