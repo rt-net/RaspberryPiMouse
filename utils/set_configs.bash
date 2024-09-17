@@ -16,18 +16,15 @@ DTPARAM='dtparam=i2c_baudrate=62500'
 # config-file PATH
 CONFIG_FILE='/boot/firmware/config.txt'
 
-# kernel version
-# remove the dot from the version number and pad single-digit minor versions
-KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-KERNEL_VERSION_INT=$(echo "$KERNEL_VERSION" | awk -F. '{ printf "%d%02d", $1, $2 }')
-
 # function to convert kernel version for comparison
-KERNEL_VERSION_INT() {
+GET_KERNEL_VERSION_INT() {
   echo "$1" | awk -F. '{ printf "%d%02d", $1, $2 }'
 }
 
-# get the kernel version
-result=$(KERNEL_VERSION_INT $(uname -r | cut -d'-' -f1))
+# kernel version
+# remove the dot from the version number and pad single-digit minor versions
+KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
+KERNEL_VERSION_INT=$(GET_KERNEL_VERSION_INT "$KERNEL_VERSION")
 
 # add raspberry pi mouse v3 settings
 if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
@@ -55,7 +52,7 @@ if ! grep -qxF "$DTPARAM" "$CONFIG_FILE"; then
 fi
 
 # use device-tree-overlay when the kernel is 5.16 or higher
-if (( KERNEL_VERSION_INT >= $(KERNEL_VERSION_INT 5.16) )); then
+if (( KERNEL_VERSION_INT >= $(GET_KERNEL_VERSION_INT 5.16) )); then
     # add dtoverlay-setting for "/boot/firmware/config.txt"
     if ! grep -qxF "$DTOVERLAY" "$CONFIG_FILE"; then
         echo "$DTOVERLAY" | sudo tee -a "$CONFIG_FILE" > /dev/null
