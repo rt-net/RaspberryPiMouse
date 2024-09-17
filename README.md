@@ -18,7 +18,7 @@ Run the following scripts.
 
 ### for `Raspberry Pi OS`・`Ubuntu`
 
-以下のコマンドでインストールを実行します。
+以下のコマンドで本リポジトリをダウンロードし、Raspberry Pi本体の設定を行います。
 
 ```bash
 $ git clone https://github.com/rt-net/RaspberryPiMouse.git
