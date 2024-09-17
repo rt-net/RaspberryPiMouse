@@ -16,17 +16,17 @@ DTPARAM='dtparam=i2c_baudrate=62500'
 # config-file PATH
 CONFIG_FILE='/boot/firmware/config.txt'
 
-# function to convert kernel version for comparison
+# compare kernel versions as integers for accurate version comparison (excluding minor versions).
 GET_KERNEL_VERSION_INT() {
-  echo "$1" | awk -F. '{ printf "%d%02d", $1, $2 }'
+    # 0-padding is used to avoid minor versions being compared by their first digit.
+    echo "$1" | awk -F. '{ printf "%d%02d", $1, $2 }'
 }
 
 # kernel version
-# remove the dot from the version number and pad single-digit minor versions
 KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
 KERNEL_VERSION_INT=$(GET_KERNEL_VERSION_INT "$KERNEL_VERSION")
 
-# add raspberry pi mouse v3 settings
+# add "Raspberry Pi Mouse v3" settings
 if ! grep -qxF "$SETTING_COMMENT" "$CONFIG_FILE"; then
     echo "$SETTING_COMMENT" | sudo tee -a "$CONFIG_FILE" > /dev/null
 fi
