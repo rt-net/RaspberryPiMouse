@@ -1423,6 +1423,7 @@ static int resister_dev(int id_dev)
     int retval;
     dev_t dev;
     dev_t devno;
+    int i;
 
     /* 空いているメジャー番号を使ってメジャー&
        マイナー番号をカーネルに登録する */
@@ -1449,7 +1450,7 @@ static int resister_dev(int id_dev)
         return PTR_ERR(class_dev[id_dev]);
     }
 
-    for (int i = 0; i < NUM_DEV[id_dev]; i++) {
+    for (i = 0; i < NUM_DEV[id_dev]; i++) {
         /* デバイスの数だけキャラクタデバイスを登録する */
         devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
 
@@ -2708,77 +2709,49 @@ int dev_init_module(void)
  * dev_cleanup_module - cleanup driver module
  * called by module_exit(dev_cleanup_module)
  */
+void cleanup_each_dev(int id_dev)
+{
+    int i;
+    dev_t devno;
+    dev_t devno_top;
+
+    devno_top = MKDEV(_major_dev[id_dev], _minor_dev[id_dev]);
+    for (i = 0; i < NUM_DEV[id_dev]; i++) {
+        devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
+        device_destroy(class_dev[id_dev], devno);
+    }
+    unregister_chrdev_region(devno_top, NUM_DEV[id_dev]);
+}
+
 void dev_cleanup_module(void)
 {
-	int i;
-	dev_t devno;
-	dev_t devno_top;
+    int i;
 
-	/* --- remove char device --- */
-	for (i = 0; i < NUM_DEV_TOTAL; i++) {
-		cdev_del(&(cdev_array[i]));
-	}
+    /* --- remove char device --- */
+    for (i = 0; i < NUM_DEV_TOTAL; i++) {
+        cdev_del(&(cdev_array[i]));
+    }
 
-	/* --- free device num. and remove device --- */
-	/* /dev/rtled0,1,2,3 */
-	devno_top = MKDEV(_major_led, _minor_led);
-	for (i = 0; i < NUM_DEV_LED; i++) {
-		devno = MKDEV(_major_led, _minor_led + i);
-		device_destroy(class_led, devno);
-	}
-	unregister_chrdev_region(devno_top, NUM_DEV_LED);
-	/* /dev/rtswitch0,1,2 */
-	devno_top = MKDEV(_major_switch, _minor_switch);
-	for (i = 0; i < NUM_DEV_SWITCH; i++) {
-		devno = MKDEV(_major_switch, _minor_switch + i);
-		device_destroy(class_switch, devno);
-	}
-	unregister_chrdev_region(devno_top, NUM_DEV_SWITCH);
-	/* /dev/rtlightsensor0 */
-	devno = MKDEV(_major_sensor, _minor_sensor);
-	device_destroy(class_sensor, devno);
-	unregister_chrdev_region(devno, NUM_DEV_SENSOR);
-	/* /dev/rtbuzzer0 */
-	devno = MKDEV(_major_buzzer, _minor_buzzer);
-	device_destroy(class_buzzer, devno);
-	unregister_chrdev_region(devno, NUM_DEV_BUZZER);
-	/* /dev/rtmotor_raw_r0 */
-	devno = MKDEV(_major_motorrawr, _minor_motorrawr);
-	device_destroy(class_motorrawr, devno);
-	unregister_chrdev_region(devno, NUM_DEV_MOTORRAWR);
-	/* /dev/rtmotor_raw_l0 */
-	devno = MKDEV(_major_motorrawl, _minor_motorrawl);
-	device_destroy(class_motorrawl, devno);
-	unregister_chrdev_region(devno, NUM_DEV_MOTORRAWL);
-	/* /dev/rtmotoren0 */
-	devno = MKDEV(_major_motoren, _minor_motoren);
-	device_destroy(class_motoren, devno);
-	unregister_chrdev_region(devno, NUM_DEV_MOTOREN);
-	/* /dev/rtmotor0 */
-	devno = MKDEV(_major_motor, _minor_motor);
-	device_destroy(class_motor, devno);
-	unregister_chrdev_region(devno, NUM_DEV_MOTOR);
+    /* --- free device num. and remove device --- */
+    for (i = 0; i < ID_DEV_SIZE-1; i++) {
+        cleanup_each_dev(i);
+    }
 
-	/* --- remove device node --- */
-	class_destroy(class_led);
-	class_destroy(class_switch);
-	class_destroy(class_sensor);
-	class_destroy(class_buzzer);
-	class_destroy(class_motorrawr);
-	class_destroy(class_motorrawl);
-	class_destroy(class_motoren);
-	class_destroy(class_motor);
+    /* --- remove device node --- */
+    for (i = 0; i < ID_DEV_SIZE-1; i++) {
+        class_destroy(class_dev[i]);
+    }
 
-	/* remove MCP3204 */
-	mcp3204_exit();
+    /* remove MCP3204 */
+    mcp3204_exit();
 
-	/* remove I2C device */
-	i2c_counter_exit();
+    /* remove I2C device */
+    i2c_counter_exit();
 
-	/* free cdev memory */
-	kfree(cdev_array);
-	gpio_unmap();
-	printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
+    /* free cdev memory */
+    kfree(cdev_array);
+    gpio_unmap();
+    printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
 }
 
 /* --- MAIN PROCESS --- */
