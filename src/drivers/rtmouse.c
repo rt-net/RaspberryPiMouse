@@ -51,14 +51,37 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 2
+#define RASPBERRYPI 4
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("3.3.0");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
+/* --- Device ID --- */
+#define ID_DEV_LED 0
+#define ID_DEV_SWITCH 1
+#define ID_DEV_SENSOR 2
+#define ID_DEV_BUZZER 3
+#define ID_DEV_MOTORRAWR 4
+#define ID_DEV_MOTORRAWL 5
+#define ID_DEV_MOTOREN 6
+#define ID_DEV_MOTOR 7
+#define ID_DEV_CNT 8
+#define ID_DEV_SIZE 9
+
 /* --- Device Numbers --- */
+static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = 4,
+    [ID_DEV_SWITCH] = 3,
+    [ID_DEV_SENSOR] = 1,
+    [ID_DEV_BUZZER] = 1,
+    [ID_DEV_MOTORRAWR] = 1,
+    [ID_DEV_MOTORRAWL] = 1,
+    [ID_DEV_MOTOREN] = 1,
+    [ID_DEV_MOTOR] = 1,
+    [ID_DEV_CNT] = 2
+};
 #define NUM_DEV_LED 4
 #define NUM_DEV_SWITCH 3
 #define NUM_DEV_SENSOR 1
@@ -69,11 +92,27 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 #define NUM_DEV_MOTOR 1
 #define NUM_DEV_CNT 2
 
-#define NUM_DEV_TOTAL                                                          \
-	(NUM_DEV_LED + NUM_DEV_SWITCH + NUM_DEV_BUZZER + NUM_DEV_MOTORRAWR +   \
-	 NUM_DEV_MOTORRAWL + NUM_DEV_MOTOREN + NUM_DEV_SENSOR + NUM_DEV_MOTOR)
+#define NUM_DEV_TOTAL \
+    (NUM_DEV[ID_DEV_LED] + \
+     NUM_DEV[ID_DEV_SWITCH] + \
+     NUM_DEV[ID_DEV_SENSOR] + \
+     NUM_DEV[ID_DEV_BUZZER] + \
+     NUM_DEV[ID_DEV_MOTORRAWR] + \
+     NUM_DEV[ID_DEV_MOTORRAWL] + \
+     NUM_DEV[ID_DEV_MOTOREN] + \
+     NUM_DEV[ID_DEV_MOTOR])
 
 /* --- Device Names --- */
+static const unsigned char* NAME_DEV[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = "rtled",
+    [ID_DEV_SWITCH] = "rtswitch",
+    [ID_DEV_SENSOR] = "rtlightsensor",
+    [ID_DEV_BUZZER] = "rtbuzzer",
+    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
+    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
+    [ID_DEV_MOTOREN] = "rtmotoren",
+    [ID_DEV_MOTOR] = "rtmotor"
+};
 #define DEVNAME_LED "rtled"
 #define DEVNAME_SWITCH "rtswitch"
 #define DEVNAME_BUZZER "rtbuzzer"
@@ -93,6 +132,28 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 static int spi_bus_num = 0;
 static int spi_chip_select = 0;
+
+static int _major_dev[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = DEV_MAJOR,
+    [ID_DEV_SWITCH] = DEV_MAJOR,
+    [ID_DEV_SENSOR] = DEV_MAJOR,
+    [ID_DEV_BUZZER] = DEV_MAJOR,
+    [ID_DEV_MOTORRAWR] = DEV_MAJOR,
+    [ID_DEV_MOTORRAWL] = DEV_MAJOR,
+    [ID_DEV_MOTOREN] = DEV_MAJOR,
+    [ID_DEV_MOTOR] = DEV_MAJOR
+};
+
+static int _minor_dev[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = DEV_MINOR,
+    [ID_DEV_SWITCH] = DEV_MINOR,
+    [ID_DEV_SENSOR] = DEV_MINOR,
+    [ID_DEV_BUZZER] = DEV_MINOR,
+    [ID_DEV_MOTORRAWR] = DEV_MINOR,
+    [ID_DEV_MOTORRAWL] = DEV_MINOR,
+    [ID_DEV_MOTOREN] = DEV_MINOR,
+    [ID_DEV_MOTOR] = DEV_MINOR
+};
 
 static int _major_led = DEV_MAJOR;
 static int _minor_led = DEV_MINOR;
@@ -120,6 +181,16 @@ static int _minor_motor = DEV_MINOR;
 
 /* --- General Options --- */
 static struct cdev *cdev_array = NULL;
+static struct class *class_dev[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = NULL,
+    [ID_DEV_SWITCH] = NULL,
+    [ID_DEV_SENSOR] = NULL,
+    [ID_DEV_BUZZER] = NULL,
+    [ID_DEV_MOTORRAWR] = NULL,
+    [ID_DEV_MOTORRAWL] = NULL,
+    [ID_DEV_MOTOREN] = NULL,
+    [ID_DEV_MOTOR] = NULL
+};
 static struct class *class_led = NULL;
 static struct class *class_buzzer = NULL;
 static struct class *class_switch = NULL;
