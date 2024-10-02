@@ -1330,6 +1330,37 @@ static ssize_t rtcnt_write(struct file *filep, const char __user *buf,
 }
 
 /* --- Device File Operations --- */
+static struct file_operations dev_fops[ID_DEV_SIZE] = {
+    [ID_DEV_LED].open = dev_open,
+    [ID_DEV_LED].release = dev_release,
+    [ID_DEV_LED].write = led_write,
+    [ID_DEV_SWITCH].open = dev_open,
+    [ID_DEV_SWITCH].read = sw_read,
+    [ID_DEV_SWITCH].release = dev_release,
+    [ID_DEV_SENSOR].open = dev_open,
+    [ID_DEV_SENSOR].read = sensor_read,
+    [ID_DEV_SENSOR].release = dev_release,
+    [ID_DEV_BUZZER].open = dev_open,
+    [ID_DEV_BUZZER].release = dev_release,
+    [ID_DEV_BUZZER].write = buzzer_write,
+    [ID_DEV_MOTORRAWR].open = dev_open,
+    [ID_DEV_MOTORRAWR].release = dev_release,
+    [ID_DEV_MOTORRAWR].write = rawmotor_r_write,
+    [ID_DEV_MOTORRAWL].open = dev_open,
+    [ID_DEV_MOTORRAWL].release = dev_release,
+    [ID_DEV_MOTORRAWL].write = rawmotor_l_write,
+    [ID_DEV_MOTOREN].open = dev_open,
+    [ID_DEV_MOTOREN].release = dev_release,
+    [ID_DEV_MOTOREN].write = motoren_write,
+    [ID_DEV_MOTOR].open = dev_open,
+    [ID_DEV_MOTOR].release = dev_release,
+    [ID_DEV_MOTOR].write = motor_write,
+    [ID_DEV_CNT].open = i2c_dev_open,
+    [ID_DEV_CNT].release = i2c_dev_release,
+    [ID_DEV_CNT].read = rtcnt_read,
+    [ID_DEV_CNT].write = rtcnt_write
+};
+
 /* /dev/rtled */
 static struct file_operations led_fops = {
     .open = dev_open,
@@ -1387,6 +1418,71 @@ static struct file_operations rtcnt_fops = {
 };
 
 /* --- Device Driver Registration and Device File Creation --- */
+static int resister_dev(int id_dev)
+{
+    int retval;
+    dev_t dev;
+    dev_t devno;
+
+    /* 空いているメジャー番号を使ってメジャー&
+       マイナー番号をカーネルに登録する */
+    retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
+        DEV_MINOR,        /* ベースマイナー番号 */
+        NUM_DEV[id_dev],  /* デバイスの数 */
+        NAME_DEV[id_dev]  /* デバイスドライバの名前 */
+    );
+
+    if (retval < 0) {
+        printk(KERN_ERR "alloc_chrdev_region failed.\n");
+        return retval;
+    }
+    _major_dev[id_dev] = MAJOR(dev);
+
+    /* デバイスクラスを作成する */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+    class_dev[id_dev] = class_create(THIS_MODULE, NAME_DEV[id_dev]);
+#else
+    class_dev[id_dev] = class_create(NAME_DEV[id_dev]);
+#endif
+
+    if (IS_ERR(class_dev[id_dev])) {
+        return PTR_ERR(class_dev[id_dev]);
+    }
+
+    for (int i = 0; i < NUM_DEV[id_dev]; i++) {
+        /* デバイスの数だけキャラクタデバイスを登録する */
+        devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
+
+        /* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
+        cdev_init(&(cdev_array[cdev_index]), &dev_fops[id_dev]);
+        cdev_array[cdev_index].owner = THIS_MODULE;
+        if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
+            /* 登録に失敗した */
+            printk(KERN_ERR "cdev_add failed minor = %d\n",
+            _minor_dev[id_dev] + i);
+        } else {
+            /* デバイスノードの作成 */
+            struct device *dev_ret;
+            dev_ret =
+                device_create(class_led, NULL, devno, NULL,
+                              DEVNAME_LED "%u", _minor_led + i);
+
+            /* デバイスファイル作成の可否を判定 */
+            if (IS_ERR(dev_ret)) {
+                /* デバイスファイルの作成に失敗した */
+                printk(KERN_ERR
+                       "device_create failed minor = %d\n",
+                       _minor_dev[id_dev] + i);
+                /* リソースリークを避けるために登録された状態cdevを削除する */
+                cdev_del(&(cdev_array[cdev_index]));
+                return PTR_ERR(dev_ret);
+            }
+        }
+        cdev_index++;
+    }
+    return 0;
+}
+
 /* /dev/rtled0,/dev/rtled1,/dev/rtled2 */
 static int led_register_dev(void)
 {
