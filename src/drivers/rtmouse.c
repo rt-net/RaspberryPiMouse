@@ -82,15 +82,6 @@ static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
     [ID_DEV_MOTOR] = 1,
     [ID_DEV_CNT] = 2
 };
-#define NUM_DEV_LED 4
-#define NUM_DEV_SWITCH 3
-#define NUM_DEV_SENSOR 1
-#define NUM_DEV_BUZZER 1
-#define NUM_DEV_MOTORRAWR 1
-#define NUM_DEV_MOTORRAWL 1
-#define NUM_DEV_MOTOREN 1
-#define NUM_DEV_MOTOR 1
-#define NUM_DEV_CNT 2
 
 #define NUM_DEV_TOTAL \
     (NUM_DEV[ID_DEV_LED] + \
@@ -113,13 +104,7 @@ static const unsigned char* NAME_DEV[ID_DEV_SIZE] = {
     [ID_DEV_MOTOREN] = "rtmotoren",
     [ID_DEV_MOTOR] = "rtmotor"
 };
-#define DEVNAME_LED "rtled"
-#define DEVNAME_SWITCH "rtswitch"
-#define DEVNAME_BUZZER "rtbuzzer"
-#define DEVNAME_MOTORRAWR "rtmotor_raw_r"
-#define DEVNAME_MOTORRAWL "rtmotor_raw_l"
-#define DEVNAME_MOTOREN "rtmotoren"
-#define DEVNAME_MOTOR "rtmotor"
+
 #define DEVNAME_SENSOR "rtlightsensor"
 #define DEVNAME_CNTR "rtcounter_r"
 #define DEVNAME_CNTL "rtcounter_l"
@@ -155,30 +140,6 @@ static int _minor_dev[ID_DEV_SIZE] = {
     [ID_DEV_MOTOR] = DEV_MINOR
 };
 
-static int _major_led = DEV_MAJOR;
-static int _minor_led = DEV_MINOR;
-
-static int _major_switch = DEV_MAJOR;
-static int _minor_switch = DEV_MINOR;
-
-static int _major_sensor = DEV_MAJOR;
-static int _minor_sensor = DEV_MINOR;
-
-static int _major_buzzer = DEV_MAJOR;
-static int _minor_buzzer = DEV_MINOR;
-
-static int _major_motorrawr = DEV_MAJOR;
-static int _minor_motorrawr = DEV_MINOR;
-
-static int _major_motorrawl = DEV_MAJOR;
-static int _minor_motorrawl = DEV_MINOR;
-
-static int _major_motoren = DEV_MAJOR;
-static int _minor_motoren = DEV_MINOR;
-
-static int _major_motor = DEV_MAJOR;
-static int _minor_motor = DEV_MINOR;
-
 /* --- General Options --- */
 static struct cdev *cdev_array = NULL;
 static struct class *class_dev[ID_DEV_SIZE] = {
@@ -191,14 +152,6 @@ static struct class *class_dev[ID_DEV_SIZE] = {
     [ID_DEV_MOTOREN] = NULL,
     [ID_DEV_MOTOR] = NULL
 };
-static struct class *class_led = NULL;
-static struct class *class_buzzer = NULL;
-static struct class *class_switch = NULL;
-static struct class *class_sensor = NULL;
-static struct class *class_motorrawr = NULL;
-static struct class *class_motorrawl = NULL;
-static struct class *class_motoren = NULL;
-static struct class *class_motor = NULL;
 
 static volatile void __iomem *pwm_base;
 static volatile void __iomem *clk_base;
@@ -925,7 +878,7 @@ static int dev_open(struct inode *inode, struct file *filep)
 
 	filep->private_data = (void *)minor;
 
-	if (_major_motor == major) {
+	if (_major_dev[ID_DEV_MOTOR] == major) {
 		printk(KERN_INFO "motor write\n");
 	}
 
@@ -1361,64 +1314,8 @@ static struct file_operations dev_fops[ID_DEV_SIZE] = {
     [ID_DEV_CNT].write = rtcnt_write
 };
 
-/* /dev/rtled */
-static struct file_operations led_fops = {
-    .open = dev_open,
-    .release = dev_release,
-    .write = led_write,
-};
-/* /dev/rtbuzzer */
-static struct file_operations buzzer_fops = {
-    .open = dev_open,
-    .release = dev_release,
-    .write = buzzer_write,
-};
-/* /dev/rtswitch */
-static struct file_operations sw_fops = {
-    .open = dev_open,
-    .read = sw_read,
-    .release = dev_release,
-};
-/* /dev/rtlightsensor */
-static struct file_operations sensor_fops = {
-    .open = dev_open,
-    .read = sensor_read,
-    .release = dev_release,
-};
-/* /dev/rtmotor_raw_r */
-static struct file_operations motorrawr_fops = {
-    .open = dev_open,
-    .write = rawmotor_r_write,
-    .release = dev_release,
-};
-/* /dev/rtmotor_raw_l */
-static struct file_operations motorrawl_fops = {
-    .open = dev_open,
-    .write = rawmotor_l_write,
-    .release = dev_release,
-};
-/* /dev/rtmotoren */
-static struct file_operations motoren_fops = {
-    .open = dev_open,
-    .write = motoren_write,
-    .release = dev_release,
-};
-/* /dev/rtmotor */
-static struct file_operations motor_fops = {
-    .open = dev_open,
-    .write = motor_write,
-    .release = dev_release,
-};
-/* /dev/rtcounter_* */
-static struct file_operations rtcnt_fops = {
-    .open = i2c_dev_open,
-    .release = i2c_dev_release,
-    .read = rtcnt_read,
-    .write = rtcnt_write,
-};
-
 /* --- Device Driver Registration and Device File Creation --- */
-static int resister_dev(int id_dev)
+static int register_dev(int id_dev)
 {
     int retval;
     dev_t dev;
@@ -1465,8 +1362,8 @@ static int resister_dev(int id_dev)
             /* デバイスノードの作成 */
             struct device *dev_ret;
             dev_ret =
-                device_create(class_led, NULL, devno, NULL,
-                              DEVNAME_LED "%u", _minor_led + i);
+                device_create(class_dev[id_dev], NULL, devno, NULL,
+                              NAME_DEV[id_dev], _minor_dev[id_dev] + i);
 
             /* デバイスファイル作成の可否を判定 */
             if (IS_ERR(dev_ret)) {
@@ -1482,516 +1379,6 @@ static int resister_dev(int id_dev)
         cdev_index++;
     }
     return 0;
-}
-
-/* /dev/rtled0,/dev/rtled1,/dev/rtled2 */
-static int led_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-	int i;
-
-	/* 空いているメジャー番号を使ってメジャー&
-	   マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				     DEV_MINOR, /* ベースマイナー番号 */
-				     NUM_DEV_LED, /* デバイスの数 */
-				     DEVNAME_LED /* デバイスドライバの名前 */
-	);
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_led = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_led = class_create(THIS_MODULE, DEVNAME_LED);
-#else
-	class_led = class_create(DEVNAME_LED);
-#endif
-
-	if (IS_ERR(class_led)) {
-		return PTR_ERR(class_led);
-	}
-
-	for (i = 0; i < NUM_DEV_LED; i++) {
-		/* デバイスの数だけキャラクタデバイスを登録する */
-		devno = MKDEV(_major_led, _minor_led + i);
-
-		/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-		cdev_init(&(cdev_array[cdev_index]), &led_fops);
-		cdev_array[cdev_index].owner = THIS_MODULE;
-		if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-			/* 登録に失敗した */
-			printk(KERN_ERR "cdev_add failed minor = %d\n",
-			       _minor_led + i);
-		} else {
-			/* デバイスノードの作成 */
-			struct device *dev_ret;
-			dev_ret =
-			    device_create(class_led, NULL, devno, NULL,
-					  DEVNAME_LED "%u", _minor_led + i);
-
-			/* デバイスファイル作成の可否を判定 */
-			if (IS_ERR(dev_ret)) {
-				/* デバイスファイルの作成に失敗した */
-				printk(KERN_ERR
-				       "device_create failed minor = %d\n",
-				       _minor_led + i);
-				/* リソースリークを避けるために登録された状態cdevを削除する
-				 */
-				cdev_del(&(cdev_array[cdev_index]));
-				return PTR_ERR(dev_ret);
-			}
-		}
-		cdev_index++;
-	}
-
-	return 0;
-}
-
-/* /dev/rtbuzzer0 */
-static int buzzer_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー&
-	   マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				     DEV_MINOR, /* ベースマイナー番号 */
-				     NUM_DEV_BUZZER, /* デバイスの数 */
-				     DEVNAME_BUZZER /* デバイスドライバの名前 */
-	);
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_buzzer = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_buzzer = class_create(THIS_MODULE, DEVNAME_BUZZER);
-#else
-	class_buzzer = class_create(DEVNAME_BUZZER);
-#endif
-
-	if (IS_ERR(class_buzzer)) {
-		return PTR_ERR(class_buzzer);
-	}
-
-	/*  create device file */
-	devno = MKDEV(_major_buzzer, _minor_buzzer);
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &buzzer_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_buzzer);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		dev_ret = device_create(class_buzzer, NULL, devno, NULL,
-					DEVNAME_BUZZER "%u", _minor_buzzer);
-
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_buzzer);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-	cdev_index++;
-
-	return 0;
-}
-
-/* /dev/rtmotor_raw_r0 */
-static int motorrawr_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー&
-	   マイナー番号をカーネルに登録する */
-	retval =
-	    alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				DEV_MINOR, /* ベースマイナー番号 */
-				NUM_DEV_MOTORRAWR, /* デバイスの数 */
-				DEVNAME_MOTORRAWR /* デバイスドライバの名前 */
-	    );
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_motorrawr = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_motorrawr = class_create(THIS_MODULE, DEVNAME_MOTORRAWR);
-#else
-	class_motorrawr = class_create(DEVNAME_MOTORRAWR);
-#endif
-
-	if (IS_ERR(class_motorrawr)) {
-		return PTR_ERR(class_motorrawr);
-	}
-
-	devno = MKDEV(_major_motorrawr, _minor_motorrawr);
-
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &motorrawr_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n",
-		       _minor_motorrawr);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		device_create(class_motorrawr, NULL, devno, NULL,
-			      DEVNAME_MOTORRAWR "%u", _minor_motorrawr);
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_motorrawr);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-
-	cdev_index++;
-
-	return 0;
-}
-
-/* /dev/rtmotor_raw_r0 */
-static int motorrawl_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー&
-	   マイナー番号をカーネルに登録する */
-	retval =
-	    alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				DEV_MINOR, /* ベースマイナー番号 */
-				NUM_DEV_MOTORRAWL, /* デバイスの数 */
-				DEVNAME_MOTORRAWL /* デバイスドライバの名前 */
-	    );
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_motorrawl = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_motorrawl = class_create(THIS_MODULE, DEVNAME_MOTORRAWL);
-#else
-	class_motorrawl = class_create(DEVNAME_MOTORRAWL);
-#endif
-
-	if (IS_ERR(class_motorrawl)) {
-		return PTR_ERR(class_motorrawl);
-	}
-
-	devno = MKDEV(_major_motorrawl, _minor_motorrawl);
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &motorrawl_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n",
-		       _minor_motorrawl);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		device_create(class_motorrawl, NULL, devno, NULL,
-			      DEVNAME_MOTORRAWL "%u", _minor_motorrawl);
-
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_motorrawl);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-
-	cdev_index++;
-
-	return 0;
-}
-
-/* /dev/rtswitch0, /dev/rtswitch1, /dev/rtswitch2 */
-static int switch_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	int i;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー&
-		マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				     DEV_MINOR, /* ベースマイナー番号 */
-				     NUM_DEV_SWITCH, /* デバイスの数 */
-				     DEVNAME_SWITCH /* デバイスドライバの名前 */
-	);
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_switch = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_switch = class_create(THIS_MODULE, DEVNAME_SWITCH);
-#else
-	class_switch = class_create(DEVNAME_SWITCH);
-#endif
-
-	if (IS_ERR(class_switch)) {
-		return PTR_ERR(class_switch);
-	}
-
-	/* デバイスの数だけキャラクタデバイスを登録する */
-	for (i = 0; i < NUM_DEV_SWITCH; i++) {
-		devno = MKDEV(_major_switch, _minor_switch + i);
-		/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-		cdev_init(&(cdev_array[cdev_index]), &sw_fops);
-		cdev_array[cdev_index].owner = THIS_MODULE;
-
-		if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-			/* 登録に失敗した */
-			printk(KERN_ERR "cdev_add failed minor = %d\n",
-			       _minor_switch + i);
-		} else {
-			/* デバイスノードの作成 */
-			struct device *dev_ret;
-			device_create(class_switch, NULL, devno, NULL,
-				      DEVNAME_SWITCH "%u", _minor_switch + i);
-			/* デバイスファイル作成の可否を判定 */
-			if (IS_ERR(dev_ret)) {
-				/* デバイスファイルの作成に失敗した */
-				printk(KERN_ERR
-				       "device_create failed minor = %d\n",
-				       _minor_switch + i);
-				/* リソースリークを避けるために登録された状態cdevを削除する
-				 */
-				cdev_del(&(cdev_array[cdev_index]));
-				return PTR_ERR(dev_ret);
-			}
-		}
-		cdev_index++;
-	}
-
-	return 0;
-}
-
-/* /dev/rtlightsensor0 */
-static int sensor_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー
-		&マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				     DEV_MINOR, /* ベースマイナー番号 */
-				     NUM_DEV_SENSOR, /* デバイスの数 */
-				     DEVNAME_SENSOR /* デバイスドライバの名前 */
-	);
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_sensor = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_sensor = class_create(THIS_MODULE, DEVNAME_SENSOR);
-#else
-	class_sensor = class_create(DEVNAME_SENSOR);
-#endif
-
-	if (IS_ERR(class_sensor)) {
-		return PTR_ERR(class_sensor);
-	}
-
-	/* デバイスの数だけキャラクタデバイスを登録する */
-	devno = MKDEV(_major_sensor, _minor_sensor);
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &sensor_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_sensor);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		dev_ret = device_create(class_sensor, NULL, devno, NULL,
-					DEVNAME_SENSOR "%u", _minor_sensor);
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_sensor);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-	cdev_index++;
-
-	return 0;
-}
-
-/* /dev/rtmotoren0 */
-static int motoren_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー
-		&マイナー番号をカーネルに登録する */
-	retval =
-	    alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				DEV_MINOR, /* ベースマイナー番号 */
-				NUM_DEV_MOTOREN, /* デバイスの数 */
-				DEVNAME_MOTOREN /* デバイスドライバの名前 */
-	    );
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_motoren = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_motoren = class_create(THIS_MODULE, DEVNAME_MOTOREN);
-#else
-	class_motoren = class_create(DEVNAME_MOTOREN);
-#endif
-
-	if (IS_ERR(class_motoren)) {
-		return PTR_ERR(class_motoren);
-	}
-
-	devno = MKDEV(_major_motoren, _minor_motoren);
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &motoren_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_motoren);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		dev_ret = device_create(class_motoren, NULL, devno, NULL,
-					DEVNAME_MOTOREN "%u", _minor_motoren);
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_motoren);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-
-	cdev_index++;
-
-	return 0;
-}
-
-/* /dev/rtmotor0 */
-static int motor_register_dev(void)
-{
-	int retval;
-	dev_t dev;
-	dev_t devno;
-
-	/* 空いているメジャー番号を使ってメジャー
-		&マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-				     DEV_MINOR, /* ベースマイナー番号 */
-				     NUM_DEV_MOTOR, /* デバイスの数 */
-				     DEVNAME_MOTOR /* デバイスドライバの名前 */
-	);
-
-	if (retval < 0) {
-		printk(KERN_ERR "alloc_chrdev_region failed.\n");
-		return retval;
-	}
-	_major_motor = MAJOR(dev);
-
-	/* デバイスクラスを作成する */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	class_motor = class_create(THIS_MODULE, DEVNAME_MOTOR);
-#else
-	class_motor = class_create(DEVNAME_MOTOR);
-#endif
-
-	if (IS_ERR(class_motor)) {
-		return PTR_ERR(class_motor);
-	}
-
-	devno = MKDEV(_major_motor, _minor_motor);
-	/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-	cdev_init(&(cdev_array[cdev_index]), &motor_fops);
-	cdev_array[cdev_index].owner = THIS_MODULE;
-	if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-		/* 登録に失敗した */
-		printk(KERN_ERR "cdev_add failed minor = %d\n", _minor_motor);
-	} else {
-		/* デバイスノードの作成 */
-		struct device *dev_ret;
-		dev_ret = device_create(class_motor, NULL, devno, NULL,
-					DEVNAME_MOTOR "%u", _minor_motor);
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       _minor_motor);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-
-	cdev_index++;
-
-	return 0;
 }
 
 /* mcp3204_remove - remove function lined with spi_dirver */
@@ -2221,7 +1608,7 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 	/* 空いているメジャー番号を確保する */
 	alloc_ret =
-	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNT, DEVNAME_CNTR);
+	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT], DEVNAME_CNTR);
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -2233,14 +1620,14 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
 	/* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
-	cdev_init(&dev_info->cdev, &rtcnt_fops);
+	cdev_init(&dev_info->cdev, &dev_fops[ID_DEV_CNT]);
 	dev_info->cdev.owner = THIS_MODULE;
 
 	/* このデバイスドライバ(cdev)をカーネルに登録する */
-	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNT);
+	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV[ID_DEV_CNT]);
 	if (cdev_err != 0) {
 		printk(KERN_ERR "cdev_add = %d\n", alloc_ret);
-		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
 		return -1;
 	}
 
@@ -2254,11 +1641,11 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
-		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
 		return -1;
 	}
 
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
@@ -2289,7 +1676,7 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 	/* 空いているメジャー番号を確保する */
 	alloc_ret =
-	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV_CNT, DEVNAME_CNTL);
+	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT], DEVNAME_CNTL);
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -2301,14 +1688,14 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	dev = MKDEV(dev_info->device_major, DEV_MINOR);
 
 	/* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
-	cdev_init(&dev_info->cdev, &rtcnt_fops);
+	cdev_init(&dev_info->cdev, &dev_fops[ID_DEV_CNT]);
 	dev_info->cdev.owner = THIS_MODULE;
 
 	/* このデバイスドライバ(cdev)をカーネルに登録する */
-	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV_CNT);
+	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV[ID_DEV_CNT]);
 	if (cdev_err != 0) {
 		printk(KERN_ERR "cdev_add = %d\n", alloc_ret);
-		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
 		return -1;
 	}
 
@@ -2322,12 +1709,12 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	if (IS_ERR(dev_info->device_class)) {
 		printk(KERN_ERR "class_create\n");
 		cdev_del(&dev_info->cdev);
-		unregister_chrdev_region(dev, NUM_DEV_CNT);
+		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
 		return -1;
 	}
 
 	/* /sys/class/mydevice/mydevice* を作る */
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
@@ -2507,7 +1894,7 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
 	dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
 	int minor;
 	/* /sys/class/mydevice/mydevice* を削除する */
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV_CNT; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
 		device_destroy(dev_info->device_class,
 			       MKDEV(dev_info->device_major, minor));
 	}
@@ -2516,7 +1903,7 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
 	/* このデバイスドライバ(cdev)をカーネルから取り除く */
 	cdev_del(&dev_info->cdev);
 	/* このデバイスドライバで使用していたメジャー番号の登録を取り除く */
-	unregister_chrdev_region(dev, NUM_DEV_CNT);
+	unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
 }
 
 /*
@@ -2566,7 +1953,7 @@ int dev_init_module(void)
 
 	retval = i2c_counter_init();
 	if (retval == 0) {
-		registered_devices += 2 * NUM_DEV_CNT;
+		registered_devices += 2 * NUM_DEV[ID_DEV_CNT];
 	} else {
 		printk(KERN_ALERT
 		       "%s: i2c counter device driver register failed.\n",
@@ -2634,60 +2021,13 @@ int dev_init_module(void)
 	cdev_array = (struct cdev *)kmalloc(size, GFP_KERNEL);
 
 	/* デバイスドライバをカーネルに登録 */
-	retval = led_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: led driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = buzzer_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: buzzer driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = switch_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: switch driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = sensor_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: switch driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = motorrawr_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: motor driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = motorrawl_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: motor driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = motoren_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: motor driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
-	}
-
-	retval = motor_register_dev();
-	if (retval != 0) {
-		printk(KERN_ALERT "%s: motor driver register failed.\n",
-		       DRIVER_NAME);
-		return retval;
+	for (i = 0; i < ID_DEV_SIZE-1; i++) {
+		retval = register_dev(i);
+		if (retval != 0) {
+			printk(KERN_ALERT "%s: %s register failed.\n",
+		               DRIVER_NAME, NAME_DEV[i]);
+			return retval;
+		}
 	}
 
 	retval = mcp3204_init();
