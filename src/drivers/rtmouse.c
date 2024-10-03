@@ -104,6 +104,16 @@ static const char* NAME_DEV[ID_DEV_SIZE] = {
     [ID_DEV_MOTOREN] = "rtmotoren",
     [ID_DEV_MOTOR] = "rtmotor"
 };
+static const char* NAME_DEV_u[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = "rtled%u",
+    [ID_DEV_SWITCH] = "rtswitch%u",
+    [ID_DEV_SENSOR] = "rtlightsensor%u",
+    [ID_DEV_BUZZER] = "rtbuzzer%u",
+    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
+    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
+    [ID_DEV_MOTOREN] = "rtmotoren%u",
+    [ID_DEV_MOTOR] = "rtmotor%u"
+};
 
 #define DEVNAME_SENSOR "rtlightsensor"
 #define DEVNAME_CNTR "rtcounter_r"
@@ -1363,7 +1373,7 @@ static int register_dev(int id_dev)
             struct device *dev_ret;
             dev_ret =
                 device_create(class_dev[id_dev], NULL, devno, NULL,
-                              NAME_DEV[id_dev], _minor_dev[id_dev] + i);
+                              NAME_DEV_u[id_dev], _minor_dev[id_dev] + i);
 
             /* デバイスファイル作成の可否を判定 */
             if (IS_ERR(dev_ret)) {
