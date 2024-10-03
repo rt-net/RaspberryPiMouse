@@ -1306,15 +1306,16 @@ static int register_dev(int id_dev)
 
 	/* 空いているメジャー番号を使ってメジャー&
 	   マイナー番号をカーネルに登録する */
-	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-	    DEV_MINOR,        /* ベースマイナー番号 */
-	    NUM_DEV[id_dev],  /* デバイスの数 */
-	    NAME_DEV[id_dev]  /* デバイスドライバの名前 */
-	);
+	retval =
+	    alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
+				DEV_MINOR, /* ベースマイナー番号 */
+				NUM_DEV[id_dev], /* デバイスの数 */
+				NAME_DEV[id_dev] /* デバイスドライバの名前 */
+	    );
 
 	if (retval < 0) {
-	    printk(KERN_ERR "alloc_chrdev_region failed.\n");
-	    return retval;
+		printk(KERN_ERR "alloc_chrdev_region failed.\n");
+		return retval;
 	}
 	_major_dev[id_dev] = MAJOR(dev);
 
@@ -1339,7 +1340,7 @@ static int register_dev(int id_dev)
 		if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
 			/* 登録に失敗した */
 			printk(KERN_ERR "cdev_add failed minor = %d\n",
-			_minor_dev[id_dev] + i);
+			       _minor_dev[id_dev] + i);
 		} else {
 			/* デバイスノードの作成 */
 			struct device *dev_ret;
@@ -1353,7 +1354,8 @@ static int register_dev(int id_dev)
 				printk(KERN_ERR
 				       "device_create failed minor = %d\n",
 				       _minor_dev[id_dev] + i);
-				/* リソースリークを避けるために登録された状態cdevを削除する */
+				/* リソースリークを避けるために登録された状態cdevを削除する
+				 */
 				cdev_del(&(cdev_array[cdev_index]));
 				return PTR_ERR(dev_ret);
 			}
@@ -2042,8 +2044,8 @@ void cleanup_each_dev(int id_dev)
 
 	devno_top = MKDEV(_major_dev[id_dev], _minor_dev[id_dev]);
 	for (i = 0; i < NUM_DEV[id_dev]; i++) {
-	    devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
-	    device_destroy(class_dev[id_dev], devno);
+		devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
+		device_destroy(class_dev[id_dev], devno);
 	}
 	unregister_chrdev_region(devno_top, NUM_DEV[id_dev]);
 }
@@ -2054,17 +2056,17 @@ void dev_cleanup_module(void)
 
 	/* --- remove char device --- */
 	for (i = 0; i < NUM_DEV_TOTAL; i++) {
-	    cdev_del(&(cdev_array[i]));
+		cdev_del(&(cdev_array[i]));
 	}
 
 	/* --- free device num. and remove device --- */
-	for (i = 0; i < ID_DEV_SIZE-1; i++) {
-	    cleanup_each_dev(i);
+	for (i = 0; i < ID_DEV_SIZE - 1; i++) {
+		cleanup_each_dev(i);
 	}
 
 	/* --- remove device node --- */
-	for (i = 0; i < ID_DEV_SIZE-1; i++) {
-	    class_destroy(class_dev[i]);
+	for (i = 0; i < ID_DEV_SIZE - 1; i++) {
+		class_destroy(class_dev[i]);
 	}
 
 	/* remove MCP3204 */
