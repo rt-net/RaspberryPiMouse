@@ -94,7 +94,7 @@ static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
      NUM_DEV[ID_DEV_MOTOR])
 
 /* --- Device Names --- */
-static const unsigned char* NAME_DEV[ID_DEV_SIZE] = {
+static const char* NAME_DEV[ID_DEV_SIZE] = {
     [ID_DEV_LED] = "rtled",
     [ID_DEV_SWITCH] = "rtswitch",
     [ID_DEV_SENSOR] = "rtlightsensor",
