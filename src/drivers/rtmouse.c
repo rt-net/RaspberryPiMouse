@@ -72,29 +72,18 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
 static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = 4,
-    [ID_DEV_SWITCH] = 3,
-    [ID_DEV_SENSOR] = 1,
-    [ID_DEV_BUZZER] = 1,
-    [ID_DEV_MOTORRAWR] = 1,
-    [ID_DEV_MOTORRAWL] = 1,
-    [ID_DEV_MOTOREN] = 1,
-    [ID_DEV_MOTOR] = 1,
-    [ID_DEV_CNT] = 2
-};
+    [ID_DEV_LED] = 4,	  [ID_DEV_SWITCH] = 3,	  [ID_DEV_SENSOR] = 1,
+    [ID_DEV_BUZZER] = 1,  [ID_DEV_MOTORRAWR] = 1, [ID_DEV_MOTORRAWL] = 1,
+    [ID_DEV_MOTOREN] = 1, [ID_DEV_MOTOR] = 1,	  [ID_DEV_CNT] = 2};
 
-#define NUM_DEV_TOTAL \
-    (NUM_DEV[ID_DEV_LED] + \
-     NUM_DEV[ID_DEV_SWITCH] + \
-     NUM_DEV[ID_DEV_SENSOR] + \
-     NUM_DEV[ID_DEV_BUZZER] + \
-     NUM_DEV[ID_DEV_MOTORRAWR] + \
-     NUM_DEV[ID_DEV_MOTORRAWL] + \
-     NUM_DEV[ID_DEV_MOTOREN] + \
-     NUM_DEV[ID_DEV_MOTOR])
+#define NUM_DEV_TOTAL                                                          \
+	(NUM_DEV[ID_DEV_LED] + NUM_DEV[ID_DEV_SWITCH] +                        \
+	 NUM_DEV[ID_DEV_SENSOR] + NUM_DEV[ID_DEV_BUZZER] +                     \
+	 NUM_DEV[ID_DEV_MOTORRAWR] + NUM_DEV[ID_DEV_MOTORRAWL] +               \
+	 NUM_DEV[ID_DEV_MOTOREN] + NUM_DEV[ID_DEV_MOTOR])
 
 /* --- Device Names --- */
-static const char* NAME_DEV[ID_DEV_SIZE] = {
+static const char *NAME_DEV[ID_DEV_SIZE] = {
     [ID_DEV_LED] = "rtled",
     [ID_DEV_SWITCH] = "rtswitch",
     [ID_DEV_SENSOR] = "rtlightsensor",
@@ -102,9 +91,9 @@ static const char* NAME_DEV[ID_DEV_SIZE] = {
     [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
     [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
     [ID_DEV_MOTOREN] = "rtmotoren",
-    [ID_DEV_MOTOR] = "rtmotor"
-};
-static const char* NAME_DEV_u[ID_DEV_SIZE] = {
+    [ID_DEV_MOTOR] = "rtmotor"};
+
+static const char *NAME_DEV_U[ID_DEV_SIZE] = {
     [ID_DEV_LED] = "rtled%u",
     [ID_DEV_SWITCH] = "rtswitch%u",
     [ID_DEV_SENSOR] = "rtlightsensor%u",
@@ -112,8 +101,7 @@ static const char* NAME_DEV_u[ID_DEV_SIZE] = {
     [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
     [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
     [ID_DEV_MOTOREN] = "rtmotoren%u",
-    [ID_DEV_MOTOR] = "rtmotor%u"
-};
+    [ID_DEV_MOTOR] = "rtmotor%u"};
 
 #define DEVNAME_SENSOR "rtlightsensor"
 #define DEVNAME_CNTR "rtcounter_r"
@@ -129,39 +117,24 @@ static int spi_bus_num = 0;
 static int spi_chip_select = 0;
 
 static int _major_dev[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = DEV_MAJOR,
-    [ID_DEV_SWITCH] = DEV_MAJOR,
-    [ID_DEV_SENSOR] = DEV_MAJOR,
-    [ID_DEV_BUZZER] = DEV_MAJOR,
-    [ID_DEV_MOTORRAWR] = DEV_MAJOR,
-    [ID_DEV_MOTORRAWL] = DEV_MAJOR,
-    [ID_DEV_MOTOREN] = DEV_MAJOR,
-    [ID_DEV_MOTOR] = DEV_MAJOR
-};
+    [ID_DEV_LED] = DEV_MAJOR,	    [ID_DEV_SWITCH] = DEV_MAJOR,
+    [ID_DEV_SENSOR] = DEV_MAJOR,    [ID_DEV_BUZZER] = DEV_MAJOR,
+    [ID_DEV_MOTORRAWR] = DEV_MAJOR, [ID_DEV_MOTORRAWL] = DEV_MAJOR,
+    [ID_DEV_MOTOREN] = DEV_MAJOR,   [ID_DEV_MOTOR] = DEV_MAJOR};
 
 static int _minor_dev[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = DEV_MINOR,
-    [ID_DEV_SWITCH] = DEV_MINOR,
-    [ID_DEV_SENSOR] = DEV_MINOR,
-    [ID_DEV_BUZZER] = DEV_MINOR,
-    [ID_DEV_MOTORRAWR] = DEV_MINOR,
-    [ID_DEV_MOTORRAWL] = DEV_MINOR,
-    [ID_DEV_MOTOREN] = DEV_MINOR,
-    [ID_DEV_MOTOR] = DEV_MINOR
-};
+    [ID_DEV_LED] = DEV_MINOR,	    [ID_DEV_SWITCH] = DEV_MINOR,
+    [ID_DEV_SENSOR] = DEV_MINOR,    [ID_DEV_BUZZER] = DEV_MINOR,
+    [ID_DEV_MOTORRAWR] = DEV_MINOR, [ID_DEV_MOTORRAWL] = DEV_MINOR,
+    [ID_DEV_MOTOREN] = DEV_MINOR,   [ID_DEV_MOTOR] = DEV_MINOR};
 
 /* --- General Options --- */
 static struct cdev *cdev_array = NULL;
 static struct class *class_dev[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = NULL,
-    [ID_DEV_SWITCH] = NULL,
-    [ID_DEV_SENSOR] = NULL,
-    [ID_DEV_BUZZER] = NULL,
-    [ID_DEV_MOTORRAWR] = NULL,
-    [ID_DEV_MOTORRAWL] = NULL,
-    [ID_DEV_MOTOREN] = NULL,
-    [ID_DEV_MOTOR] = NULL
-};
+    [ID_DEV_LED] = NULL,       [ID_DEV_SWITCH] = NULL,
+    [ID_DEV_SENSOR] = NULL,    [ID_DEV_BUZZER] = NULL,
+    [ID_DEV_MOTORRAWR] = NULL, [ID_DEV_MOTORRAWL] = NULL,
+    [ID_DEV_MOTOREN] = NULL,   [ID_DEV_MOTOR] = NULL};
 
 static volatile void __iomem *pwm_base;
 static volatile void __iomem *clk_base;
@@ -1321,74 +1294,73 @@ static struct file_operations dev_fops[ID_DEV_SIZE] = {
     [ID_DEV_CNT].open = i2c_dev_open,
     [ID_DEV_CNT].release = i2c_dev_release,
     [ID_DEV_CNT].read = rtcnt_read,
-    [ID_DEV_CNT].write = rtcnt_write
-};
+    [ID_DEV_CNT].write = rtcnt_write};
 
 /* --- Device Driver Registration and Device File Creation --- */
 static int register_dev(int id_dev)
 {
-    int retval;
-    dev_t dev;
-    dev_t devno;
-    int i;
+	int retval;
+	dev_t dev;
+	dev_t devno;
+	int i;
 
-    /* 空いているメジャー番号を使ってメジャー&
-       マイナー番号をカーネルに登録する */
-    retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
-        DEV_MINOR,        /* ベースマイナー番号 */
-        NUM_DEV[id_dev],  /* デバイスの数 */
-        NAME_DEV[id_dev]  /* デバイスドライバの名前 */
-    );
+	/* 空いているメジャー番号を使ってメジャー&
+	   マイナー番号をカーネルに登録する */
+	retval = alloc_chrdev_region(&dev, /* 結果を格納するdev_t構造体 */
+	    DEV_MINOR,        /* ベースマイナー番号 */
+	    NUM_DEV[id_dev],  /* デバイスの数 */
+	    NAME_DEV[id_dev]  /* デバイスドライバの名前 */
+	);
 
-    if (retval < 0) {
-        printk(KERN_ERR "alloc_chrdev_region failed.\n");
-        return retval;
-    }
-    _major_dev[id_dev] = MAJOR(dev);
+	if (retval < 0) {
+	    printk(KERN_ERR "alloc_chrdev_region failed.\n");
+	    return retval;
+	}
+	_major_dev[id_dev] = MAJOR(dev);
 
-    /* デバイスクラスを作成する */
+	/* デバイスクラスを作成する */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-    class_dev[id_dev] = class_create(THIS_MODULE, NAME_DEV[id_dev]);
+	class_dev[id_dev] = class_create(THIS_MODULE, NAME_DEV[id_dev]);
 #else
-    class_dev[id_dev] = class_create(NAME_DEV[id_dev]);
+	class_dev[id_dev] = class_create(NAME_DEV[id_dev]);
 #endif
 
-    if (IS_ERR(class_dev[id_dev])) {
-        return PTR_ERR(class_dev[id_dev]);
-    }
+	if (IS_ERR(class_dev[id_dev])) {
+		return PTR_ERR(class_dev[id_dev]);
+	}
 
-    for (i = 0; i < NUM_DEV[id_dev]; i++) {
-        /* デバイスの数だけキャラクタデバイスを登録する */
-        devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
+	for (i = 0; i < NUM_DEV[id_dev]; i++) {
+		/* デバイスの数だけキャラクタデバイスを登録する */
+		devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
 
-        /* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
-        cdev_init(&(cdev_array[cdev_index]), &dev_fops[id_dev]);
-        cdev_array[cdev_index].owner = THIS_MODULE;
-        if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
-            /* 登録に失敗した */
-            printk(KERN_ERR "cdev_add failed minor = %d\n",
-            _minor_dev[id_dev] + i);
-        } else {
-            /* デバイスノードの作成 */
-            struct device *dev_ret;
-            dev_ret =
-                device_create(class_dev[id_dev], NULL, devno, NULL,
-                              NAME_DEV_u[id_dev], _minor_dev[id_dev] + i);
+		/* キャラクタデバイスとしてこのモジュールをカーネルに登録する */
+		cdev_init(&(cdev_array[cdev_index]), &dev_fops[id_dev]);
+		cdev_array[cdev_index].owner = THIS_MODULE;
+		if (cdev_add(&(cdev_array[cdev_index]), devno, 1) < 0) {
+			/* 登録に失敗した */
+			printk(KERN_ERR "cdev_add failed minor = %d\n",
+			_minor_dev[id_dev] + i);
+		} else {
+			/* デバイスノードの作成 */
+			struct device *dev_ret;
+			dev_ret = device_create(class_dev[id_dev], NULL, devno,
+						NULL, NAME_DEV_U[id_dev],
+						_minor_dev[id_dev] + i);
 
-            /* デバイスファイル作成の可否を判定 */
-            if (IS_ERR(dev_ret)) {
-                /* デバイスファイルの作成に失敗した */
-                printk(KERN_ERR
-                       "device_create failed minor = %d\n",
-                       _minor_dev[id_dev] + i);
-                /* リソースリークを避けるために登録された状態cdevを削除する */
-                cdev_del(&(cdev_array[cdev_index]));
-                return PTR_ERR(dev_ret);
-            }
-        }
-        cdev_index++;
-    }
-    return 0;
+			/* デバイスファイル作成の可否を判定 */
+			if (IS_ERR(dev_ret)) {
+				/* デバイスファイルの作成に失敗した */
+				printk(KERN_ERR
+				       "device_create failed minor = %d\n",
+				       _minor_dev[id_dev] + i);
+				/* リソースリークを避けるために登録された状態cdevを削除する */
+				cdev_del(&(cdev_array[cdev_index]));
+				return PTR_ERR(dev_ret);
+			}
+		}
+		cdev_index++;
+	}
+	return 0;
 }
 
 /* mcp3204_remove - remove function lined with spi_dirver */
@@ -1617,8 +1589,8 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	dev_t dev;
 
 	/* 空いているメジャー番号を確保する */
-	alloc_ret =
-	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT], DEVNAME_CNTR);
+	alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
+					DEVNAME_CNTR);
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -1655,7 +1627,8 @@ static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 		return -1;
 	}
 
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT];
+	     minor++) {
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
@@ -1685,8 +1658,8 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	dev_t dev;
 
 	/* 空いているメジャー番号を確保する */
-	alloc_ret =
-	    alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT], DEVNAME_CNTL);
+	alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
+					DEVNAME_CNTL);
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -1724,7 +1697,8 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	}
 
 	/* /sys/class/mydevice/mydevice* を作る */
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT];
+	     minor++) {
 
 		struct device *dev_ret;
 		dev_ret = device_create(dev_info->device_class, NULL,
@@ -1904,7 +1878,8 @@ static void rtcnt_i2c_delete_cdev(struct rtcnt_device_info *dev_info)
 	dev_t dev = MKDEV(dev_info->device_major, DEV_MINOR);
 	int minor;
 	/* /sys/class/mydevice/mydevice* を削除する */
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT]; minor++) {
+	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT];
+	     minor++) {
 		device_destroy(dev_info->device_class,
 			       MKDEV(dev_info->device_major, minor));
 	}
@@ -2031,11 +2006,11 @@ int dev_init_module(void)
 	cdev_array = (struct cdev *)kmalloc(size, GFP_KERNEL);
 
 	/* デバイスドライバをカーネルに登録 */
-	for (i = 0; i < ID_DEV_SIZE-1; i++) {
+	for (i = 0; i < ID_DEV_SIZE - 1; i++) {
 		retval = register_dev(i);
 		if (retval != 0) {
 			printk(KERN_ALERT "%s: %s register failed.\n",
-		               DRIVER_NAME, NAME_DEV[i]);
+			       DRIVER_NAME, NAME_DEV[i]);
 			return retval;
 		}
 	}
@@ -2061,47 +2036,47 @@ int dev_init_module(void)
  */
 void cleanup_each_dev(int id_dev)
 {
-    int i;
-    dev_t devno;
-    dev_t devno_top;
+	int i;
+	dev_t devno;
+	dev_t devno_top;
 
-    devno_top = MKDEV(_major_dev[id_dev], _minor_dev[id_dev]);
-    for (i = 0; i < NUM_DEV[id_dev]; i++) {
-        devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
-        device_destroy(class_dev[id_dev], devno);
-    }
-    unregister_chrdev_region(devno_top, NUM_DEV[id_dev]);
+	devno_top = MKDEV(_major_dev[id_dev], _minor_dev[id_dev]);
+	for (i = 0; i < NUM_DEV[id_dev]; i++) {
+	    devno = MKDEV(_major_dev[id_dev], _minor_dev[id_dev] + i);
+	    device_destroy(class_dev[id_dev], devno);
+	}
+	unregister_chrdev_region(devno_top, NUM_DEV[id_dev]);
 }
 
 void dev_cleanup_module(void)
 {
-    int i;
+	int i;
 
-    /* --- remove char device --- */
-    for (i = 0; i < NUM_DEV_TOTAL; i++) {
-        cdev_del(&(cdev_array[i]));
-    }
+	/* --- remove char device --- */
+	for (i = 0; i < NUM_DEV_TOTAL; i++) {
+	    cdev_del(&(cdev_array[i]));
+	}
 
-    /* --- free device num. and remove device --- */
-    for (i = 0; i < ID_DEV_SIZE-1; i++) {
-        cleanup_each_dev(i);
-    }
+	/* --- free device num. and remove device --- */
+	for (i = 0; i < ID_DEV_SIZE-1; i++) {
+	    cleanup_each_dev(i);
+	}
 
-    /* --- remove device node --- */
-    for (i = 0; i < ID_DEV_SIZE-1; i++) {
-        class_destroy(class_dev[i]);
-    }
+	/* --- remove device node --- */
+	for (i = 0; i < ID_DEV_SIZE-1; i++) {
+	    class_destroy(class_dev[i]);
+	}
 
-    /* remove MCP3204 */
-    mcp3204_exit();
+	/* remove MCP3204 */
+	mcp3204_exit();
 
-    /* remove I2C device */
-    i2c_counter_exit();
+	/* remove I2C device */
+	i2c_counter_exit();
 
-    /* free cdev memory */
-    kfree(cdev_array);
-    gpio_unmap();
-    printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
+	/* free cdev memory */
+	kfree(cdev_array);
+	gpio_unmap();
+	printk(KERN_INFO "%s: module removed at %lu\n", DRIVER_NAME, jiffies);
 }
 
 /* --- MAIN PROCESS --- */
