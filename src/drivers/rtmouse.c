@@ -3,7 +3,7 @@
  * rtmouse.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 3.3.0
+ * Version: 3.3.1
  *
  * Copyright (C) 2015-2021 RT Corporation <shop@rt-net.jp>
  *
