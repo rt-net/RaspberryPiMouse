@@ -861,9 +861,8 @@ static int dev_open(struct inode *inode, struct file *filep)
 
 	filep->private_data = (void *)minor;
 
-	if (_major_dev[ID_DEV_MOTOR] == major) {
-		printk(KERN_INFO "motor write\n");
-	}
+const char *dev_name = filep->f_path.dentry->d_name.name;
+printk(KERN_INFO "Device opened: %s, Major: %d\n", dev_name, major);
 
 	return 0;
 }
