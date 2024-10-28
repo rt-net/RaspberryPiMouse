@@ -1,3 +1,6 @@
+#ifndef RTMOUSE_H
+#define RTMOUSE_H
+
 // define the Raspberry Pi version here
 // Raspberry Pi 1 B/A/B+/A+: 1
 // Raspberry Pi 2 B        : 2
@@ -206,3 +209,5 @@ const char *NAME_DEV_U[ID_DEV_SIZE] = {
 
 /* -- Buffer -- */
 #define MAX_BUFLEN 64
+
+#endif // RTMOUSE_H
