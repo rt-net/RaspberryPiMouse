@@ -1,4 +1,5 @@
 MODULE:= rtmouse
+EXTRA_CFLAGS := -I$(PWD)/include
 obj-m:= $(MODULE).o
 clean-files:= *.o *.ko *.mod.[co] *~
 
