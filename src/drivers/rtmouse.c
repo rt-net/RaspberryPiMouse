@@ -190,60 +190,6 @@ static struct i2c_driver i2c_counter_driver = {
 MODULE_DEVICE_TABLE(spi, mcp3204_id);
 MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
-#define MOTOR_MOTION 0
-#if MOTOR_MOTION
-/* Variable Type Definition for motor motion */
-typedef struct {
-	signed int r_hz;
-	signed int l_hz;
-	unsigned int time;
-} t_motor_motion;
-
-#define MAX_MOTORBUFLEN 16
-static t_motor_motion motor_motion[MAX_MOTORBUFLEN];
-static unsigned int motor_motion_head = 0, motor_motion_tail = 0;
-
-static int motor_motion_push(int r_hz, int l_hz, int time)
-{
-	unsigned int next_tail = motor_motion_tail + 1;
-
-	if (next_tail >= MAX_MOTORBUFLEN) {
-		next_tail = 0;
-	}
-
-	if (next_tail == motor_motion_head) {
-		return -1;
-	}
-
-	motor_motion[motor_motion_tail].r_hz = r_hz;
-	motor_motion[motor_motion_tail].l_hz = l_hz;
-	motor_motion[motor_motion_tail].time = time;
-
-	motor_motion_tail = next_tail;
-
-	return 0;
-}
-
-static int motor_motion_pop(t_motor_motion **ret)
-{
-	unsigned int next_head = motor_motion_head + 1;
-
-	if (motor_motion_tail == motor_motion_head) {
-		return -1;
-	}
-
-	if (next_head >= MAX_MOTORBUFLEN) {
-		next_head = 0;
-	}
-
-	*ret = (motor_motion + motor_motion_head);
-
-	motor_motion_head = next_head;
-
-	return 0;
-}
-#endif
-
 /* --- GPIO Operation --- */
 /* getPWMCount function for GPIO Operation */
 static int getPWMCount(int freq)
