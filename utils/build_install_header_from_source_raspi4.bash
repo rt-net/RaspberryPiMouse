@@ -11,7 +11,7 @@ rm Makefile
 ln -s Makefile.header_from_source Makefile
 make clean
 # Update for Raspberry Pi 4
-sed -i -e "s/#define RASPBERRYPI 2/#define RASPBERRYPI 4/g" rtmouse.c
+sed -i -e "s/#define RASPBERRYPI 2/#define RASPBERRYPI 4/g" rtmouse.h
 make 
 sudo insmod rtmouse.ko
 
