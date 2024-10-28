@@ -53,36 +53,6 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("3.3.1");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
-/* --- Device Numbers --- */
-static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = 4,	  [ID_DEV_SWITCH] = 3,	  [ID_DEV_SENSOR] = 1,
-    [ID_DEV_BUZZER] = 1,  [ID_DEV_MOTORRAWR] = 1, [ID_DEV_MOTORRAWL] = 1,
-    [ID_DEV_MOTOREN] = 1, [ID_DEV_MOTOR] = 1,	  [ID_DEV_CNT] = 2};
-
-/* --- Device Names --- */
-static const char *NAME_DEV[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = "rtled",
-    [ID_DEV_SWITCH] = "rtswitch",
-    [ID_DEV_SENSOR] = "rtlightsensor",
-    [ID_DEV_BUZZER] = "rtbuzzer",
-    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
-    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
-    [ID_DEV_MOTOREN] = "rtmotoren",
-    [ID_DEV_MOTOR] = "rtmotor"};
-
-static const char *NAME_DEV_U[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = "rtled%u",
-    [ID_DEV_SWITCH] = "rtswitch%u",
-    [ID_DEV_SENSOR] = "rtlightsensor%u",
-    [ID_DEV_BUZZER] = "rtbuzzer%u",
-    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
-    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
-    [ID_DEV_MOTOREN] = "rtmotoren%u",
-    [ID_DEV_MOTOR] = "rtmotor%u"};
-
-static int spi_bus_num = 0;
-static int spi_chip_select = 0;
-
 static int _major_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = DEV_MAJOR,	    [ID_DEV_SWITCH] = DEV_MAJOR,
     [ID_DEV_SENSOR] = DEV_MAJOR,    [ID_DEV_BUZZER] = DEV_MAJOR,
@@ -1354,8 +1324,8 @@ static int mcp3204_init(void)
 
 	spi_register_driver(&mcp3204_driver);
 
-	mcp3204_info.bus_num = spi_bus_num;
-	mcp3204_info.chip_select = spi_chip_select;
+	mcp3204_info.bus_num = SPI_BUS_NUM;
+	mcp3204_info.chip_select = SPI_CHIP_SELECT;
 
 	master = spi_busnum_to_master(mcp3204_info.bus_num);
 
