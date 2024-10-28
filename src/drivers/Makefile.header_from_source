@@ -1,10 +1,12 @@
 MODULE:= rtmouse
-EXTRA_CFLAGS := -I$(PWD)/include
 obj-m:= $(MODULE).o
 clean-files:= *.o *.ko *.mod.[co] *~
 
 LINUX_SRC_DIR:=/usr/src/linux
 VERBOSE:=0
+
+EXTRA_CFLAGS += -I$(PWD)/include
+ccflags-y += -I$(PWD)/include
 
 rtmouse.ko: rtmouse.c
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) modules
