@@ -51,31 +51,29 @@ const unsigned int NUM_DEV[ID_DEV_SIZE] = {
     [ID_DEV_MOTOREN] = 1, [ID_DEV_MOTOR] = 1,	  [ID_DEV_CNT] = 2};
 
 /* --- Device Names --- */
-const char *NAME_DEV[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = "rtled",
-    [ID_DEV_SWITCH] = "rtswitch",
-    [ID_DEV_SENSOR] = "rtlightsensor",
-    [ID_DEV_BUZZER] = "rtbuzzer",
-    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
-    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
-    [ID_DEV_MOTOREN] = "rtmotoren",
-    [ID_DEV_MOTOR] = "rtmotor"};
+const char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
+				     [ID_DEV_SWITCH] = "rtswitch",
+				     [ID_DEV_SENSOR] = "rtlightsensor",
+				     [ID_DEV_BUZZER] = "rtbuzzer",
+				     [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
+				     [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
+				     [ID_DEV_MOTOREN] = "rtmotoren",
+				     [ID_DEV_MOTOR] = "rtmotor"};
 
-const char *NAME_DEV_U[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = "rtled%u",
-    [ID_DEV_SWITCH] = "rtswitch%u",
-    [ID_DEV_SENSOR] = "rtlightsensor%u",
-    [ID_DEV_BUZZER] = "rtbuzzer%u",
-    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
-    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
-    [ID_DEV_MOTOREN] = "rtmotoren%u",
-    [ID_DEV_MOTOR] = "rtmotor%u"};
+const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
+				       [ID_DEV_SWITCH] = "rtswitch%u",
+				       [ID_DEV_SENSOR] = "rtlightsensor%u",
+				       [ID_DEV_BUZZER] = "rtbuzzer%u",
+				       [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
+				       [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
+				       [ID_DEV_MOTOREN] = "rtmotoren%u",
+				       [ID_DEV_MOTOR] = "rtmotor%u"};
 
 #define NUM_DEV_TOTAL                                                          \
-        (NUM_DEV[ID_DEV_LED] + NUM_DEV[ID_DEV_SWITCH] +                        \
-         NUM_DEV[ID_DEV_SENSOR] + NUM_DEV[ID_DEV_BUZZER] +                     \
-         NUM_DEV[ID_DEV_MOTORRAWR] + NUM_DEV[ID_DEV_MOTORRAWL] +               \
-         NUM_DEV[ID_DEV_MOTOREN] + NUM_DEV[ID_DEV_MOTOR])
+	(NUM_DEV[ID_DEV_LED] + NUM_DEV[ID_DEV_SWITCH] +                        \
+	 NUM_DEV[ID_DEV_SENSOR] + NUM_DEV[ID_DEV_BUZZER] +                     \
+	 NUM_DEV[ID_DEV_MOTORRAWR] + NUM_DEV[ID_DEV_MOTORRAWL] +               \
+	 NUM_DEV[ID_DEV_MOTOREN] + NUM_DEV[ID_DEV_MOTOR])
 
 #define DEVNAME_SENSOR "rtlightsensor"
 #define DEVNAME_CNTR "rtcounter_r"
