@@ -6,7 +6,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 4
+#define RASPBERRYPI 2
 
 /* --- Device ID --- */
 #define ID_DEV_LED 0
