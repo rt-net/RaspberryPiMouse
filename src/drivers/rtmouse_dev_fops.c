@@ -1,11 +1,9 @@
 /*
  *
- * rtmouse_dev.c
- * Raspberry Pi Mouse device driver
+ * rtmouse_dev_fops.c
+ * Define device file operations
  *
- * Version: 3.3.2
- *
- * Copyright (C) 2015-2024 RT Corporation <shop@rt-net.jp>
+ * Copyright (C) 2024 RT Corporation <shop@rt-net.jp>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
