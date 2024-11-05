@@ -98,7 +98,8 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
  * update_signed_count - update signed pulse count of dev_info
  * called by rtcnt_read()
  */
-static void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
+static void update_signed_count(struct rtcnt_device_info *dev_info,
+				int rtcnt_count)
 {
 	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
 
@@ -134,7 +135,8 @@ static void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_co
  * reset_signed_count - reset signed pulse count of dev_info
  * called by rtcnt_write()
  */
-static void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
+static void reset_signed_count(struct rtcnt_device_info *dev_info,
+			       int rtcnt_count)
 {
 	int raw_count;
 
@@ -202,7 +204,8 @@ static unsigned int mcp3204_get_value(int channel)
 
 /*
  * pwm set function
- * called by buzzer_init() and set_motor_l_freq(), set_motor_r_freq(), buzzer_write()
+ * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq()
+ * and buzzer_write()
  */
 void rpi_pwm_write32(uint32_t offset, uint32_t val)
 {
@@ -211,7 +214,8 @@ void rpi_pwm_write32(uint32_t offset, uint32_t val)
 
 /*
  * set mask and value
- * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_put() and motoren_write()
+ * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_put()
+ * and motoren_write()
  */
 void rpi_gpio_set32(uint32_t mask, uint32_t val)
 {
@@ -220,7 +224,8 @@ void rpi_gpio_set32(uint32_t mask, uint32_t val)
 
 /*
  * clear mask and value
- * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_del() and motoren_write()
+ * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_del()
+ * and motoren_write()
  */
 void rpi_gpio_clear32(uint32_t mask, uint32_t val)
 {
@@ -229,7 +234,8 @@ void rpi_gpio_clear32(uint32_t mask, uint32_t val)
 
 /*
  * set function
- * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq() and buzzer_write()
+ * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq() and
+ * buzzer_write()
  */
 int rpi_gpio_function_set(int pin, uint32_t func)
 {
@@ -672,14 +678,17 @@ static int i2c_dev_open(struct inode *inode, struct file *filep)
 	return 0;
 }
 
-static int i2c_dev_release(struct inode *inode, struct file *filep) { return 0; }
+static int i2c_dev_release(struct inode *inode, struct file *filep)
+{
+	return 0;
+}
 
 /*
  * led_write - Trun ON/OFF LEDs
  * Write function of /dev/rtled
  */
-static ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
-		  loff_t *f_pos)
+static ssize_t led_write(struct file *filep, const char __user *buf,
+			 size_t count, loff_t *f_pos)
 {
 	char cval;
 	int ret;
@@ -706,8 +715,8 @@ static ssize_t led_write(struct file *filep, const char __user *buf, size_t coun
  * buzzer_write - Write buzzer frequency
  * Write function of /dev/rtbuzzer
  */
-static ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
-		     loff_t *f_pos)
+static ssize_t buzzer_write(struct file *filep, const char __user *buf,
+			    size_t count, loff_t *f_pos)
 {
 	int ret;
 	int freq, dat;
@@ -746,7 +755,7 @@ static ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t c
  *  Write function of /dev/rtmotor_raw_l
  */
 static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
-			 size_t count, loff_t *f_pos)
+				size_t count, loff_t *f_pos)
 {
 	int freq, ret;
 
@@ -766,7 +775,7 @@ static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
  *  Write function of /dev/rtmotor_raw_r
  */
 static ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
-			 size_t count, loff_t *f_pos)
+				size_t count, loff_t *f_pos)
 {
 	int freq, ret;
 
@@ -786,8 +795,8 @@ static ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
  * motoren_write - Turn ON/OFF SteppingMotor Power
  * Write function of /dev/rtmotoren
  */
-static ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
-		      loff_t *f_pos)
+static ssize_t motoren_write(struct file *filep, const char __user *buf,
+			     size_t count, loff_t *f_pos)
 {
 	char cval;
 
@@ -813,8 +822,8 @@ static ssize_t motoren_write(struct file *filep, const char __user *buf, size_t 
  *  motor_write - Output frequency to right and left both motors
  *  Write function of /dev/rtmotor
  */
-static ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
-		    loff_t *f_pos)
+static ssize_t motor_write(struct file *filep, const char __user *buf,
+			   size_t count, loff_t *f_pos)
 {
 	int tmp;
 	int bufcnt;
