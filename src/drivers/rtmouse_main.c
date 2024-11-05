@@ -168,7 +168,7 @@ MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
  * Initialize buzzer
  * return 0 : device close
  */
-int buzzer_init(void)
+static int buzzer_init(void)
 {
 
 	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT); // io is pwm out

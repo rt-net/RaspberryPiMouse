@@ -152,7 +152,7 @@ static void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_cou
  * mcp3204_get_value - get sensor data from MCP3204
  * called by sensor_read()
  */
-unsigned int mcp3204_get_value(int channel)
+static unsigned int mcp3204_get_value(int channel)
 {
 	struct device *dev;
 	struct mcp3204_drvdata *data;
@@ -639,7 +639,7 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 
 /* --- Device File Operation --- */
 /* Open Device */
-int dev_open(struct inode *inode, struct file *filep)
+static int dev_open(struct inode *inode, struct file *filep)
 {
 	int *minor = (int *)kmalloc(sizeof(int), GFP_KERNEL);
 	int major = MAJOR(inode->i_rdev);
@@ -654,13 +654,13 @@ int dev_open(struct inode *inode, struct file *filep)
 }
 
 /* Close device */
-int dev_release(struct inode *inode, struct file *filep)
+static int dev_release(struct inode *inode, struct file *filep)
 {
 	kfree(filep->private_data);
 	return 0;
 }
 
-int i2c_dev_open(struct inode *inode, struct file *filep)
+static int i2c_dev_open(struct inode *inode, struct file *filep)
 {
 	struct rtcnt_device_info *dev_info;
 	dev_info = container_of(inode->i_cdev, struct rtcnt_device_info, cdev);
@@ -672,13 +672,13 @@ int i2c_dev_open(struct inode *inode, struct file *filep)
 	return 0;
 }
 
-int i2c_dev_release(struct inode *inode, struct file *filep) { return 0; }
+static int i2c_dev_release(struct inode *inode, struct file *filep) { return 0; }
 
 /*
  * led_write - Trun ON/OFF LEDs
  * Write function of /dev/rtled
  */
-ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
+static ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
 		  loff_t *f_pos)
 {
 	char cval;
@@ -706,7 +706,7 @@ ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
  * buzzer_write - Write buzzer frequency
  * Write function of /dev/rtbuzzer
  */
-ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
+static ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
 		     loff_t *f_pos)
 {
 	int ret;
@@ -745,7 +745,7 @@ ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
  *  rawmotor_l_write - Output frequency to the left motor
  *  Write function of /dev/rtmotor_raw_l
  */
-ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
+static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
 			 size_t count, loff_t *f_pos)
 {
 	int freq, ret;
@@ -765,7 +765,7 @@ ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
  *  rawmotor_r_write - Output frequency to the right motor
  *  Write function of /dev/rtmotor_raw_r
  */
-ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
+static ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
 			 size_t count, loff_t *f_pos)
 {
 	int freq, ret;
@@ -786,7 +786,7 @@ ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
  * motoren_write - Turn ON/OFF SteppingMotor Power
  * Write function of /dev/rtmotoren
  */
-ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
+static ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
 		      loff_t *f_pos)
 {
 	char cval;
@@ -813,7 +813,7 @@ ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
  *  motor_write - Output frequency to right and left both motors
  *  Write function of /dev/rtmotor
  */
-ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
+static ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
 		    loff_t *f_pos)
 {
 	int tmp;
