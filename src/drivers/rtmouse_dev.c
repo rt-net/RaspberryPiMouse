@@ -666,16 +666,14 @@ int i2c_dev_open(struct inode *inode, struct file *filep)
 	return 0;
 }
 
-int i2c_dev_release(struct inode *inode, struct file *filep)
-{
-	return 0;
-}
+int i2c_dev_release(struct inode *inode, struct file *filep) { return 0; }
 
 /*
  * led_write - Trun ON/OFF LEDs
  * Write function of /dev/rtled
  */
-ssize_t led_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
+		  loff_t *f_pos)
 {
 	char cval;
 	int ret;
@@ -702,7 +700,8 @@ ssize_t led_write(struct file *filep, const char __user *buf, size_t count, loff
  * buzzer_write - Write buzzer frequency
  * Write function of /dev/rtbuzzer
  */
-ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
+		     loff_t *f_pos)
 {
 	int ret;
 	int freq, dat;
@@ -740,7 +739,8 @@ ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count, l
  *  rawmotor_l_write - Output frequency to the left motor
  *  Write function of /dev/rtmotor_raw_l
  */
-ssize_t rawmotor_l_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
+			 size_t count, loff_t *f_pos)
 {
 	int freq, ret;
 
@@ -759,7 +759,8 @@ ssize_t rawmotor_l_write(struct file *filep, const char __user *buf, size_t coun
  *  rawmotor_r_write - Output frequency to the right motor
  *  Write function of /dev/rtmotor_raw_r
  */
-ssize_t rawmotor_r_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
+			 size_t count, loff_t *f_pos)
 {
 	int freq, ret;
 
@@ -779,7 +780,8 @@ ssize_t rawmotor_r_write(struct file *filep, const char __user *buf, size_t coun
  * motoren_write - Turn ON/OFF SteppingMotor Power
  * Write function of /dev/rtmotoren
  */
-ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
+		      loff_t *f_pos)
 {
 	char cval;
 
@@ -805,7 +807,8 @@ ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count, 
  *  motor_write - Output frequency to right and left both motors
  *  Write function of /dev/rtmotor
  */
-ssize_t motor_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos)
+ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
+		    loff_t *f_pos)
 {
 	int tmp;
 	int bufcnt;
