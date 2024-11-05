@@ -285,12 +285,18 @@ int dev_open(struct inode *inode, struct file *filep);
 int dev_release(struct inode *inode, struct file *filep);
 int i2c_dev_open(struct inode *inode, struct file *filep);
 int i2c_dev_release(struct inode *inode, struct file *filep);
-ssize_t led_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
-ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
-ssize_t rawmotor_l_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
-ssize_t rawmotor_r_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
-ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
-ssize_t motor_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t led_write(struct file *filep, const char __user *buf, size_t count,
+		  loff_t *f_pos);
+ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count,
+		     loff_t *f_pos);
+ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
+			 size_t count, loff_t *f_pos);
+ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
+			 size_t count, loff_t *f_pos);
+ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count,
+		      loff_t *f_pos);
+ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
+		    loff_t *f_pos);
 int rpi_gpio_function_set(int pin, uint32_t func);
 void rpi_gpio_set32(uint32_t mask, uint32_t val);
 void rpi_gpio_clear32(uint32_t mask, uint32_t val);
