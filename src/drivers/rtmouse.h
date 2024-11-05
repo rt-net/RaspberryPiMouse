@@ -229,6 +229,29 @@
 /* --- Buffer --- */
 #define MAX_BUFLEN 64
 
+/* --- Variable Type definitions --- */
+/* SPI */
+struct mcp3204_drvdata {
+	struct spi_device *spi;
+	struct mutex lock;
+	unsigned char tx[MCP320X_PACKET_SIZE] ____cacheline_aligned;
+	unsigned char rx[MCP320X_PACKET_SIZE] ____cacheline_aligned;
+	struct spi_transfer xfer ____cacheline_aligned;
+	struct spi_message msg ____cacheline_aligned;
+};
+
+/* I2C */
+struct rtcnt_device_info {
+	struct cdev cdev;
+	unsigned int device_major;
+	unsigned int device_minor;
+	struct class *device_class;
+	struct i2c_client *client;
+	struct mutex lock;
+	int signed_pulse_count;
+	int raw_pulse_count;
+};
+
 /* --- extern --- */
 extern unsigned int NUM_DEV[ID_DEV_SIZE];
 extern char *NAME_DEV[ID_DEV_SIZE];
@@ -251,11 +274,26 @@ extern unsigned int motor_l_freq_is_positive;
 extern unsigned int motor_r_freq_is_positive;
 extern struct i2c_device_id i2c_counter_id[];
 extern struct i2c_driver i2c_counter_driver;
+extern struct file_operations dev_fops[ID_DEV_SIZE];
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 extern struct device *mcp320x_dev;
 #endif
 
-void tmp_func(void);
+/* --- function --- */
+int dev_open(struct inode *inode, struct file *filep);
+int dev_release(struct inode *inode, struct file *filep);
+int i2c_dev_open(struct inode *inode, struct file *filep);
+int i2c_dev_release(struct inode *inode, struct file *filep);
+ssize_t led_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t buzzer_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t rawmotor_l_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t rawmotor_r_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t motoren_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+ssize_t motor_write(struct file *filep, const char __user *buf, size_t count, loff_t *f_pos);
+int rpi_gpio_function_set(int pin, uint32_t func);
+void rpi_gpio_set32(uint32_t mask, uint32_t val);
+void rpi_gpio_clear32(uint32_t mask, uint32_t val);
+int buzzer_init(void);
 
 #endif // RTMOUSE_H
