@@ -66,10 +66,6 @@
 #define ID_DEV_CNT 8
 #define ID_DEV_SIZE 9
 
-extern unsigned int NUM_DEV[ID_DEV_SIZE];
-extern char *NAME_DEV[ID_DEV_SIZE];
-extern char *NAME_DEV_U[ID_DEV_SIZE];
-
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV[ID_DEV_LED] + NUM_DEV[ID_DEV_SWITCH] +                        \
 	 NUM_DEV[ID_DEV_SENSOR] + NUM_DEV[ID_DEV_BUZZER] +                     \
@@ -230,7 +226,36 @@ extern char *NAME_DEV_U[ID_DEV_SIZE];
 #define SIGNED_COUNT_SIZE 32767
 #define MAX_PULSE_COUNT 65535
 
-/* -- Buffer -- */
+/* --- Buffer --- */
 #define MAX_BUFLEN 64
+
+/* --- extern --- */
+extern unsigned int NUM_DEV[ID_DEV_SIZE];
+extern char *NAME_DEV[ID_DEV_SIZE];
+extern char *NAME_DEV_U[ID_DEV_SIZE];
+extern int _major_dev[ID_DEV_SIZE];
+extern int _minor_dev[ID_DEV_SIZE];
+extern struct cdev *cdev_array;
+extern struct class *class_dev[ID_DEV_SIZE];
+extern volatile void __iomem *pwm_base;
+extern volatile void __iomem *clk_base;
+extern volatile uint32_t *gpio_base;
+extern volatile int cdev_index;
+extern struct mutex lock;
+extern struct spi_device_id mcp3204_id[];
+extern struct spi_board_info mcp3204_info;
+extern struct spi_driver mcp3204_driver;
+extern struct i2c_client *i2c_client_r;
+extern struct i2c_client *i2c_client_l;
+extern unsigned int motor_l_freq_is_positive;
+extern unsigned int motor_r_freq_is_positive;
+extern struct i2c_device_id i2c_counter_id[];
+extern struct i2c_driver i2c_counter_driver;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+extern struct device *mcp320x_dev;
+#endif
+
+void tmp_func(void);
 
 #endif // RTMOUSE_H

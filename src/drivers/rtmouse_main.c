@@ -55,34 +55,32 @@ char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
 				       [ID_DEV_MOTOR] = "rtmotor%u"};
 
 // used in by register_dev() and cleanup_each_dev()
-static int _major_dev[ID_DEV_SIZE] = {
+int _major_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = DEV_MAJOR,	    [ID_DEV_SWITCH] = DEV_MAJOR,
     [ID_DEV_SENSOR] = DEV_MAJOR,    [ID_DEV_BUZZER] = DEV_MAJOR,
     [ID_DEV_MOTORRAWR] = DEV_MAJOR, [ID_DEV_MOTORRAWL] = DEV_MAJOR,
     [ID_DEV_MOTOREN] = DEV_MAJOR,   [ID_DEV_MOTOR] = DEV_MAJOR};
 
 // used in register_dev() and cleanup_each_dev()
-static int _minor_dev[ID_DEV_SIZE] = {
+int _minor_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = DEV_MINOR,	    [ID_DEV_SWITCH] = DEV_MINOR,
     [ID_DEV_SENSOR] = DEV_MINOR,    [ID_DEV_BUZZER] = DEV_MINOR,
     [ID_DEV_MOTORRAWR] = DEV_MINOR, [ID_DEV_MOTORRAWL] = DEV_MINOR,
     [ID_DEV_MOTOREN] = DEV_MINOR,   [ID_DEV_MOTOR] = DEV_MINOR};
 
 /* --- General Options --- */
-static struct cdev *cdev_array = NULL;
-static struct class *class_dev[ID_DEV_SIZE] = {
+struct cdev *cdev_array = NULL;
+struct class *class_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = NULL,       [ID_DEV_SWITCH] = NULL,
     [ID_DEV_SENSOR] = NULL,    [ID_DEV_BUZZER] = NULL,
     [ID_DEV_MOTORRAWR] = NULL, [ID_DEV_MOTORRAWL] = NULL,
     [ID_DEV_MOTOREN] = NULL,   [ID_DEV_MOTOR] = NULL};
 
-static volatile void __iomem *pwm_base;
-static volatile void __iomem *clk_base;
-static volatile uint32_t *gpio_base;
-
-static volatile int cdev_index = 0;
-
-static struct mutex lock;
+volatile void __iomem *pwm_base;
+volatile void __iomem *clk_base;
+volatile uint32_t *gpio_base;
+volatile int cdev_index = 0;
+struct mutex lock;
 
 /* --- Function Declarations --- */
 static void set_motor_r_freq(int freq);
@@ -123,13 +121,13 @@ struct mcp3204_drvdata {
 
 /* --- Static variables --- */
 /* SPI device ID */
-static struct spi_device_id mcp3204_id[] = {
+struct spi_device_id mcp3204_id[] = {
     {"mcp3204", 0},
     {},
 };
 
 /* SPI Info */
-static struct spi_board_info mcp3204_info = {
+struct spi_board_info mcp3204_info = {
     .modalias = "mcp3204",
     .max_speed_hz = 100000,
     .bus_num = 0,
@@ -138,11 +136,11 @@ static struct spi_board_info mcp3204_info = {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-static struct device *mcp320x_dev;
+struct device *mcp320x_dev;
 #endif
 
 /* SPI Dirver Info */
-static struct spi_driver mcp3204_driver = {
+struct spi_driver mcp3204_driver = {
     .driver =
 	{
 	    .name = DEVNAME_SENSOR,
@@ -165,20 +163,20 @@ struct rtcnt_device_info {
 	int raw_pulse_count;
 };
 
-static struct i2c_client *i2c_client_r = NULL;
-static struct i2c_client *i2c_client_l = NULL;
-static unsigned int motor_l_freq_is_positive = 1;
-static unsigned int motor_r_freq_is_positive = 1;
+struct i2c_client *i2c_client_r = NULL;
+struct i2c_client *i2c_client_l = NULL;
+unsigned int motor_l_freq_is_positive = 1;
+unsigned int motor_r_freq_is_positive = 1;
 
 /* I2C Device ID */
-static struct i2c_device_id i2c_counter_id[] = {
+struct i2c_device_id i2c_counter_id[] = {
     {DEVNAME_CNTL, 0},
     {DEVNAME_CNTR, 1},
     {},
 };
 
 /* I2C Dirver Info */
-static struct i2c_driver i2c_counter_driver = {
+struct i2c_driver i2c_counter_driver = {
     .driver =
 	{
 	    .name = "rtcounter",
@@ -1672,6 +1670,8 @@ int dev_init_module(void)
 	int retval, i;
 	int registered_devices = 0;
 	size_t size;
+
+	tmp_func();
 
 	/* log loding message */
 	printk(KERN_INFO "%s: loading driver...\n", DRIVER_NAME);
