@@ -83,9 +83,6 @@ volatile int cdev_index = 0;
 struct mutex lock;
 
 /* --- Function Declarations --- */
-static void set_motor_r_freq(int freq);
-static void set_motor_l_freq(int freq);
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
 static int mcp3204_remove(struct spi_device *spi);
 #else
@@ -167,6 +164,24 @@ struct i2c_driver i2c_counter_driver = {
 /* -- Device Addition -- */
 MODULE_DEVICE_TABLE(spi, mcp3204_id);
 MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
+
+/*
+ * Initialize buzzer
+ * return 0 : device close
+ */
+int buzzer_init(void)
+{
+
+	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT); // io is pwm out
+	rpi_pwm_write32(RPI_PWM_CTRL, 0x00000000);
+	udelay(1000);
+	rpi_pwm_write32(RPI_PWM_CTRL, 0x00008181); // PWM1,2 enable
+
+	// printk(KERN_DEBUG "%s: rpi_pwm_ctrl:%08X\n", DRIVER_NAME,
+	// ioread32(pwm_base + RPI_PWM_CTRL));
+
+	return 0;
+}
 
 /* --- GPIO mapping for Device Open/Close --- */
 /*

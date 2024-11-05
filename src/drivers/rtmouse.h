@@ -300,6 +300,7 @@ ssize_t motor_write(struct file *filep, const char __user *buf, size_t count,
 int rpi_gpio_function_set(int pin, uint32_t func);
 void rpi_gpio_set32(uint32_t mask, uint32_t val);
 void rpi_gpio_clear32(uint32_t mask, uint32_t val);
+void rpi_pwm_write32(uint32_t offset, uint32_t val);
 int buzzer_init(void);
 
 #endif // RTMOUSE_H

@@ -23,44 +23,8 @@
 #include "rtmouse.h"
 
 /*
- * update_signed_count - update signed pulse count of dev_info
- * called by rtcnt_read()
- */
-void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
-{
-	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
-
-	// カウントがMAX_PULSE_COUNTから0に変わる場合の処理
-	// ただし、それ以外でもdiffが負の値になることがある
-	// そのため、diffが十分に大きな負の値の場合に処理する
-	// if(diff_count < 0) では正常に動作しない
-	if (diff_count < -SIGNED_COUNT_SIZE) {
-		diff_count += MAX_PULSE_COUNT;
-	}
-
-	if (dev_info->client->addr == DEV_ADDR_CNTL) {
-		if (motor_l_freq_is_positive) {
-			dev_info->signed_pulse_count += diff_count;
-		} else {
-			dev_info->signed_pulse_count -= diff_count;
-		}
-	} else {
-		if (motor_r_freq_is_positive) {
-			dev_info->signed_pulse_count += diff_count;
-		} else {
-			dev_info->signed_pulse_count -= diff_count;
-		}
-	}
-
-	if (dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
-	    dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE) {
-		dev_info->signed_pulse_count = 0;
-	}
-}
-
-/*
  * i2c_counter_set - set value to I2C pulse counter
- * called by cntr_write() and cntl_write()
+ * called by rtcnt_write()
  */
 static int i2c_counter_set(struct rtcnt_device_info *dev_info, int setval)
 {
@@ -128,6 +92,42 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 }
 
 /*
+ * update_signed_count - update signed pulse count of dev_info
+ * called by rtcnt_read()
+ */
+void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
+{
+	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
+
+	// カウントがMAX_PULSE_COUNTから0に変わる場合の処理
+	// ただし、それ以外でもdiffが負の値になることがある
+	// そのため、diffが十分に大きな負の値の場合に処理する
+	// if(diff_count < 0) では正常に動作しない
+	if (diff_count < -SIGNED_COUNT_SIZE) {
+		diff_count += MAX_PULSE_COUNT;
+	}
+
+	if (dev_info->client->addr == DEV_ADDR_CNTL) {
+		if (motor_l_freq_is_positive) {
+			dev_info->signed_pulse_count += diff_count;
+		} else {
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	} else {
+		if (motor_r_freq_is_positive) {
+			dev_info->signed_pulse_count += diff_count;
+		} else {
+			dev_info->signed_pulse_count -= diff_count;
+		}
+	}
+
+	if (dev_info->signed_pulse_count > SIGNED_COUNT_SIZE ||
+	    dev_info->signed_pulse_count < -SIGNED_COUNT_SIZE) {
+		dev_info->signed_pulse_count = 0;
+	}
+}
+
+/*
  * reset_signed_count - reset signed pulse count of dev_info
  * called by rtcnt_write()
  */
@@ -143,6 +143,272 @@ void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
 	dev_info->signed_pulse_count = rtcnt_count;
 	i2c_counter_read(dev_info, &raw_count);
 	dev_info->raw_pulse_count = raw_count;
+}
+
+/*
+ * mcp3204_get_value - get sensor data from MCP3204
+ * called by sensor_read()
+ */
+static unsigned int mcp3204_get_value(int channel)
+{
+	struct device *dev;
+	struct mcp3204_drvdata *data;
+	struct spi_device *spi;
+	char str[128];
+
+	unsigned int r = 0;
+	unsigned char c = channel & 0x03;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+
+	if (mcp320x_dev == NULL)
+		return 0;
+	dev = mcp320x_dev;
+
+#else
+	struct spi_master *master;
+	master = spi_busnum_to_master(mcp3204_info.bus_num);
+	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
+		 mcp3204_info.chip_select);
+	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
+#endif
+
+	spi = to_spi_device(dev);
+	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
+	mutex_lock(&data->lock);
+	data->tx[0] = 1 << 2;  // start bit
+	data->tx[0] |= 1 << 1; // Single
+	data->tx[1] = c << 6;  // channel
+	data->tx[2] = 0;
+
+	if (spi_sync(data->spi, &data->msg)) {
+		printk(KERN_INFO "%s: spi_sync_transfer returned non zero\n",
+		       __func__);
+	}
+
+	mutex_unlock(&data->lock);
+
+	r = (data->rx[1] & 0xf) << 8;
+	r |= data->rx[2];
+
+	// printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__,
+	// channel, r);
+
+	return r;
+}
+
+/*
+ * pwm set function
+ * called by buzzer_init() and set_motor_l_freq(), set_motor_r_freq(), buzzer_write()
+ */
+void rpi_pwm_write32(uint32_t offset, uint32_t val)
+{
+	iowrite32(val, pwm_base + offset);
+}
+
+/*
+ * set mask and value
+ * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_put() and motoren_write()
+ */
+void rpi_gpio_set32(uint32_t mask, uint32_t val)
+{
+	gpio_base[RPI_GPSET0_INDEX] = val & mask;
+}
+
+/*
+ * clear mask and value
+ * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_del() and motoren_write()
+ */
+void rpi_gpio_clear32(uint32_t mask, uint32_t val)
+{
+	gpio_base[RPI_GPCLR0_INDEX] = val & mask;
+}
+
+/*
+ * set function
+ * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq() and buzzer_write()
+ */
+int rpi_gpio_function_set(int pin, uint32_t func)
+{
+	int index = RPI_GPFSEL0_INDEX + pin / 10;
+	uint32_t mask = ~(0x7 << ((pin % 10) * 3));
+
+	gpio_base[index] =
+	    (gpio_base[index] & mask) | ((func & 0x7) << ((pin % 10) * 3));
+
+	return 1;
+}
+
+/* --- GPIO Operation --- */
+/* getPWMCount function for GPIO Operation */
+static int getPWMCount(int freq)
+{
+	if (freq < 1)
+		return PWM_BASECLK;
+	if (freq > 10000)
+		return PWM_BASECLK / 10000;
+
+	return PWM_BASECLK / freq;
+}
+
+/*
+ * left motor function
+ * called by parseMotorCmd() and rawmotor_l_write()
+ */
+static void set_motor_l_freq(int freq)
+{
+	int dat;
+
+	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
+
+	if (freq == 0) {
+		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
+		return;
+	} else {
+		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
+	}
+
+	if (freq > 0) {
+		motor_l_freq_is_positive = 1;
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+	} else {
+		motor_l_freq_is_positive = 0;
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+		freq = -freq;
+	}
+
+	dat = getPWMCount(freq);
+
+	rpi_pwm_write32(RPI_PWM_RNG1, dat);
+	rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
+
+	return;
+}
+
+/*
+ * right motor function
+ * called by parseMotorCmd() and rawmotor_r_write()
+ */
+static void set_motor_r_freq(int freq)
+{
+	int dat;
+
+	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
+
+	// Reset uncontrollable frequency to zero.
+	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
+		freq = 0;
+	}
+
+	if (freq == 0) {
+		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
+		return;
+	} else {
+		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
+	}
+
+	if (freq > 0) {
+		motor_r_freq_is_positive = 1;
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+	} else {
+		motor_r_freq_is_positive = 0;
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+		freq = -freq;
+	}
+
+	dat = getPWMCount(freq);
+
+	rpi_pwm_write32(RPI_PWM_RNG2, dat);
+	rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
+
+	return;
+}
+
+/*
+ * Parse motor command
+ * called by motor_write()
+ */
+static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
+{
+	int r_motor_val, l_motor_val, time_val;
+	char *newbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
+
+	if (copy_from_user(newbuf, buf, sizeof(char) * count)) {
+		kfree(newbuf);
+		return -EFAULT;
+	}
+
+	sscanf(newbuf, "%d%d%d\n", &l_motor_val, &r_motor_val, &time_val);
+
+	kfree(newbuf);
+
+	mutex_lock(&lock);
+
+	set_motor_l_freq(l_motor_val);
+	set_motor_r_freq(r_motor_val);
+
+	msleep_interruptible(time_val);
+
+	set_motor_l_freq(0);
+	set_motor_r_freq(0);
+
+	mutex_unlock(&lock);
+
+	return count;
+}
+
+/*
+ * Turn On LEDs
+ * return 0 : device close
+ * called by led_write()
+ */
+static int led_put(int ledno)
+{
+	switch (ledno) {
+	case 0:
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
+		break;
+	case 1:
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
+		break;
+	case 2:
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
+		break;
+	case 3:
+		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
+		break;
+	}
+	return 0;
+}
+
+/*
+ * Turn Off LEDs
+ * return 0 : device close
+ * called by led_write()
+ */
+static int led_del(int ledno)
+{
+	switch (ledno) {
+	case 0:
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
+		break;
+	case 1:
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
+		break;
+	case 2:
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
+		break;
+	case 3:
+		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
+		break;
+	}
+
+	return 0;
 }
 
 /*
@@ -297,58 +563,6 @@ static ssize_t sw_read(struct file *filep, char __user *buf, size_t count,
 }
 
 /*
- * mcp3204_get_value - get sensor data from MCP3204
- * called by 'sensor_read'
- */
-static unsigned int mcp3204_get_value(int channel)
-{
-	struct device *dev;
-	struct mcp3204_drvdata *data;
-	struct spi_device *spi;
-	char str[128];
-
-	unsigned int r = 0;
-	unsigned char c = channel & 0x03;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
-
-	if (mcp320x_dev == NULL)
-		return 0;
-	dev = mcp320x_dev;
-
-#else
-	struct spi_master *master;
-	master = spi_busnum_to_master(mcp3204_info.bus_num);
-	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
-		 mcp3204_info.chip_select);
-	dev = bus_find_device_by_name(&spi_bus_type, NULL, str);
-#endif
-
-	spi = to_spi_device(dev);
-	data = (struct mcp3204_drvdata *)spi_get_drvdata(spi);
-	mutex_lock(&data->lock);
-	data->tx[0] = 1 << 2;  // start bit
-	data->tx[0] |= 1 << 1; // Single
-	data->tx[1] = c << 6;  // channel
-	data->tx[2] = 0;
-
-	if (spi_sync(data->spi, &data->msg)) {
-		printk(KERN_INFO "%s: spi_sync_transfer returned non zero\n",
-		       __func__);
-	}
-
-	mutex_unlock(&data->lock);
-
-	r = (data->rx[1] & 0xf) << 8;
-	r |= data->rx[2];
-
-	// printk(KERN_INFO "%s: get result on ch[%d] : %04d\n", __func__,
-	// channel, r);
-
-	return r;
-}
-
-/*
  * Read Sensor information
  * return 0 : device close
  */
@@ -418,215 +632,6 @@ static ssize_t sensor_read(struct file *filep, char __user *buf, size_t count,
 	*f_pos += count;
 
 	return count;
-}
-
-/* pwm set function */
-static void rpi_pwm_write32(uint32_t offset, uint32_t val)
-{
-	iowrite32(val, pwm_base + offset);
-}
-
-/*
- * Initialize buzzer
- * return 0 : device close
- */
-int buzzer_init(void)
-{
-
-	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT); // io is pwm out
-	rpi_pwm_write32(RPI_PWM_CTRL, 0x00000000);
-	udelay(1000);
-	rpi_pwm_write32(RPI_PWM_CTRL, 0x00008181); // PWM1,2 enable
-
-	// printk(KERN_DEBUG "%s: rpi_pwm_ctrl:%08X\n", DRIVER_NAME,
-	// ioread32(pwm_base + RPI_PWM_CTRL));
-
-	return 0;
-}
-
-/* --- GPIO Operation --- */
-/* getPWMCount function for GPIO Operation */
-static int getPWMCount(int freq)
-{
-	if (freq < 1)
-		return PWM_BASECLK;
-	if (freq > 10000)
-		return PWM_BASECLK / 10000;
-
-	return PWM_BASECLK / freq;
-}
-
-/* left motor function */
-static void set_motor_l_freq(int freq)
-{
-	int dat;
-
-	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
-
-	// Reset uncontrollable frequency to zero.
-	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
-		freq = 0;
-	}
-
-	if (freq == 0) {
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
-		return;
-	} else {
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
-	}
-
-	if (freq > 0) {
-		motor_l_freq_is_positive = 1;
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
-	} else {
-		motor_l_freq_is_positive = 0;
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
-		freq = -freq;
-	}
-
-	dat = getPWMCount(freq);
-
-	rpi_pwm_write32(RPI_PWM_RNG1, dat);
-	rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
-
-	return;
-}
-
-/* right motor function */
-static void set_motor_r_freq(int freq)
-{
-	int dat;
-
-	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
-
-	// Reset uncontrollable frequency to zero.
-	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
-		freq = 0;
-	}
-
-	if (freq == 0) {
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
-		return;
-	} else {
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
-	}
-
-	if (freq > 0) {
-		motor_r_freq_is_positive = 1;
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-	} else {
-		motor_r_freq_is_positive = 0;
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-		freq = -freq;
-	}
-
-	dat = getPWMCount(freq);
-
-	rpi_pwm_write32(RPI_PWM_RNG2, dat);
-	rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
-
-	return;
-}
-
-/* Parse motor command  */
-static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
-{
-	int r_motor_val, l_motor_val, time_val;
-	char *newbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
-
-	if (copy_from_user(newbuf, buf, sizeof(char) * count)) {
-		kfree(newbuf);
-		return -EFAULT;
-	}
-
-	sscanf(newbuf, "%d%d%d\n", &l_motor_val, &r_motor_val, &time_val);
-
-	kfree(newbuf);
-
-	mutex_lock(&lock);
-
-	set_motor_l_freq(l_motor_val);
-	set_motor_r_freq(r_motor_val);
-
-	msleep_interruptible(time_val);
-
-	set_motor_l_freq(0);
-	set_motor_r_freq(0);
-
-	mutex_unlock(&lock);
-
-	return count;
-}
-
-/*
- * Turn On LEDs
- * return 0 : device close
- */
-static int led_put(int ledno)
-{
-	switch (ledno) {
-	case 0:
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
-		break;
-	case 1:
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
-		break;
-	case 2:
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
-		break;
-	case 3:
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
-		break;
-	}
-	return 0;
-}
-
-/*set mask and value */
-void rpi_gpio_set32(uint32_t mask, uint32_t val)
-{
-	gpio_base[RPI_GPSET0_INDEX] = val & mask;
-}
-
-/* clear mask and value */
-void rpi_gpio_clear32(uint32_t mask, uint32_t val)
-{
-	gpio_base[RPI_GPCLR0_INDEX] = val & mask;
-}
-
-/* set function */
-int rpi_gpio_function_set(int pin, uint32_t func)
-{
-	int index = RPI_GPFSEL0_INDEX + pin / 10;
-	uint32_t mask = ~(0x7 << ((pin % 10) * 3));
-
-	gpio_base[index] =
-	    (gpio_base[index] & mask) | ((func & 0x7) << ((pin % 10) * 3));
-
-	return 1;
-}
-
-/*
- * Turn Off LEDs
- * return 0 : device close
- */
-static int led_del(int ledno)
-{
-	switch (ledno) {
-	case 0:
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED0_BASE);
-		break;
-	case 1:
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED1_BASE);
-		break;
-	case 2:
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED2_BASE);
-		break;
-	case 3:
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << LED3_BASE);
-		break;
-	}
-
-	return 0;
 }
 
 /* --- Device File Operation --- */
