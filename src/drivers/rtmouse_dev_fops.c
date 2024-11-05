@@ -22,6 +22,9 @@
 
 #include "rtmouse.h"
 
+static unsigned int motor_l_freq_is_positive = 1;
+static unsigned int motor_r_freq_is_positive = 1;
+
 /*
  * i2c_counter_set - set value to I2C pulse counter
  * called by rtcnt_write()
@@ -95,7 +98,7 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
  * update_signed_count - update signed pulse count of dev_info
  * called by rtcnt_read()
  */
-void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
+static void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
 {
 	int diff_count = rtcnt_count - dev_info->raw_pulse_count;
 
@@ -131,7 +134,7 @@ void update_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
  * reset_signed_count - reset signed pulse count of dev_info
  * called by rtcnt_write()
  */
-void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
+static void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
 {
 	int raw_count;
 
@@ -149,7 +152,7 @@ void reset_signed_count(struct rtcnt_device_info *dev_info, int rtcnt_count)
  * mcp3204_get_value - get sensor data from MCP3204
  * called by sensor_read()
  */
-static unsigned int mcp3204_get_value(int channel)
+unsigned int mcp3204_get_value(int channel)
 {
 	struct device *dev;
 	struct mcp3204_drvdata *data;

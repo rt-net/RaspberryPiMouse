@@ -252,35 +252,18 @@ struct rtcnt_device_info {
 	int raw_pulse_count;
 };
 
-/* --- extern --- */
-extern unsigned int NUM_DEV[ID_DEV_SIZE];
-extern char *NAME_DEV[ID_DEV_SIZE];
-extern char *NAME_DEV_U[ID_DEV_SIZE];
-extern int _major_dev[ID_DEV_SIZE];
-extern int _minor_dev[ID_DEV_SIZE];
-extern struct cdev *cdev_array;
-extern struct class *class_dev[ID_DEV_SIZE];
+/* --- rtmouse_dev_fops.c extern --- */
 extern volatile void __iomem *pwm_base;
-extern volatile void __iomem *clk_base;
 extern volatile uint32_t *gpio_base;
-extern volatile int cdev_index;
 extern struct mutex lock;
-extern struct spi_device_id mcp3204_id[];
 extern struct spi_board_info mcp3204_info;
-extern struct spi_driver mcp3204_driver;
-extern struct i2c_client *i2c_client_r;
-extern struct i2c_client *i2c_client_l;
-extern unsigned int motor_l_freq_is_positive;
-extern unsigned int motor_r_freq_is_positive;
-extern struct i2c_device_id i2c_counter_id[];
-extern struct i2c_driver i2c_counter_driver;
 extern struct file_operations dev_fops[ID_DEV_SIZE];
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 extern struct device *mcp320x_dev;
 #endif
 
-/* --- function --- */
+/* --- rtmouse_dev_fops.c function --- */
 int dev_open(struct inode *inode, struct file *filep);
 int dev_release(struct inode *inode, struct file *filep);
 int i2c_dev_open(struct inode *inode, struct file *filep);
@@ -302,5 +285,6 @@ void rpi_gpio_set32(uint32_t mask, uint32_t val);
 void rpi_gpio_clear32(uint32_t mask, uint32_t val);
 void rpi_pwm_write32(uint32_t offset, uint32_t val);
 int buzzer_init(void);
+unsigned int mcp3204_get_value(int channel);
 
 #endif // RTMOUSE_H

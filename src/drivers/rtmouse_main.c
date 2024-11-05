@@ -30,13 +30,13 @@ MODULE_VERSION("3.3.3");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /* --- Device Numbers --- */
-unsigned int NUM_DEV[ID_DEV_SIZE] = {
+static const unsigned int NUM_DEV[ID_DEV_SIZE] = {
     [ID_DEV_LED] = 4,	  [ID_DEV_SWITCH] = 3,	  [ID_DEV_SENSOR] = 1,
     [ID_DEV_BUZZER] = 1,  [ID_DEV_MOTORRAWR] = 1, [ID_DEV_MOTORRAWL] = 1,
     [ID_DEV_MOTOREN] = 1, [ID_DEV_MOTOR] = 1,	  [ID_DEV_CNT] = 2};
 
 /* --- Device Names --- */
-char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
+static const char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
 			       [ID_DEV_SWITCH] = "rtswitch",
 			       [ID_DEV_SENSOR] = "rtlightsensor",
 			       [ID_DEV_BUZZER] = "rtbuzzer",
@@ -45,7 +45,7 @@ char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
 			       [ID_DEV_MOTOREN] = "rtmotoren",
 			       [ID_DEV_MOTOR] = "rtmotor"};
 
-char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
+static const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
 				 [ID_DEV_SWITCH] = "rtswitch%u",
 				 [ID_DEV_SENSOR] = "rtlightsensor%u",
 				 [ID_DEV_BUZZER] = "rtbuzzer%u",
@@ -55,31 +55,31 @@ char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
 				 [ID_DEV_MOTOR] = "rtmotor%u"};
 
 // used in by register_dev() and cleanup_each_dev()
-int _major_dev[ID_DEV_SIZE] = {
+static int _major_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = DEV_MAJOR,	    [ID_DEV_SWITCH] = DEV_MAJOR,
     [ID_DEV_SENSOR] = DEV_MAJOR,    [ID_DEV_BUZZER] = DEV_MAJOR,
     [ID_DEV_MOTORRAWR] = DEV_MAJOR, [ID_DEV_MOTORRAWL] = DEV_MAJOR,
     [ID_DEV_MOTOREN] = DEV_MAJOR,   [ID_DEV_MOTOR] = DEV_MAJOR};
 
 // used in register_dev() and cleanup_each_dev()
-int _minor_dev[ID_DEV_SIZE] = {
+static int _minor_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = DEV_MINOR,	    [ID_DEV_SWITCH] = DEV_MINOR,
     [ID_DEV_SENSOR] = DEV_MINOR,    [ID_DEV_BUZZER] = DEV_MINOR,
     [ID_DEV_MOTORRAWR] = DEV_MINOR, [ID_DEV_MOTORRAWL] = DEV_MINOR,
     [ID_DEV_MOTOREN] = DEV_MINOR,   [ID_DEV_MOTOR] = DEV_MINOR};
 
 /* --- General Options --- */
-struct cdev *cdev_array = NULL;
-struct class *class_dev[ID_DEV_SIZE] = {
+static struct cdev *cdev_array = NULL;
+static struct class *class_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = NULL,       [ID_DEV_SWITCH] = NULL,
     [ID_DEV_SENSOR] = NULL,    [ID_DEV_BUZZER] = NULL,
     [ID_DEV_MOTORRAWR] = NULL, [ID_DEV_MOTORRAWL] = NULL,
     [ID_DEV_MOTOREN] = NULL,   [ID_DEV_MOTOR] = NULL};
 
 volatile void __iomem *pwm_base;
-volatile void __iomem *clk_base;
+static volatile void __iomem *clk_base;
 volatile uint32_t *gpio_base;
-volatile int cdev_index = 0;
+static volatile int cdev_index = 0;
 struct mutex lock;
 
 /* --- Function Declarations --- */
@@ -90,7 +90,6 @@ static void mcp3204_remove(struct spi_device *spi);
 #endif
 
 static int mcp3204_probe(struct spi_device *spi);
-static unsigned int mcp3204_get_value(int channel);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 static int rtcnt_i2c_probe(struct i2c_client *client,
@@ -107,7 +106,7 @@ static void rtcnt_i2c_remove(struct i2c_client *client);
 
 /* --- Static variables --- */
 /* SPI device ID */
-struct spi_device_id mcp3204_id[] = {
+static struct spi_device_id mcp3204_id[] = {
     {"mcp3204", 0},
     {},
 };
@@ -126,7 +125,7 @@ struct device *mcp320x_dev;
 #endif
 
 /* SPI Dirver Info */
-struct spi_driver mcp3204_driver = {
+static struct spi_driver mcp3204_driver = {
     .driver =
 	{
 	    .name = DEVNAME_SENSOR,
@@ -137,20 +136,18 @@ struct spi_driver mcp3204_driver = {
     .remove = mcp3204_remove,
 };
 
-struct i2c_client *i2c_client_r = NULL;
-struct i2c_client *i2c_client_l = NULL;
-unsigned int motor_l_freq_is_positive = 1;
-unsigned int motor_r_freq_is_positive = 1;
+static struct i2c_client *i2c_client_r = NULL;
+static struct i2c_client *i2c_client_l = NULL;
 
 /* I2C Device ID */
-struct i2c_device_id i2c_counter_id[] = {
+static struct i2c_device_id i2c_counter_id[] = {
     {DEVNAME_CNTL, 0},
     {DEVNAME_CNTR, 1},
     {},
 };
 
 /* I2C Dirver Info */
-struct i2c_driver i2c_counter_driver = {
+static struct i2c_driver i2c_counter_driver = {
     .driver =
 	{
 	    .name = "rtcounter",
@@ -829,7 +826,7 @@ static void rtcnt_i2c_remove(struct i2c_client *client)
  * dev_init_module - register driver module
  * called by module_init(dev_init_module)
  */
-int dev_init_module(void)
+static int dev_init_module(void)
 {
 	int retval, i;
 	int registered_devices = 0;
@@ -939,7 +936,7 @@ int dev_init_module(void)
  * dev_cleanup_module - cleanup driver module
  * called by module_exit(dev_cleanup_module)
  */
-void cleanup_each_dev(int id_dev)
+static void cleanup_each_dev(int id_dev)
 {
 	int i;
 	dev_t devno;
@@ -953,7 +950,7 @@ void cleanup_each_dev(int id_dev)
 	unregister_chrdev_region(devno_top, NUM_DEV[id_dev]);
 }
 
-void dev_cleanup_module(void)
+static void dev_cleanup_module(void)
 {
 	int i;
 
