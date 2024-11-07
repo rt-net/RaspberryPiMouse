@@ -253,6 +253,11 @@ struct rtcnt_device_info {
 };
 
 /* --- used in rtmouse_dev_fops.c --- */
+extern const char *NAME_DEV[ID_DEV_SIZE];
+extern const char *NAME_DEV_U[ID_DEV_SIZE];
+extern int _major_dev[ID_DEV_SIZE];
+extern int _minor_dev[ID_DEV_SIZE];
+extern struct class *class_dev[ID_DEV_SIZE];
 extern volatile void __iomem *pwm_base;
 extern volatile uint32_t *gpio_base;
 extern struct mutex lock;
@@ -261,11 +266,8 @@ extern struct file_operations dev_fops[ID_DEV_SIZE];
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 extern struct device *mcp320x_dev;
 #endif
-
-int rpi_gpio_function_set(int pin, uint32_t func);
-void rpi_gpio_set32(uint32_t mask, uint32_t val);
-void rpi_gpio_clear32(uint32_t mask, uint32_t val);
-void rpi_pwm_write32(uint32_t offset, uint32_t val);
+int buzzer_init(void);
+int register_dev(int id_dev);
 
 /* --- used in rtmouse_spi.c --- */
 int mcp3204_init(void);
@@ -277,5 +279,11 @@ extern struct cdev *cdev_array;
 extern volatile int cdev_index;
 int i2c_counter_init(void);
 void i2c_counter_exit(void);
+
+/* --- used in rtmouse_gpio.c --- */
+int rpi_gpio_function_set(int pin, uint32_t func);
+void rpi_gpio_set32(uint32_t mask, uint32_t val);
+void rpi_gpio_clear32(uint32_t mask, uint32_t val);
+void rpi_pwm_write32(uint32_t offset, uint32_t val);
 
 #endif // RTMOUSE_H
