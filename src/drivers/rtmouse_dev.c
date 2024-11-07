@@ -1,7 +1,7 @@
 /*
  *
- * rtmouse_dev_fops.c
- * Define device file operations
+ * rtmouse_dev.c
+ * Define device file operations and register device
  *
  * Copyright (C) 2024 RT Corporation <shop@rt-net.jp>
  *
