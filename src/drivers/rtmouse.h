@@ -52,7 +52,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 4
+#define RASPBERRYPI 2
 
 /* --- Device ID --- */
 #define ID_DEV_LED 0
@@ -252,9 +252,8 @@ struct rtcnt_device_info {
 	int raw_pulse_count;
 };
 
-/* --- used in rtmouse_dev_fops.c --- */
+/* --- used in rtmouse_dev.c --- */
 extern const char *NAME_DEV[ID_DEV_SIZE];
-extern const char *NAME_DEV_U[ID_DEV_SIZE];
 extern int _major_dev[ID_DEV_SIZE];
 extern int _minor_dev[ID_DEV_SIZE];
 extern struct class *class_dev[ID_DEV_SIZE];

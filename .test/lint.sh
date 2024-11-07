@@ -10,6 +10,7 @@ lint_driver () {
         python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_dev.c
         python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_spi.c
         python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_i2c.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_gpio.c
         python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse.h
     popd
 }

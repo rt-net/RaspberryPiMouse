@@ -31,7 +31,8 @@ MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /*
  * --- Device Numbers ---
- * used in rtmouse_i2c.c
+ * used in rtmouse_i2c.c, dev_init_module()
+ * and cleanup_each_dev()
  */
 const unsigned int NUM_DEV[ID_DEV_SIZE] = {
     [ID_DEV_LED] = 4,	  [ID_DEV_SWITCH] = 3,	  [ID_DEV_SENSOR] = 1,
@@ -40,7 +41,7 @@ const unsigned int NUM_DEV[ID_DEV_SIZE] = {
 
 /*
  * --- Device Names ---
- * used in rtmouse_dev.c
+ * used in rtmouse_dev.c and dev_init_module()
  */
 const char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
 				     [ID_DEV_SWITCH] = "rtswitch",
@@ -50,19 +51,6 @@ const char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
 				     [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
 				     [ID_DEV_MOTOREN] = "rtmotoren",
 				     [ID_DEV_MOTOR] = "rtmotor"};
-
-/*
- * --- Device Names(+%u) ---
- * used in rtmouse_dev.c
- */
-const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
-				       [ID_DEV_SWITCH] = "rtswitch%u",
-				       [ID_DEV_SENSOR] = "rtlightsensor%u",
-				       [ID_DEV_BUZZER] = "rtbuzzer%u",
-				       [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
-				       [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
-				       [ID_DEV_MOTOREN] = "rtmotoren%u",
-				       [ID_DEV_MOTOR] = "rtmotor%u"};
 
 // used in by rtmouse_dev.c and cleanup_each_dev()
 int _major_dev[ID_DEV_SIZE] = {
@@ -80,7 +68,7 @@ int _minor_dev[ID_DEV_SIZE] = {
 
 /*
  * --- General Options ---
- * used in rtmouse_dev.c
+ * used in rtmouse_dev.c and dev_cleanup_module()
  */
 struct class *class_dev[ID_DEV_SIZE] = {
     [ID_DEV_LED] = NULL,       [ID_DEV_SWITCH] = NULL,
@@ -88,13 +76,17 @@ struct class *class_dev[ID_DEV_SIZE] = {
     [ID_DEV_MOTORRAWR] = NULL, [ID_DEV_MOTORRAWL] = NULL,
     [ID_DEV_MOTOREN] = NULL,   [ID_DEV_MOTOR] = NULL};
 
-// used in rtmouse_i2c.c
+// used in rtmouse_i2c.c and dev_cleanup_module()
 struct cdev *cdev_array = NULL;
+
+// used in rtmouse_i2c.c
 volatile int cdev_index = 0;
 
-// used in rtmouse_dev.c
+// used in rtmouse_dev.c and rtmouse_gpio.c
 volatile void __iomem *pwm_base;
 volatile uint32_t *gpio_base;
+
+// used in rtmouse_dev.c, rtmouse_i2c.c and rtmouse_spi.c
 struct mutex lock;
 
 /* --- Static variables --- */
