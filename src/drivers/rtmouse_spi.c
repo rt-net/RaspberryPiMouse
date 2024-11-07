@@ -1,7 +1,7 @@
 /*
  *
  * rtmouse_spi.c
- * SPI Driver
+ * SPI driver
  *
  * Copyright (C) 2024 RT Corporation <shop@rt-net.jp>
  *

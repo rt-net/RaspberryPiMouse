@@ -1,7 +1,7 @@
 /*
  *
  * rtmouse_i2c.c
- * I2C Driver
+ * I2C driver
  *
  * Copyright (C) 2024 RT Corporation <shop@rt-net.jp>
  *
