@@ -1,12 +1,12 @@
 MODULE:= rtmouse
 obj-m:= $(MODULE).o
-$(MODULE)-y:= $(MODULE)_main.o $(MODULE)_dev_fops.o $(MODULE)_spi.o
+$(MODULE)-y:= $(MODULE)_main.o $(MODULE)_dev_fops.o $(MODULE)_spi.o $(MODULE)_i2c.o
 clean-files:= *.o *.ko *.mod.[co] *~
 
 LINUX_SRC_DIR:=/usr/src/linux-headers-$(shell uname -r)
 VERBOSE:=0
 
-$(MODULE).ko: $(MODULE)_main.c $(MODULE)_dev_fops.c $(MODULE)_spi.c $(MODULE).h
+$(MODULE).ko: $(MODULE)_main.c $(MODULE)_dev_fops.c $(MODULE)_spi.c $(MODULE)_i2c.c $(MODULE).h
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) modules
 
 clean:

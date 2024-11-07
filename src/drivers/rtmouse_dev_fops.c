@@ -786,7 +786,11 @@ static ssize_t motor_write(struct file *filep, const char __user *buf,
 	return bufcnt;
 }
 
-/* --- Device File Operations --- */
+/*
+ * Device File Operations
+ * used in register_dev(), rtcntr_i2c_create_cdev()
+ * and rtcntl_i2c_create_cdev()
+ */
 struct file_operations dev_fops[ID_DEV_SIZE] = {
     [ID_DEV_LED].open = dev_open,
     [ID_DEV_LED].release = dev_release,

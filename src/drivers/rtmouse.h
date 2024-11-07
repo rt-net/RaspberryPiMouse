@@ -271,4 +271,11 @@ void rpi_pwm_write32(uint32_t offset, uint32_t val);
 int mcp3204_init(void);
 void mcp3204_exit(void);
 
+/* --- used in rtmouse_i2c.c --- */
+extern const unsigned int NUM_DEV[ID_DEV_SIZE];
+extern struct cdev *cdev_array;
+extern volatile int cdev_index;
+int i2c_counter_init(void);
+void i2c_counter_exit(void);
+
 #endif // RTMOUSE_H
