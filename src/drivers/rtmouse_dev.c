@@ -29,14 +29,15 @@ static unsigned int motor_r_freq_is_positive = 1;
  * --- Device Names(+%u) ---
  * used in register_dev()
  */
-static const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
-				       [ID_DEV_SWITCH] = "rtswitch%u",
-				       [ID_DEV_SENSOR] = "rtlightsensor%u",
-				       [ID_DEV_BUZZER] = "rtbuzzer%u",
-				       [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
-				       [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
-				       [ID_DEV_MOTOREN] = "rtmotoren%u",
-				       [ID_DEV_MOTOR] = "rtmotor%u"};
+static const char *NAME_DEV_U[ID_DEV_SIZE] = {
+    [ID_DEV_LED] = "rtled%u",
+    [ID_DEV_SWITCH] = "rtswitch%u",
+    [ID_DEV_SENSOR] = "rtlightsensor%u",
+    [ID_DEV_BUZZER] = "rtbuzzer%u",
+    [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
+    [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
+    [ID_DEV_MOTOREN] = "rtmotoren%u",
+    [ID_DEV_MOTOR] = "rtmotor%u"};
 
 /*
  * i2c_counter_set - set value to I2C pulse counter
