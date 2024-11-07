@@ -202,52 +202,6 @@ static unsigned int mcp3204_get_value(int channel)
 	return r;
 }
 
-/*
- * pwm set function
- * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq()
- * and buzzer_write()
- */
-void rpi_pwm_write32(uint32_t offset, uint32_t val)
-{
-	iowrite32(val, pwm_base + offset);
-}
-
-/*
- * set mask and value
- * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_put()
- * and motoren_write()
- */
-void rpi_gpio_set32(uint32_t mask, uint32_t val)
-{
-	gpio_base[RPI_GPSET0_INDEX] = val & mask;
-}
-
-/*
- * clear mask and value
- * called by sensor_read(), set_motor_l_freq(), set_motor_r_freq(), led_del()
- * and motoren_write()
- */
-void rpi_gpio_clear32(uint32_t mask, uint32_t val)
-{
-	gpio_base[RPI_GPCLR0_INDEX] = val & mask;
-}
-
-/*
- * set function
- * called by buzzer_init(), set_motor_l_freq(), set_motor_r_freq() and
- * buzzer_write()
- */
-int rpi_gpio_function_set(int pin, uint32_t func)
-{
-	int index = RPI_GPFSEL0_INDEX + pin / 10;
-	uint32_t mask = ~(0x7 << ((pin % 10) * 3));
-
-	gpio_base[index] =
-	    (gpio_base[index] & mask) | ((func & 0x7) << ((pin % 10) * 3));
-
-	return 1;
-}
-
 /* --- GPIO Operation --- */
 /* getPWMCount function for GPIO Operation */
 static int getPWMCount(int freq)
