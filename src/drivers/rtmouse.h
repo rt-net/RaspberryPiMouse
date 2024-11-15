@@ -52,7 +52,7 @@
 // Raspberry Pi 2 B        : 2
 // Raspberry Pi 3 B/A+/B+  : 2
 // Raspberry Pi 4 B        : 4
-#define RASPBERRYPI 4
+#define RASPBERRYPI 2
 
 /* --- Device ID --- */
 #define ID_DEV_LED 0
@@ -65,31 +65,6 @@
 #define ID_DEV_MOTOR 7
 #define ID_DEV_CNT 8
 #define ID_DEV_SIZE 9
-
-/* --- Device Numbers --- */
-const unsigned int NUM_DEV[ID_DEV_SIZE] = {
-    [ID_DEV_LED] = 4,	  [ID_DEV_SWITCH] = 3,	  [ID_DEV_SENSOR] = 1,
-    [ID_DEV_BUZZER] = 1,  [ID_DEV_MOTORRAWR] = 1, [ID_DEV_MOTORRAWL] = 1,
-    [ID_DEV_MOTOREN] = 1, [ID_DEV_MOTOR] = 1,	  [ID_DEV_CNT] = 2};
-
-/* --- Device Names --- */
-const char *NAME_DEV[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled",
-				     [ID_DEV_SWITCH] = "rtswitch",
-				     [ID_DEV_SENSOR] = "rtlightsensor",
-				     [ID_DEV_BUZZER] = "rtbuzzer",
-				     [ID_DEV_MOTORRAWR] = "rtmotor_raw_r",
-				     [ID_DEV_MOTORRAWL] = "rtmotor_raw_l",
-				     [ID_DEV_MOTOREN] = "rtmotoren",
-				     [ID_DEV_MOTOR] = "rtmotor"};
-
-const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
-				       [ID_DEV_SWITCH] = "rtswitch%u",
-				       [ID_DEV_SENSOR] = "rtlightsensor%u",
-				       [ID_DEV_BUZZER] = "rtbuzzer%u",
-				       [ID_DEV_MOTORRAWR] = "rtmotor_raw_r%u",
-				       [ID_DEV_MOTORRAWL] = "rtmotor_raw_l%u",
-				       [ID_DEV_MOTOREN] = "rtmotoren%u",
-				       [ID_DEV_MOTOR] = "rtmotor%u"};
 
 #define NUM_DEV_TOTAL                                                          \
 	(NUM_DEV[ID_DEV_LED] + NUM_DEV[ID_DEV_SWITCH] +                        \
@@ -251,7 +226,65 @@ const char *NAME_DEV_U[ID_DEV_SIZE] = {[ID_DEV_LED] = "rtled%u",
 #define SIGNED_COUNT_SIZE 32767
 #define MAX_PULSE_COUNT 65535
 
-/* -- Buffer -- */
+/* --- Buffer --- */
 #define MAX_BUFLEN 64
+
+/* --- Variable Type definitions --- */
+/* SPI */
+struct mcp3204_drvdata {
+	struct spi_device *spi;
+	struct mutex lock;
+	unsigned char tx[MCP320X_PACKET_SIZE] ____cacheline_aligned;
+	unsigned char rx[MCP320X_PACKET_SIZE] ____cacheline_aligned;
+	struct spi_transfer xfer ____cacheline_aligned;
+	struct spi_message msg ____cacheline_aligned;
+};
+
+/* I2C */
+struct rtcnt_device_info {
+	struct cdev cdev;
+	unsigned int device_major;
+	unsigned int device_minor;
+	struct class *device_class;
+	struct i2c_client *client;
+	struct mutex lock;
+	int signed_pulse_count;
+	int raw_pulse_count;
+};
+
+/* --- used in rtmouse_dev.c --- */
+extern const char *NAME_DEV[ID_DEV_SIZE];
+extern int _major_dev[ID_DEV_SIZE];
+extern int _minor_dev[ID_DEV_SIZE];
+extern struct class *class_dev[ID_DEV_SIZE];
+extern volatile void __iomem *pwm_base;
+extern volatile uint32_t *gpio_base;
+extern struct mutex lock;
+extern struct spi_board_info mcp3204_info;
+extern struct file_operations dev_fops[ID_DEV_SIZE];
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+extern struct device *mcp320x_dev;
+#endif
+int buzzer_init(void);
+int register_dev(int id_dev);
+
+/* --- used in rtmouse_spi.c --- */
+int mcp3204_init(void);
+void mcp3204_exit(void);
+
+/* --- used in rtmouse_i2c.c --- */
+extern const unsigned int NUM_DEV[ID_DEV_SIZE];
+extern struct cdev *cdev_array;
+extern volatile int cdev_index;
+int i2c_counter_init(void);
+void i2c_counter_exit(void);
+
+/* --- used in rtmouse_gpio.c --- */
+int rpi_gpio_function_set(int pin, uint32_t func);
+void rpi_gpio_set32(uint32_t mask, uint32_t val);
+void rpi_gpio_clear32(uint32_t mask, uint32_t val);
+void rpi_pwm_write32(uint32_t offset, uint32_t val);
+int gpio_map(void);
+int gpio_unmap(void);
 
 #endif // RTMOUSE_H

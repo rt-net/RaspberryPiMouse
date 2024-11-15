@@ -6,7 +6,11 @@ SRC_DIR=$(cd $(dirname ${BASH_SOURCE:-$0}); cd ../; pwd)
 
 lint_driver () {
     pushd $SRC_DIR/src/drivers
-        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_main.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_dev.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_spi.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_i2c.c
+        python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse_gpio.c
         python3 $SRC_DIR/.test/bin/run-clang-format.py rtmouse.h
     popd
 }
