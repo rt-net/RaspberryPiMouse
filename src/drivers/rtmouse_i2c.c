@@ -215,10 +215,10 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTL))
+		if (rtcnt_i2c_create_cdev(dev_info, DEV_LEFT))
 			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTR))
+		if (rtcnt_i2c_create_cdev(dev_info, DEV_RIGHT))
 			return -ENOMEM;
 	}
 
@@ -256,10 +256,10 @@ static int rtcnt_i2c_probe(struct i2c_client *client)
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTL))
+		if (rtcnt_i2c_create_cdev(dev_info, DEV_LEFT))
 			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTR))
+		if (rtcnt_i2c_create_cdev(dev_info, DEV_RIGHT))
 			return -ENOMEM;
 	}
 

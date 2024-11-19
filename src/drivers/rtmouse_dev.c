@@ -270,6 +270,7 @@ static void set_motor_freq(int freq, const int dev_side)
 		if (dev_side == DEV_LEFT) {
 			motor_l_freq_is_positive = 0;
 			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+			freq = -freq;
 		} else if (dev_side == DEV_RIGHT) {
 			motor_r_freq_is_positive = 0;
 			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
