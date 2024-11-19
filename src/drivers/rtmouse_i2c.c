@@ -69,7 +69,7 @@ static struct i2c_driver i2c_counter_driver = {
 MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
 // called by rtcnt_i2c_probe()
-static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const char *devname_cnt)
+static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const int dev_side)
 {
 	int minor;
 	int alloc_ret = 0;
@@ -77,8 +77,13 @@ static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const char 
 	dev_t dev;
 
 	/* 空いているメジャー番号を確保する */
-	alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
-					devname_cnt);
+	if (dev_side == DEV_LEFT) {
+		alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
+						DEVNAME_CNTL);
+	} else if (dev_side == DEV_RIGHT) {
+		alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
+						DEVNAME_CNTR);
+	}
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -103,9 +108,17 @@ static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const char 
 
 /* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	dev_info->device_class = class_create(THIS_MODULE, devname_cnt);
+	if (dev_side == DEV_LEFT) {
+		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+	} else if (dev_side == DEV_RIGHT) {
+		dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
+	}
 #else
-	dev_info->device_class = class_create(devname_cnt);
+	if (dev_side == DEV_LEFT) {
+		dev_info->device_class = class_create(DEVNAME_CNTL);
+	} else if (dev_side == DEV_RIGHT) {
+		dev_info->device_class = class_create(DEVNAME_CNTR);
+	}
 #endif
 
 	if (IS_ERR(dev_info->device_class)) {
@@ -120,11 +133,11 @@ static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const char 
 	     minor++) {
 
 		struct device *dev_ret;
-		if (devname_cnt == DEVNAME_CNTL) {
+		if (dev_side == DEV_LEFT) {
 			dev_ret = device_create(dev_info->device_class, NULL,
 						MKDEV(dev_info->device_major, minor),
 						NULL, "rtcounter_l%d", minor);
-		} else if (devname_cnt == DEVNAME_CNTR) {
+		} else if (dev_side == DEV_RIGHT) {
 			dev_ret = device_create(dev_info->device_class, NULL,
 						MKDEV(dev_info->device_major, minor),
 						NULL, "rtcounter_r%d", minor);
