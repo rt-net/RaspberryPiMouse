@@ -3,7 +3,7 @@
  * rtmouse_main.c
  * Raspberry Pi Mouse device driver
  *
- * Version: 3.3.3
+ * Version: 3.3.4
  *
  * Copyright (C) 2015-2024 RT Corporation <shop@rt-net.jp>
  *
@@ -26,7 +26,7 @@
 
 MODULE_AUTHOR("RT Corporation");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("3.3.3");
+MODULE_VERSION("3.3.4");
 MODULE_DESCRIPTION("Raspberry Pi Mouse device driver");
 
 /*
