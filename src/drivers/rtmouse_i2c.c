@@ -68,77 +68,8 @@ static struct i2c_driver i2c_counter_driver = {
 /* -- Device Addition -- */
 MODULE_DEVICE_TABLE(i2c, i2c_counter_id);
 
-static int rtcntr_i2c_create_cdev(struct rtcnt_device_info *dev_info)
-{
-	int minor;
-	int alloc_ret = 0;
-	int cdev_err = 0;
-	dev_t dev;
-
-	/* 空いているメジャー番号を確保する */
-	alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
-					DEVNAME_CNTR);
-	if (alloc_ret != 0) {
-		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
-		return -1;
-	}
-
-	/* 取得したdev( = メジャー番号 +  マイナー番号)
-	 * からメジャー番号を取得して保持しておく */
-	dev_info->device_major = MAJOR(dev);
-	dev = MKDEV(dev_info->device_major, DEV_MINOR);
-
-	/* cdev構造体の初期化とシステムコールハンドラテーブルの登録 */
-	cdev_init(&dev_info->cdev, &dev_fops[ID_DEV_CNT]);
-	dev_info->cdev.owner = THIS_MODULE;
-
-	/* このデバイスドライバ(cdev)をカーネルに登録する */
-	cdev_err = cdev_add(&dev_info->cdev, dev, NUM_DEV[ID_DEV_CNT]);
-	if (cdev_err != 0) {
-		printk(KERN_ERR "cdev_add = %d\n", alloc_ret);
-		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
-		return -1;
-	}
-
-	/* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTR);
-#else
-	dev_info->device_class = class_create(DEVNAME_CNTR);
-#endif
-
-	if (IS_ERR(dev_info->device_class)) {
-		printk(KERN_ERR "class_create\n");
-		cdev_del(&dev_info->cdev);
-		unregister_chrdev_region(dev, NUM_DEV[ID_DEV_CNT]);
-		return -1;
-	}
-
-	for (minor = DEV_MINOR; minor < DEV_MINOR + NUM_DEV[ID_DEV_CNT];
-	     minor++) {
-
-		struct device *dev_ret;
-		dev_ret = device_create(dev_info->device_class, NULL,
-					MKDEV(dev_info->device_major, minor),
-					NULL, "rtcounter_r%d", minor);
-
-		/* デバイスファイル作成の可否を判定 */
-		if (IS_ERR(dev_ret)) {
-			/* デバイスファイルの作成に失敗した */
-			printk(KERN_ERR "device_create failed minor = %d\n",
-			       minor);
-			/* リソースリークを避けるために登録された状態cdevを削除する
-			 */
-			cdev_del(&(cdev_array[cdev_index]));
-			return PTR_ERR(dev_ret);
-		}
-	}
-
-	return 0;
-}
-
 // called by rtcnt_i2c_probe()
-static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
+static int rtcnt_i2c_create_cdev(struct rtcnt_device_info *dev_info, const char *devname_cnt)
 {
 	int minor;
 	int alloc_ret = 0;
@@ -147,7 +78,7 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 	/* 空いているメジャー番号を確保する */
 	alloc_ret = alloc_chrdev_region(&dev, DEV_MINOR, NUM_DEV[ID_DEV_CNT],
-					DEVNAME_CNTL);
+					devname_cnt);
 	if (alloc_ret != 0) {
 		printk(KERN_ERR "alloc_chrdev_region = %d\n", alloc_ret);
 		return -1;
@@ -172,9 +103,9 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 
 /* このデバイスのクラス登録をする(/sys/class/mydevice/ を作る) */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-	dev_info->device_class = class_create(THIS_MODULE, DEVNAME_CNTL);
+	dev_info->device_class = class_create(THIS_MODULE, devname_cnt);
 #else
-	dev_info->device_class = class_create(DEVNAME_CNTL);
+	dev_info->device_class = class_create(devname_cnt);
 #endif
 
 	if (IS_ERR(dev_info->device_class)) {
@@ -189,9 +120,15 @@ static int rtcntl_i2c_create_cdev(struct rtcnt_device_info *dev_info)
 	     minor++) {
 
 		struct device *dev_ret;
-		dev_ret = device_create(dev_info->device_class, NULL,
-					MKDEV(dev_info->device_major, minor),
-					NULL, "rtcounter_l%d", minor);
+		if (devname_cnt == DEVNAME_CNTL) {
+			dev_ret = device_create(dev_info->device_class, NULL,
+						MKDEV(dev_info->device_major, minor),
+						NULL, "rtcounter_l%d", minor);
+		} else if (devname_cnt == DEVNAME_CNTR) {
+			dev_ret = device_create(dev_info->device_class, NULL,
+						MKDEV(dev_info->device_major, minor),
+						NULL, "rtcounter_r%d", minor);
+		}
 
 		/* デバイスファイル作成の可否を判定 */
 		if (IS_ERR(dev_ret)) {
@@ -260,10 +197,10 @@ static int rtcnt_i2c_probe(struct i2c_client *client,
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcntl_i2c_create_cdev(dev_info))
+		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTL))
 			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcntr_i2c_create_cdev(dev_info))
+		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTR))
 			return -ENOMEM;
 	}
 
@@ -301,10 +238,10 @@ static int rtcnt_i2c_probe(struct i2c_client *client)
 
 	/* create character device */
 	if ((int)(id->driver_data) == 0) {
-		if (rtcntl_i2c_create_cdev(dev_info))
+		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTL))
 			return -ENOMEM;
 	} else if ((int)(id->driver_data) == 1) {
-		if (rtcntr_i2c_create_cdev(dev_info))
+		if (rtcnt_i2c_create_cdev(dev_info, DEVNAME_CNTR))
 			return -ENOMEM;
 	}
 
