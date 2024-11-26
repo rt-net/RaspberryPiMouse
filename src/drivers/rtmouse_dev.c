@@ -264,7 +264,7 @@ static void set_motor_freq(int freq, const int dev_side)
 			rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
 		} else if (dev_side == DEV_RIGHT) {
 			motor_r_freq_is_positive = 1;
-			rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 		}
 	} else {
 		if (dev_side == DEV_LEFT) {
@@ -273,7 +273,7 @@ static void set_motor_freq(int freq, const int dev_side)
 			freq = -freq;
 		} else if (dev_side == DEV_RIGHT) {
 			motor_r_freq_is_positive = 0;
-			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+			rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
 			freq = -freq;
 		}
 	}
