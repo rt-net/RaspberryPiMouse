@@ -54,6 +54,9 @@
 // Raspberry Pi 4 B        : 4
 #define RASPBERRYPI 2
 
+#define DEV_RIGHT 0
+#define DEV_LEFT 1
+
 /* --- Device ID --- */
 #define ID_DEV_LED 0
 #define ID_DEV_SWITCH 1

@@ -229,10 +229,10 @@ static int getPWMCount(int freq)
 }
 
 /*
- * left motor function
+ * motor function
  * called by parseMotorCmd() and rawmotor_l_write()
  */
-static void set_motor_l_freq(int freq)
+static void set_motor_freq(int freq, const int dev_side)
 {
 	int dat;
 
@@ -244,64 +244,49 @@ static void set_motor_l_freq(int freq)
 	}
 
 	if (freq == 0) {
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
+		if (dev_side == DEV_LEFT) {
+			rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_OUTPUT);
+		} else if (dev_side == DEV_RIGHT) {
+			rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
+		}
 		return;
 	} else {
-		rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
+		if (dev_side == DEV_LEFT) {
+			rpi_gpio_function_set(MOTCLK_L_BASE, RPI_GPF_ALT0);
+		} else if (dev_side == DEV_RIGHT) {
+			rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
+		}
 	}
 
 	if (freq > 0) {
-		motor_l_freq_is_positive = 1;
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+		if (dev_side == DEV_LEFT) {
+			motor_l_freq_is_positive = 1;
+			rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+		} else if (dev_side == DEV_RIGHT) {
+			motor_r_freq_is_positive = 1;
+			rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+		}
 	} else {
-		motor_l_freq_is_positive = 0;
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
-		freq = -freq;
+		if (dev_side == DEV_LEFT) {
+			motor_l_freq_is_positive = 0;
+			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_L_BASE);
+			freq = -freq;
+		} else if (dev_side == DEV_RIGHT) {
+			motor_r_freq_is_positive = 0;
+			rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
+			freq = -freq;
+		}
 	}
 
 	dat = getPWMCount(freq);
 
-	rpi_pwm_write32(RPI_PWM_RNG1, dat);
-	rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
-
-	return;
-}
-
-/*
- * right motor function
- * called by parseMotorCmd() and rawmotor_r_write()
- */
-static void set_motor_r_freq(int freq)
-{
-	int dat;
-
-	rpi_gpio_function_set(BUZZER_BASE, RPI_GPF_OUTPUT);
-
-	// Reset uncontrollable frequency to zero.
-	if (abs(freq) < MOTOR_UNCONTROLLABLE_FREQ) {
-		freq = 0;
+	if (dev_side == DEV_LEFT) {
+		rpi_pwm_write32(RPI_PWM_RNG1, dat);
+		rpi_pwm_write32(RPI_PWM_DAT1, dat >> 1);
+	} else if (dev_side == DEV_RIGHT) {
+		rpi_pwm_write32(RPI_PWM_RNG2, dat);
+		rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
 	}
-
-	if (freq == 0) {
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_OUTPUT);
-		return;
-	} else {
-		rpi_gpio_function_set(MOTCLK_R_BASE, RPI_GPF_ALT0);
-	}
-
-	if (freq > 0) {
-		motor_r_freq_is_positive = 1;
-		rpi_gpio_set32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-	} else {
-		motor_r_freq_is_positive = 0;
-		rpi_gpio_clear32(RPI_GPIO_P2MASK, 1 << MOTDIR_R_BASE);
-		freq = -freq;
-	}
-
-	dat = getPWMCount(freq);
-
-	rpi_pwm_write32(RPI_PWM_RNG2, dat);
-	rpi_pwm_write32(RPI_PWM_DAT2, dat >> 1);
 
 	return;
 }
@@ -326,13 +311,13 @@ static int parseMotorCmd(const char __user *buf, size_t count, int *ret)
 
 	mutex_lock(&lock);
 
-	set_motor_l_freq(l_motor_val);
-	set_motor_r_freq(r_motor_val);
+	set_motor_freq(l_motor_val, DEV_LEFT);
+	set_motor_freq(r_motor_val, DEV_RIGHT);
 
 	msleep_interruptible(time_val);
 
-	set_motor_l_freq(0);
-	set_motor_r_freq(0);
+	set_motor_freq(0, DEV_LEFT);
+	set_motor_freq(0, DEV_RIGHT);
 
 	mutex_unlock(&lock);
 
@@ -751,7 +736,7 @@ static ssize_t rawmotor_l_write(struct file *filep, const char __user *buf,
 		       DRIVER_NAME, __func__);
 		return ret;
 	}
-	set_motor_l_freq(freq);
+	set_motor_freq(freq, DEV_LEFT);
 
 	return count;
 }
@@ -772,7 +757,7 @@ static ssize_t rawmotor_r_write(struct file *filep, const char __user *buf,
 		return ret;
 	}
 
-	set_motor_r_freq(freq);
+	set_motor_freq(freq, DEV_RIGHT);
 
 	return count;
 }
