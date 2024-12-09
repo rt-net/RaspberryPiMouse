@@ -59,6 +59,7 @@ static int i2c_counter_set(struct rtcnt_device_info *dev_info, int setval)
 		printk(KERN_ERR
 		       "%s: Failed writing to i2c counter device, addr=0x%x\n",
 		       __func__, client->addr);
+		mutex_unlock(&dev_info->lock);
 		return -ENODEV;
 	}
 	// printk(KERN_INFO "set 0x%x lsb = 0x%x\n", client->addr, lsb);
@@ -67,6 +68,7 @@ static int i2c_counter_set(struct rtcnt_device_info *dev_info, int setval)
 		printk(KERN_ERR
 		       "%s: Failed writing to i2c counter device, addr=0x%x\n",
 		       __func__, client->addr);
+		mutex_unlock(&dev_info->lock);
 		return -ENODEV;
 	}
 	mutex_unlock(&dev_info->lock);
@@ -90,6 +92,7 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 		    KERN_ERR
 		    "%s: Failed reading from i2c counter device, addr=0x%x\n",
 		    __func__, client->addr);
+		mutex_unlock(&dev_info->lock);
 		return -ENODEV;
 	}
 	msb = i2c_smbus_read_byte_data(client, CNT_ADDR_MSB);
@@ -98,6 +101,7 @@ static int i2c_counter_read(struct rtcnt_device_info *dev_info, int *ret)
 		    KERN_ERR
 		    "%s: Failed reading from i2c counter device, addr=0x%x\n",
 		    __func__, client->addr);
+		mutex_unlock(&dev_info->lock);
 		return -ENODEV;
 	}
 	mutex_unlock(&dev_info->lock);
