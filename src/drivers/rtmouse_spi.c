@@ -148,7 +148,7 @@ static int mcp3204_probe(struct spi_device *spi)
  * spi_remove_device - remove SPI device
  * called by mcp3204_init() and mcp3204_exit()
  */
-static void spi_remove_device(struct spi_master *master, unsigned int cs)
+static void spi_remove_device(struct spi_controller *master, unsigned int cs)
 {
 	struct device *dev;
 	char str[128];
@@ -188,7 +188,7 @@ int mcp3204_init(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
 	bus_for_each_dev(&spi_bus_type, NULL, NULL, __callback_find_mcp3204);
 #else
-	struct spi_master *master;
+	struct spi_controller *master;
 	struct spi_device *spi_device;
 
 	spi_register_driver(&mcp3204_driver);
@@ -231,7 +231,7 @@ void mcp3204_exit(void)
 		mcp3204_remove(to_spi_device(mcp320x_dev));
 	}
 #else
-	struct spi_master *master;
+	struct spi_controller *master;
 	master = spi_busnum_to_master(mcp3204_info.bus_num);
 
 	if (master) {
