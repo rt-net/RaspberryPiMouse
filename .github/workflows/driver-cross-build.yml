@@ -36,12 +36,6 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          # Debian 10 (Buster)
-          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf, RASPI: 3}
-          - { HOST: 20.04, KERNEL_VER: rpi-5.4.y, OS_BIT: armhf, RASPI: 4}
-          # Debian 11 (Bullseye)
-          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf, RASPI: 3}
-          - { HOST: 20.04, KERNEL_VER: rpi-5.10.y, OS_BIT: armhf, RASPI: 4}
           # Debian 11 (Bullseye)
           - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf, RASPI: 3}
           - { HOST: 22.04, KERNEL_VER: rpi-5.15.y, OS_BIT: armhf, RASPI: 4}
