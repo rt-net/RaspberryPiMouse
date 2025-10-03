@@ -189,7 +189,7 @@ static unsigned int mcp3204_get_value(int channel)
 	dev = mcp320x_dev;
 
 #else
-	struct spi_master *master;
+	struct spi_controller *master;
 	master = spi_busnum_to_master(mcp3204_info.bus_num);
 	snprintf(str, sizeof(str), "%s.%u", dev_name(&master->dev),
 		 mcp3204_info.chip_select);
