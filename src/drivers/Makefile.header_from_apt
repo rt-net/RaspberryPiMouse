@@ -3,8 +3,13 @@ obj-m:= $(MODULE).o
 $(MODULE)-y:= $(MODULE)_main.o $(MODULE)_dev.o $(MODULE)_spi.o $(MODULE)_i2c.o $(MODULE)_gpio.o
 clean-files:= *.o *.ko *.mod.[co] *~
 
-LINUX_SRC_DIR:=/usr/src/linux-headers-$(shell uname -r)
+KVERSION ?= $(shell uname -r)
+LINUX_SRC_DIR ?= /lib/modules/$(KVERSION)/build
 VERBOSE:=0
+
+ifneq ($(RASPBERRYPI),)
+ccflags-y += -DRASPBERRYPI=$(RASPBERRYPI)
+endif
 
 $(MODULE).ko: $(MODULE)_main.c $(MODULE)_dev.c $(MODULE)_spi.c $(MODULE)_i2c.c $(MODULE)_gpio.c $(MODULE).h
 	make -C $(LINUX_SRC_DIR) M=$(shell pwd) V=$(VERBOSE) modules
