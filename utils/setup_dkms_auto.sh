@@ -71,7 +71,8 @@ $SUDO dkms add -m "$PACKAGE_NAME" -v "$PACKAGE_VERSION"
 $SUDO dkms build -m "$PACKAGE_NAME" -v "$PACKAGE_VERSION" -k "$(uname -r)"
 $SUDO dkms install -m "$PACKAGE_NAME" -v "$PACKAGE_VERSION" -k "$(uname -r)"
 
-# 起動時に rtmouse.ko が自動ロードされるようにする。
-printf '%s\n' "$PACKAGE_NAME" | $SUDO tee "/etc/modules-load.d/${PACKAGE_NAME}.conf" >/dev/null
+# DKMS で入れたモジュールを現在のシステムから参照できるようにする。
 $SUDO depmod -a
+
+# 現在のセッションでのmodprobe実行
 $SUDO modprobe "$PACKAGE_NAME"
