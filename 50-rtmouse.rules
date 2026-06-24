@@ -4,3 +4,5 @@ KERNEL=="rtbuzzer*",ACTION=="add",MODE="0666"
 KERNEL=="rtswitch*",ACTION=="add",MODE="0666"
 KERNEL=="rtled*",ACTION=="add",MODE="0666"
 KERNEL=="rtcounter*",ACTION=="add",MODE="0666"
+
+KERNEL=="rtmotoren0", ACTION=="add", RUN+="/bin/sh -c 'echo 0 > /dev/rtmotoren0'"
