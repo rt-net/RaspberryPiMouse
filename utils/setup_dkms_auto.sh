@@ -18,26 +18,26 @@ fi
 . /etc/os-release
 case "${ID:-}" in
 	ubuntu)
-		$SUDO apt-get update
-		$SUDO apt-get install -y linux-raspi linux-headers-raspi build-essential dkms
+		PACKAGES=(linux-raspi linux-headers-raspi build-essential dkms)
 		;;
 	raspbian)
-		$SUDO apt-get update
-		$SUDO apt-get install -y linux-headers-rpi-v8 build-essential dkms
+		PACKAGES=(raspberrypi-kernel-headers build-essential dkms)
 		;;
 	debian)
-		if ! echo "${PRETTY_NAME:-}" | grep -qi "raspberry pi"; then
+		if [ -r /etc/rpi-issue ] || echo "${ID_LIKE:-}" | grep -qi "raspbian"; then
+			PACKAGES=(raspberrypi-kernel-headers build-essential dkms)
+		else
 			echo "Unsupported OS: ${PRETTY_NAME:-unknown}" >&2
 			exit 1
 		fi
-		$SUDO apt-get update
-		$SUDO apt-get install -y linux-headers-rpi-v8 build-essential dkms
 		;;
 	*)
 		echo "Unsupported OS: ${PRETTY_NAME:-unknown}" >&2
 		exit 1
 		;;
 esac
+$SUDO apt-get update
+$SUDO apt-get install -y "${PACKAGES[@]}"
 
 # いま起動しているカーネル用のヘッダーが無い場合、DKMS ビルドはできない。
 # apt によるカーネル更新直後は、再起動してから再実行する必要がある。
