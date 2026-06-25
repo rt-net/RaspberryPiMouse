@@ -14,19 +14,13 @@ else
 	SUDO=sudo
 fi
 
-# OS ごとに、DKMS ビルドに必要な最低限のパッケージだけを入れる。
+# 対象OSだけを許可し、DKMS ビルドに必要な最低限のパッケージを入れる。
 . /etc/os-release
 case "${ID:-}" in
-	ubuntu)
-		PACKAGES=(linux-raspi linux-headers-raspi build-essential dkms)
-		;;
-	raspbian)
-		PACKAGES=(raspberrypi-kernel-headers build-essential dkms)
+	ubuntu | raspbian)
 		;;
 	debian)
-		if [ -r /etc/rpi-issue ] || echo "${ID_LIKE:-}" | grep -qi "raspbian"; then
-			PACKAGES=(raspberrypi-kernel-headers build-essential dkms)
-		else
+		if [ ! -r /etc/rpi-issue ] && ! echo "${ID_LIKE:-}" | grep -qi "raspbian"; then
 			echo "Unsupported OS: ${PRETTY_NAME:-unknown}" >&2
 			exit 1
 		fi
@@ -37,7 +31,7 @@ case "${ID:-}" in
 		;;
 esac
 $SUDO apt-get update
-$SUDO apt-get install -y "${PACKAGES[@]}"
+$SUDO apt-get install -y "linux-headers-$(uname -r)" build-essential dkms
 
 # いま起動しているカーネル用のヘッダーが無い場合、DKMS ビルドはできない。
 # apt によるカーネル更新直後は、再起動してから再実行する必要がある。
