@@ -7,6 +7,17 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 DKMS_SRC_DIR="/usr/src/${PACKAGE_NAME}-${PACKAGE_VERSION}"
 
+kernel_version_int() {
+	echo "$1" | awk -F. '{ printf "%d%02d", $1, $2 }'
+}
+
+KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
+KERNEL_VERSION_INT=$(kernel_version_int "$KERNEL_VERSION")
+USE_MODULES_LOAD_CONF=0
+if [ "$KERNEL_VERSION_INT" -lt "$(kernel_version_int 5.16)" ]; then
+	USE_MODULES_LOAD_CONF=1
+fi
+
 # sudo 経由でも root 直実行でも同じコマンド列で動かすための準備。
 if [ "$(id -u)" -eq 0 ]; then
 	SUDO=
@@ -67,6 +78,11 @@ $SUDO dkms install -m "$PACKAGE_NAME" -v "$PACKAGE_VERSION" -k "$(uname -r)"
 
 # DKMS で入れたモジュールを現在のシステムから参照できるようにする。
 $SUDO depmod -a
+
+# カーネル 5.16 未満では device tree 経由でロードされないため明示的に自動ロードする。
+if [ "$USE_MODULES_LOAD_CONF" -eq 1 ]; then
+	printf '%s\n' "$PACKAGE_NAME" | $SUDO tee "/etc/modules-load.d/${PACKAGE_NAME}.conf" > /dev/null
+fi
 
 # 現在のセッションでのmodprobe実行
 $SUDO modprobe "$PACKAGE_NAME"
